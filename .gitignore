@@ -1,0 +1,18 @@
+**/node_modules/
+**/dist/**
+**/package-lock.json
+
+# Data directories
+# **/.data/
+# **/data/
+data
+docker/**/data/
+docker/**/.data/
+docker/**/certs/
+docker/**/ssl/
+**/tmp
+
+*.env
+*.env.dev
+*.env.local
+*.env.*.local
