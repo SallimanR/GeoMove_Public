@@ -3,14 +3,4 @@
 		"**/dist/**/*",
 		"**/node_modules/**/*"
 	],
-	"compilerOptions": {
-		// "target": "es2022",
-		// "module": "nodenext",
-		// "baseUrl": ".",
-		// "rootDir": ".",
-		// "outDir": "./dist",
-		// "esModuleInterop": true,
-		// "strict": true,
-		// "skipLibCheck": true
-	}
 }

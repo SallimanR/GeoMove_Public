@@ -1,3 +1,9 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'packages/@domains/*'
+allowBuilds:
+  '@vaadin/vaadin-usage-statistics': true
+  esbuild: true
+  protobufjs: set this to true or false
+  sharp: true

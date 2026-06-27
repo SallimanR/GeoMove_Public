@@ -1,0 +1,19 @@
+{
+	"extends": [
+		"../../../tsconfig.json"
+	],
+	"compilerOptions": {
+		"target": "es2022",
+		"allowImportingTsExtensions": true,
+		"module": "nodenext",
+		"baseUrl": ".",
+		"rootDir": "src",
+		"outDir": "dist",
+		"esModuleInterop": true,
+		"strict": true,
+		"skipLibCheck": true
+	},
+	"include": [
+		"src"
+	]
+}

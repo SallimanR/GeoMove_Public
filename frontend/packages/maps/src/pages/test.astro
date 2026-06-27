@@ -1,0 +1,14 @@
+---
+import BaseLayout from "@layouts/BaseLayout.astro";
+import Maps from "@components/Maps.vue";
+import MapsOverlayControls from "@components/MapsOverlayControls.vue";
+
+export const prerender = false
+---
+
+<BaseLayout>
+  <div class="relative w-full h-full">
+    <Maps client:only="vue" />
+    <MapsOverlayControls client:only="vue" />
+  </div>
+</BaseLayout>
