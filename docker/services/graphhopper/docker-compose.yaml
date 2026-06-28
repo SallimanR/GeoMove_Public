@@ -1,0 +1,22 @@
+services:
+  graphhopper:
+    image: israelhikingmap/graphhopper
+    container_name: tow-graphhopper
+    ports:
+      - "8989:8989"
+    volumes:
+      # - ./data/russia-latest.osm.pbf:/data/russia-latest.osm.pbf:ro
+      - ./data:/data
+      - ./config.yml:/config.yml:ro
+    environment:
+      - JAVA_OPTS=-Xmx1g -Xms1g
+    command: 
+      - java
+      - -Ddw.graphhopper.datareader.file=/data/russia-latest.osm.pbf
+      - -jar
+      - graphhopper-web-11.0.jar
+      - server 
+      - /config.yml
+
+volumes:
+  graphhopper:

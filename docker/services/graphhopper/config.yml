@@ -1,0 +1,34 @@
+graphhopper:
+  datareader.file: ./data/maps/russia-latest.osm.pbf
+  graph.location: ./data/graph-cache
+
+  profiles:
+    - name: car
+      custom_model: {
+        "speed": [
+          { "if": "true", "limit_to": "70" }
+        ],
+        # "priority": [
+        #   { "if": "!car_access", "multiply_by": "0" }
+        # ],
+        "distance_influence": 100
+      }
+  # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
+  graph.dataaccess.default_type: RAM_STORE
+
+  non_ch.disabling_allowed: false
+  prepare.min_network_size: 200
+  prepare.min_one_way_network_size: 200
+  import.osm.ignored_highways: footway,construction,cycleway,path,steps
+
+
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+      bind_host: localhost
+  admin_connectors:
+    - type: http
+      port: 8990
+      bind_host: localhost
+

@@ -1,0 +1,124 @@
+{
+  "layers": [
+    {
+      "id": "Volcano peak labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "mountain_peak",
+      "maxzoom": 16,
+      "layout": {
+        "icon-image": "volcano",
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-anchor": "top",
+        "text-field": {
+          "stops": [
+            [
+              6,
+              " "
+            ],
+            [
+              12,
+              "{name} {ele}m"
+            ]
+          ]
+        },
+        "text-font": [
+          "Open Sans Regular",
+          "Noto Sans Regular"
+        ],
+        "text-line-height": 1.1,
+        "text-max-width": 6,
+        "text-offset": [
+          0,
+          0.5
+        ],
+        "text-size": 10
+      },
+      "paint": {
+        "text-color": "hsl(0, 100%, 42%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "volcano"
+        ],
+        [
+          "has",
+          "ele"
+        ]
+      ],
+      "order": 240
+    },
+    {
+      "id": "Mountain peak labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "mountain_peak",
+      "maxzoom": 16,
+      "layout": {
+        "icon-image": "peak",
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-anchor": "top",
+        "text-field": {
+          "stops": [
+            [
+              6,
+              " "
+            ],
+            [
+              12,
+              "{name} {ele}m"
+            ]
+          ]
+        },
+        "text-font": [
+          "Open Sans Regular",
+          "Noto Sans Regular"
+        ],
+        "text-line-height": 1.1,
+        "text-max-width": 6,
+        "text-offset": [
+          0,
+          0.5
+        ],
+        "text-size": 10,
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(29, 57%, 27%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1
+      },
+      "filter": [
+        "all",
+        [
+          "!in",
+          "class",
+          "cliff",
+          "volcano"
+        ],
+        [
+          "has",
+          "ele"
+        ]
+      ],
+      "order": 241
+    }
+  ]
+}

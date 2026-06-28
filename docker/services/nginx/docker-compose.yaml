@@ -1,0 +1,20 @@
+services:
+  nginx:
+    image: docker.io/library/nginx:mainline-alpine3.23
+    container_name: tow-nginx
+    ports:
+      - "8050:443/tcp"
+      - "8050:443/udp" # for quic/http3
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/nginx-selfsigned.crt:/etc/nginx/tls/localhost.crt:ro
+      - ./certs/nginx-selfsigned.key:/etc/nginx/tls/localhost.key:ro
+      - ../../../data/maps:/data/maps:ro
+    networks:
+      - tow-network
+# volumes:
+#   tow-nginx:
+
+networks:
+  tow-network:
+    driver: bridge

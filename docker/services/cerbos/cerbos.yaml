@@ -1,0 +1,24 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+
+  # apiExplorerEnabled: true # APIExplorerEnabled defines whether the API explorer UI is enabled.
+  # adminAPI: # AdminAPI defines the admin API configuration.
+  #   enabled: true # Enabled defines whether the admin API is enabled.
+  #   adminCredentials: # AdminCredentials defines the admin user credentials.
+  #     passwordHash: JDJiJDExJEFBTEJxVjhaVlowUkpPQkNHVjdaMi5QSjNsTDU0Z1ZzWjdCa2Q5bU9oU0hydnF6czdpaEw2Cg== # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
+  #     username: cerbos # Username is the hardcoded username to use for authentication.
+
+engine:
+  defaultPolicyVersion: "default"
+
+auxData:
+  jwt:
+    disableVerification: true
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /policies
+    watchForChanges: true

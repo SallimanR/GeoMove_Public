@@ -1,0 +1,13 @@
+services:
+  my-cerbos-container:
+    container_name: tow-cerbos
+    image: ghcr.io/cerbos/cerbos:0.50.0
+    ports:
+      - "3592:3592"
+      - "3593:3593"
+    volumes:
+      - ./policies:/policies
+      - ./cerbos.yaml:/cerbos.yaml:ro
+    command:
+      - server
+      - --config=cerbos.yaml

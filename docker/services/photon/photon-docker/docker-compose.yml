@@ -1,0 +1,17 @@
+services:
+    photon:
+        image: ghcr.io/rtuszik/photon-docker:latest
+        container_name: "photon-docker"
+        environment:
+            - UPDATE_STRATEGY=PARALLEL
+            - UPDATE_INTERVAL=30d
+            - LOG_LEVEL=INFO # Options: DEBUG, INFO, ERROR
+            # - BASE_URL=https://r2.koalasec.org/public
+            # - REGION=andorra
+        volumes:
+            - photon_data:/photon/data
+        restart: unless-stopped
+        ports:
+            - "2322:2322"
+volumes:
+    photon_data:

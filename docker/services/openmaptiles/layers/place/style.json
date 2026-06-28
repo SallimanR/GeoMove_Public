@@ -1,0 +1,608 @@
+{
+  "layers": [
+    {
+      "id": "Other labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 8,
+      "layout": {
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "symbol-spacing": 150,
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 10,
+        "text-size": {
+          "base": 1.2,
+          "stops": [
+            [
+              11,
+              10
+            ],
+            [
+              14,
+              14
+            ],
+            [
+              18,
+              16
+            ]
+          ]
+        },
+        "text-transform": "none",
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              12.5,
+              "hsl(0, 0%, 13%)"
+            ],
+            [
+              12.6,
+              "hsl(0, 0%, 47%)"
+            ]
+          ]
+        },
+        "text-halo-blur": 0,
+        "text-halo-color": {
+          "stops": [
+            [
+              11,
+              "hsla(0, 0%, 100%, 0.6)"
+            ],
+            [
+              13,
+              "hsl(0, 0%, 100%)"
+            ]
+          ]
+        },
+        "text-halo-width": {
+          "stops": [
+            [
+              8,
+              0.8
+            ],
+            [
+              13,
+              1.5
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "in",
+          "class",
+          "hamlet",
+          "island",
+          "islet",
+          "neighbourhood",
+          "suburb"
+        ]
+      ],
+      "order": 236
+    },
+    {
+      "id": "Village labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 8,
+      "layout": {
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 8,
+        "text-size": {
+          "base": 1.2,
+          "stops": [
+            [
+              10,
+              10
+            ],
+            [
+              15,
+              16
+            ]
+          ]
+        },
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(0, 0%, 20%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1.2
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "village"
+        ]
+      ],
+      "order": 242
+    },
+    {
+      "id": "Town labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 6,
+      "layout": {
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-anchor": "bottom",
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 8,
+        "text-offset": [
+          0,
+          0
+        ],
+        "text-size": {
+          "base": 1.2,
+          "stops": [
+            [
+              7,
+              10
+            ],
+            [
+              11,
+              13
+            ]
+          ]
+        },
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(0, 0%, 20%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1.2
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "town"
+        ]
+      ],
+      "order": 243
+    },
+    {
+      "id": "State labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 4,
+      "maxzoom": 12,
+      "layout": {
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular",
+          "Noto Sans Bold"
+        ],
+        "text-letter-spacing": 0,
+        "text-padding": 2,
+        "text-size": {
+          "stops": [
+            [
+              3,
+              10
+            ],
+            [
+              6,
+              14
+            ]
+          ]
+        },
+        "text-transform": "none",
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(302, 18%, 42%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.7)",
+        "text-halo-width": 0.8
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "state"
+        ],
+        [
+          "<",
+          "rank",
+          3
+        ]
+      ],
+      "order": 244
+    },
+    {
+      "id": "City labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 4,
+      "maxzoom": 14,
+      "layout": {
+        "icon-allow-overlap": true,
+        "icon-image": {
+          "stops": [
+            [
+              4,
+              "place-6"
+            ],
+            [
+              7,
+              " "
+            ]
+          ]
+        },
+        "icon-offset": [
+          0,
+          3
+        ],
+        "icon-optional": false,
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-anchor": "bottom",
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 8,
+        "text-offset": [
+          0,
+          0
+        ],
+        "text-size": {
+          "base": 1.2,
+          "stops": [
+            [
+              4,
+              11
+            ],
+            [
+              15,
+              16
+            ]
+          ]
+        },
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              6,
+              "hsl(0, 0%, 35%)"
+            ],
+            [
+              14,
+              "hsl(0, 0%, 13%)"
+            ]
+          ]
+        },
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "city"
+        ],
+        [
+          "!in",
+          "capital",
+          1,
+          2
+        ]
+      ],
+      "order": 245
+    },
+    {
+      "id": "Capital city labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 3,
+      "maxzoom": 15,
+      "layout": {
+        "icon-allow-overlap": true,
+        "icon-image": {
+          "stops": [
+            [
+              6,
+              "place-capital-8"
+            ],
+            [
+              8,
+              ""
+            ]
+          ]
+        },
+        "icon-offset": [
+          0,
+          3
+        ],
+        "icon-optional": false,
+        "icon-size": 1,
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-anchor": "bottom",
+        "text-field": "{name:en}",
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 8,
+        "text-offset": [
+          0,
+          0
+        ],
+        "text-size": {
+          "base": 1.2,
+          "stops": [
+            [
+              4,
+              12
+            ],
+            [
+              12,
+              18
+            ]
+          ]
+        },
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              6,
+              "hsl(0, 0%, 29%)"
+            ],
+            [
+              14,
+              "hsla(0, 0%, 13%, 1)"
+            ]
+          ]
+        },
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1.2
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "city"
+        ],
+        [
+          "in",
+          "capital",
+          1,
+          2
+        ]
+      ],
+      "order": 246
+    },
+    {
+      "id": "Country labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "minzoom": 2,
+      "maxzoom": 12,
+      "layout": {
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-field": "{name:en}",
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Bold"
+        ],
+        "text-max-width": 6.25,
+        "text-size": [
+          "interpolate",
+          [
+            "linear",
+            1
+          ],
+          [
+            "zoom"
+          ],
+          4.99,
+          [
+            "case",
+            [
+              ">",
+              [
+                "get",
+                "rank"
+              ],
+              2
+            ],
+            0,
+            11
+          ],
+          5,
+          [
+            "case",
+            [
+              ">",
+              [
+                "get",
+                "rank"
+              ],
+              2
+            ],
+            13,
+            14
+          ],
+          7,
+          [
+            "case",
+            [
+              ">",
+              [
+                "get",
+                "rank"
+              ],
+              2
+            ],
+            17,
+            19
+          ]
+        ],
+        "text-transform": "none",
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              2,
+              "hsl(302, 16%, 36%)"
+            ],
+            [
+              10,
+              "hsl(273, 33%, 22%)"
+            ]
+          ]
+        },
+        "text-halo-blur": 1,
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 0.8
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "country"
+        ],
+        [
+          "!=",
+          "iso_a2",
+          "VA"
+        ]
+      ],
+      "order": 247
+    }
+  ]
+}

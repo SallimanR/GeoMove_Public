@@ -1,0 +1,23 @@
+services:
+  valkey:
+    # image: docker.io/bitnami/valkey:latest
+    image: docker.io/valkey/valkey:9.0.1-alpine3.23
+    container_name: tow-valkey-sessions
+    ports:
+      - "6300:6379"
+    environment:
+      - VALKEY_HOST=localhost
+      - VALKEY-PORT=6379
+      - VALKEY_PASSWORD=valkey-sessions-password
+      - VALKEY_DATABASE=0
+    volumes:
+      - tow-valkey-sessions-data:/var/lib/valkey/data
+    restart: unless-stopped
+
+volumes:
+  tow-valkey-sessions-data:
+
+networks:
+  # tow-valkey-sessions-network:
+  tow-network:
+    driver: bridge

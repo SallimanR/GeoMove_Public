@@ -1,0 +1,116 @@
+{
+  "hints": {},
+  "info": {
+    "copyrights": ["GraphHopper", "OpenStreetMap contributors"],
+    "took": 2,
+    "road_data_timestamp": "2025-11-09T21:21:00Z"
+  },
+  "paths": [
+    {
+      "distance": 132.635,
+      "weight": {
+        "source": "9.223372036854775E12",
+        "parsedValue": 9223372036854.775
+      },
+      "time": 6820,
+      "transfers": 0,
+      "legs": [],
+      "points_encoded": false,
+      "bbox": [37.619737, 55.745896, 37.621115, 55.746572],
+      "points": {
+        "type": "LineString",
+        "coordinates": [
+          [37.621115, 55.745921],
+          [37.620908, 55.745899],
+          [37.620734, 55.745897],
+          [37.620622, 55.745896],
+          [37.620528, 55.745908],
+          [37.620473, 55.745927],
+          [37.620428, 55.74596],
+          [37.62031, 55.74614],
+          [37.620096, 55.746443],
+          [37.620018, 55.746523],
+          [37.61998, 55.746547],
+          [37.619917, 55.74656],
+          [37.619737, 55.746572]
+        ]
+      },
+      "instructions": [
+        {
+          "distance": 45.744,
+          "heading": 259.23,
+          "sign": 0,
+          "interval": [0, 6],
+          "text": "Continue onto Болотная улица",
+          "time": 2352,
+          "street_name": "Болотная улица"
+        },
+        {
+          "distance": 86.891,
+          "sign": 1,
+          "interval": [6, 12],
+          "text": "Turn slight right onto Болотная площадь",
+          "time": 4468,
+          "street_name": "Болотная площадь"
+        },
+        {
+          "distance": {
+            "source": "0.0",
+            "parsedValue": 0
+          },
+          "sign": 4,
+          "last_heading": 276.6182939112101,
+          "interval": [12, 12],
+          "text": "Arrive at destination",
+          "time": 0,
+          "street_name": ""
+        }
+      ],
+      "details": {
+        "distance": [
+          [0, 2, 24.074978756415895],
+          [2, 6, 21.669381605283114],
+          [6, 7, 21.389285478514296],
+          [7, 8, 36.23036530061847],
+          [8, 10, 13.709],
+          [10, 12, 15.562164393397588]
+        ],
+        "max_speed": [
+          [
+            0,
+            12,
+            {
+              "source": "50.0",
+              "parsedValue": 50
+            }
+          ]
+        ],
+        "time": [
+          [0, 2, 1238],
+          [2, 6, 1114],
+          [6, 7, 1100],
+          [7, 8, 1863],
+          [8, 10, 705],
+          [10, 12, 800]
+        ]
+      },
+      "ascend": {
+        "source": "0.0",
+        "parsedValue": 0
+      },
+      "descend": {
+        "source": "0.0",
+        "parsedValue": 0
+      },
+      "snapped_waypoints": {
+        "type": "LineString",
+        "coordinates": []
+      }
+    }
+  ],
+  "map_matching": {
+    "original_distance": 121.27299138971969,
+    "distance": 132.63517553422935,
+    "time": 6820
+  }
+}

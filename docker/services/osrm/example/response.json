@@ -1,0 +1,276 @@
+{
+  "code": "Ok",
+  "matchings": [
+    {
+      "confidence": 0.062487,
+      "geometry": {
+        "coordinates": [
+          [37.620725, 55.745893],
+          [37.620685, 55.745894],
+          [37.620622, 55.745896],
+          [37.620528, 55.745908],
+          [37.620473, 55.745927],
+          [37.620428, 55.74596],
+          [37.620312, 55.74614],
+          [37.620268, 55.746208],
+          [37.620202, 55.746305],
+          [37.620096, 55.746443],
+          [37.620039, 55.746504],
+          [37.620018, 55.746523],
+          [37.61998, 55.746547],
+          [37.619917, 55.74656],
+          [37.619804, 55.746569],
+          [37.619738, 55.746572]
+        ],
+        "type": "LineString"
+      },
+      "legs": [
+        {
+          "annotation": {
+            "metadata": { "datasource_names": ["lua profile"] },
+            "nodes": [
+              5363131514, 5728532718, 1543110221, 5261971829, 5728532719,
+              1543110281, 9831805368
+            ],
+            "datasources": [0, 0, 0, 0, 0, 0],
+            "speed": [12.5, 9.9, 12.1, 10.1, 11.6, 11.8],
+            "weight": [0.2, 0.4, 0.5, 0.4, 0.4, 1.8],
+            "duration": [0.2, 0.4, 0.5, 0.4, 0.4, 1.8],
+            "distance": [
+              2.506681, 3.950402, 6.034358, 4.040084, 4.627002, 21.297162
+            ]
+          },
+          "steps": [
+            {
+              "intersections": [
+                {
+                  "out": 0,
+                  "entry": [true],
+                  "bearings": [273],
+                  "location": [37.620734, 55.745893]
+                }
+              ],
+              "driving_side": "right",
+              "geometry": {
+                "coordinates": [
+                  [37.620725, 55.745893],
+                  [37.620685, 55.745894],
+                  [37.620622, 55.745896],
+                  [37.620528, 55.745908],
+                  [37.620473, 55.745927],
+                  [37.620428, 55.74596]
+                ],
+                "type": "LineString"
+              },
+              "mode": "driving",
+              "duration": 2,
+              "maneuver": {
+                "bearing_after": 273,
+                "location": [37.620734, 55.745893],
+                "bearing_before": 0,
+                "type": "depart"
+              },
+              "weight": 2,
+              "distance": 21.7,
+              "name": "Болотная улица"
+            },
+            {
+              "intersections": [
+                {
+                  "out": 2,
+                  "location": [37.620428, 55.74596],
+                  "bearings": [135, 165, 345],
+                  "entry": [false, false, true],
+                  "in": 0
+                }
+              ],
+              "driving_side": "right",
+              "geometry": {
+                "coordinates": [
+                  [37.620428, 55.74596],
+                  [37.620312, 55.74614]
+                ],
+                "type": "LineString"
+              },
+              "mode": "driving",
+              "duration": 1.8,
+              "maneuver": {
+                "bearing_after": 338,
+                "type": "turn",
+                "modifier": "slight right",
+                "bearing_before": 307,
+                "location": [37.620428, 55.74596]
+              },
+              "weight": 1.8,
+              "distance": 21.3,
+              "name": "Болотная площадь"
+            },
+            {
+              "intersections": [
+                {
+                  "in": 0,
+                  "entry": [true],
+                  "bearings": [160],
+                  "location": [37.620312, 55.74614]
+                }
+              ],
+              "driving_side": "right",
+              "geometry": {
+                "coordinates": [
+                  [37.620312, 55.74614],
+                  [37.620312, 55.74614]
+                ],
+                "type": "LineString"
+              },
+              "mode": "driving",
+              "duration": 0,
+              "maneuver": {
+                "bearing_after": 0,
+                "location": [37.620312, 55.74614],
+                "bearing_before": 340,
+                "type": "arrive"
+              },
+              "weight": 0,
+              "distance": 0,
+              "name": "Болотная площадь"
+            }
+          ],
+          "distance": 43,
+          "duration": 3.8,
+          "summary": "Болотная улица, Болотная площадь",
+          "weight": 3.8
+        },
+        {
+          "annotation": {
+            "metadata": { "datasource_names": ["lua profile"] },
+            "nodes": [
+              1543110281, 9831805368, 1070716583, 9831805369, 9831805370,
+              9831805403, 475873835, 1543110826, 9831805396, 1070716680
+            ],
+            "datasources": [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "speed": [10.1, 11.6, 11.1, 11, 12.4, 11.9, 10.5, 11.9, 13.8],
+            "weight": [0.8, 1, 1.5, 0.7, 0.2, 0.3, 0.4, 0.6, 0.3],
+            "duration": [0.8, 1, 1.5, 0.7, 0.2, 0.3, 0.4, 0.6, 0.3],
+            "distance": [
+              8.049394, 11.553102, 16.722332, 7.66599, 2.488864, 3.575657,
+              4.200763, 7.144751, 4.14533
+            ]
+          },
+          "steps": [
+            {
+              "intersections": [
+                {
+                  "out": 0,
+                  "entry": [true],
+                  "bearings": [340],
+                  "location": [37.620312, 55.74614]
+                },
+                {
+                  "out": 2,
+                  "location": [37.61998, 55.746547],
+                  "bearings": [15, 150, 285],
+                  "entry": [false, false, true],
+                  "in": 1
+                }
+              ],
+              "driving_side": "right",
+              "geometry": {
+                "coordinates": [
+                  [37.620312, 55.74614],
+                  [37.620268, 55.746208],
+                  [37.620202, 55.746305],
+                  [37.620096, 55.746443],
+                  [37.620039, 55.746504],
+                  [37.620018, 55.746523],
+                  [37.61998, 55.746547],
+                  [37.619917, 55.74656],
+                  [37.619804, 55.746569],
+                  [37.619738, 55.746572]
+                ],
+                "type": "LineString"
+              },
+              "mode": "driving",
+              "duration": 8.4,
+              "maneuver": {
+                "bearing_after": 340,
+                "location": [37.620312, 55.74614],
+                "bearing_before": 0,
+                "type": "depart"
+              },
+              "weight": 8.4,
+              "distance": 65.5,
+              "name": "Болотная площадь"
+            },
+            {
+              "intersections": [
+                {
+                  "in": 0,
+                  "entry": [true],
+                  "bearings": [95],
+                  "location": [37.619738, 55.746572]
+                }
+              ],
+              "driving_side": "right",
+              "geometry": {
+                "coordinates": [
+                  [37.619738, 55.746572],
+                  [37.619738, 55.746572]
+                ],
+                "type": "LineString"
+              },
+              "mode": "driving",
+              "duration": 0,
+              "maneuver": {
+                "bearing_after": 0,
+                "location": [37.619738, 55.746572],
+                "bearing_before": 275,
+                "type": "arrive"
+              },
+              "weight": 0,
+              "distance": 0,
+              "name": "Болотная площадь"
+            }
+          ],
+          "distance": 65.5,
+          "duration": 8.4,
+          "summary": "Болотная площадь",
+          "weight": 8.4
+        }
+      ],
+      "distance": 108.5,
+      "duration": 12.2,
+      "weight_name": "routability",
+      "weight": 12.2
+    }
+  ],
+  "tracepoints": [
+    null,
+    {
+      "alternatives_count": 0,
+      "waypoint_index": 0,
+      "matchings_index": 0,
+      "location": [37.620734, 55.745893],
+      "name": "Болотная улица",
+      "distance": 4.119993,
+      "hint": "gLBFgf___38EAAAABQAAABkAAAATAAAA0tSSQP3GED9tb9tBX82pQQQAAAAFAAAAGQAAABMAAACUBQAA_gs-AmWdUgP9Cz4Cip1SAwIAzxAC8d95"
+    },
+    {
+      "alternatives_count": 0,
+      "waypoint_index": 1,
+      "matchings_index": 0,
+      "location": [37.620312, 55.74614],
+      "name": "Болотная площадь",
+      "distance": 0.1679,
+      "hint": "W7BFgcawRQESAAAACAAAAAAAAAAZAAAANZqqQfX1AEEAAAAAN4XiQRIAAAAIAAAAAAAAABkAAACUBQAAWAo-AlyeUgNaCj4CXZ5SAwAATxUC8d95"
+    },
+    {
+      "alternatives_count": 1,
+      "waypoint_index": 2,
+      "matchings_index": 0,
+      "location": [37.619738, 55.746572],
+      "name": "Болотная площадь",
+      "distance": 1.115154,
+      "hint": "TbBFgfawRQEDAAAABAAAAAoAAABSAAAAaiSFQNc6akAyLTZBLOG1QgMAAAAEAAAACgAAAFIAAACUBQAAGgg-AgygUgMbCD4CFqBSAwIALxEC8d95"
+    }
+  ]
+}

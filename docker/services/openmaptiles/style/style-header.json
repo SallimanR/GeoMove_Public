@@ -1,0 +1,33 @@
+{
+  "version": 8,
+  "name": "OSM OpenMapTiles",
+  "id": "openmaptiles",
+  "center": [0, 0],
+  "zoom": 1,
+  "bearing": 0,
+  "pitch": 0,
+  "sources": {
+    "openmaptiles": {
+      "type": "vector",
+      "url": "https://tiles.openfreemap.org/planet"
+    },
+    "attribution": {
+      "attribution": "<a href=\"https://www.openmaptiles.org/\" target=\"_blank\">&copy; OpenMapTiles</a> <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">&copy; OpenStreetMap contributors</a>",
+      "type": "vector"
+    }
+  },
+  "glyphs": "{fontstack}/{range}.pbf",
+  "sprite": "sprite",
+  "layers": [
+    {
+      "id": "Background",
+      "type": "background",
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "background-color": "hsl(40, 26%, 93%)"
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+services:
+    photon:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                - PHOTON_VERSION=${PHOTON_VERSION}
+        environment:
+            - UPDATE_STRATEGY=SEQUENTIAL
+            - UPDATE_INTERVAL=3m
+            # - LOG_LEVEL=DEBUG
+            # - FORCE_UPDATE=TRUE
+            # - REGION=andorra
+            # - BASE_URL=https://r2.koalasec.org/public
+            # - SKIP_MD5_CHECK=TRUE
+        volumes:
+            - photon_data:/photon/data
+        restart: unless-stopped
+        ports:
+            - "2322:2322"
+volumes:
+    photon_data:

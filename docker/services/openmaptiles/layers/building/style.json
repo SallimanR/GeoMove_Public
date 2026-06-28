@@ -1,0 +1,43 @@
+{
+  "layers": [
+    {
+      "id": "Building",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "building",
+      "minzoom": 13,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "fill-color": {
+          "stops": [
+            [
+              13,
+              "hsl(24, 19%, 84%)"
+            ],
+            [
+              16,
+              "hsl(26, 17%, 82%)"
+            ]
+          ]
+        },
+        "fill-outline-color": {
+          "base": 1,
+          "stops": [
+            [
+              13,
+              "hsl(26, 7%, 57%)"
+            ],
+            [
+              16,
+              "hsl(26, 8%, 62%)"
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "order": 62
+    }
+  ]
+}

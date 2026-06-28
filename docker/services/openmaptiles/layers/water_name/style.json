@@ -1,0 +1,94 @@
+{
+  "layers": [
+    {
+      "id": "Lakeline labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "water_name",
+      "minzoom": 0,
+      "layout": {
+        "symbol-placement": "line",
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular",
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 5,
+        "text-size": 12,
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(238, 43%, 55%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.7)",
+        "text-halo-width": 1
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "$type",
+          "LineString"
+        ]
+      ],
+      "order": 198
+    },
+    {
+      "id": "Water labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "water_name",
+      "minzoom": 15,
+      "layout": {
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular",
+          "Open Sans Light"
+        ],
+        "text-max-width": 5,
+        "text-size": 11,
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(210, 39%, 49%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "$type",
+          "Point"
+        ],
+        [
+          "!=",
+          "class",
+          "ocean"
+        ]
+      ],
+      "order": 199
+    }
+  ]
+}

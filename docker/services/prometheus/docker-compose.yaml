@@ -1,0 +1,6 @@
+services:
+  prometheus:
+    image: docker.io/prom/prometheus
+    container_name: tow-prometheus
+    ports:
+      - "9090:9090"

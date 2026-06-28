@@ -1,0 +1,41 @@
+listen_addresses: '0.0.0.0:5050'
+
+preferred_encoding: gzip
+
+postgres:
+  connection_string: "postgresql://tow-service:tow-service-password@postgres:5432/tow-service-db"
+  # ssl_root_cert: "./ca-cert.pem"
+
+  # auto_publish: true
+  tables:
+    drivers:
+      schema: public
+      table: drivers
+      srid: 4326
+      geometry_column: location
+      # bounds:
+      # - 36.608
+      # - 54.757
+      # - 38.608
+      # - 56.757
+      geometry_type: Point
+      properties:
+        city_id: int4
+        # created_at: timestamp
+        # updated_at: timestamp
+        rating: int4
+        work_ends: timetz
+        work_starts: timetz
+  functions:
+    filter_driver_points:
+      schema: public
+      function: filter_driver_points
+# fonts:
+#   paths:
+#     - /data/fonts
+styles:
+  paths:
+    - /data/style
+sprites:
+  paths:
+    - /data/style

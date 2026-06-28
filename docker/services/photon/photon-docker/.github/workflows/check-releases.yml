@@ -1,0 +1,104 @@
+name: Check for New Releases and Propose Update
+
+on:
+    schedule:
+        - cron: "0 * * * *"
+    workflow_dispatch:
+
+jobs:
+    check_and_propose_update:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v5
+
+            - name: Check for new Photon release
+              id: check_release
+              run: |
+                  latest_release=$(curl -s https://github.com/komoot/photon/releases.atom | grep '<title>' | sed -n '2p' | sed -E 's/.*Release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+                  if [ -z "$latest_release" ]; then
+                    echo "Error: Failed to fetch the latest Photon release version."
+                    exit 1
+                  else
+                    echo "Latest Photon release version: $latest_release"
+                    echo "latest_release_version=${latest_release}" >> "$GITHUB_ENV"
+                  fi
+
+            - name: Get last processed release from file
+              id: get_last_release
+              run: |
+                  if [ -f .last_release ]; then
+                    current_version_in_file=$(cat .last_release)
+                    echo "Current version in .last_release file: $current_version_in_file"
+                    echo "last_processed_version=$current_version_in_file" >> "$GITHUB_ENV"
+                  else
+                    echo ".last_release file not found."
+                    exit 1
+                  fi
+
+            - name: Determine if update is needed
+              id: prepare_update
+              run: |
+                  if [[ -n "${{ env.latest_release_version }}" && "${{ env.latest_release_version }}" != "${{ env.last_processed_version }}" ]]; then
+                    echo "New version found: ${{ env.latest_release_version }}. (Previous: ${{ env.last_processed_version }})"
+                    {
+                      echo "update_needed=true"
+                      echo "new_version=${{ env.latest_release_version }}"
+                      echo "new_branch_name=update-photon-${{ env.latest_release_version }}"
+                    } >> "$GITHUB_OUTPUT"
+                  else
+                    echo "No new Photon release detected or version is already up-to-date. Latest fetched: '${{ env.latest_release_version }}', last processed: '${{ env.last_processed_version }}'."
+                    {
+                      echo "update_needed=false"
+                      echo "new_version=${{ env.last_processed_version }}"
+                    } >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Update release file(s) locally
+              if: steps.prepare_update.outputs.update_needed == 'true'
+              run: |
+                  echo "Updating .last_release to ${{ steps.prepare_update.outputs.new_version }}"
+                  echo "${{ steps.prepare_update.outputs.new_version }}" > .last_release
+
+            - name: Create Pull Request
+              if: steps.prepare_update.outputs.update_needed == 'true'
+              uses: peter-evans/create-pull-request@v7
+              with:
+                  token: ${{ secrets.MY_PAT_TOKEN }}
+                  commit-message: |
+                      Update Photon version to ${{ steps.prepare_update.outputs.new_version }}
+
+                      Automated update of the .last_release file (and potentially other version files)
+                      to reflect the new Photon release: ${{ steps.prepare_update.outputs.new_version }}.
+                  committer: GitHub Actions <41898282+github-actions[bot]@users.noreply.github.com>
+                  author: GitHub Actions <41898282+github-actions[bot]@users.noreply.github.com>
+                  branch: ${{ steps.prepare_update.outputs.new_branch_name }}
+                  delete-branch: true
+                  title: "Update Photon to version ${{ steps.prepare_update.outputs.new_version }}"
+                  body: |
+                      A new version of Photon (${{ steps.prepare_update.outputs.new_version }}) has been released.
+
+                      This Pull Request proposes updating our tracked version.
+
+                      **Release File(s) Updated:**
+                      * `.last_release` has been updated to `${{ steps.prepare_update.outputs.new_version }}`.
+                      * (Mention any other files updated here, e.g., Dockerfile, if applicable)
+
+                      **Next Steps:**
+                      1.  Review the changes in this PR.
+                      2.  Merge this PR if everything looks good.
+                      3.  Build New Image: Merging this PR should (ideally) trigger the separate workflow responsible for building and publishing the new Docker image with Photon version `${{ steps.prepare_update.outputs.new_version }}`.
+
+                      ---
+                      Upstream release notes for Photon ${{ steps.prepare_update.outputs.new_version }}: https://github.com/komoot/photon/releases/tag/${{ steps.prepare_update.outputs.new_version }}
+                  labels: |
+                      update
+                      automated-pr
+
+            - name: No update needed
+              if: steps.prepare_update.outputs.update_needed == 'false'
+              run: echo "No new Photon release was found or the version is already current. No action taken."

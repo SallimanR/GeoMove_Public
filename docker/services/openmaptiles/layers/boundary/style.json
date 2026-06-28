@@ -1,0 +1,167 @@
+{
+  "layers": [
+    {
+      "id": "Other border",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "boundary",
+      "minzoom": 3,
+      "layout": {
+        "line-join": "round",
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(301, 23%, 42%)",
+        "line-dasharray": [
+          5,
+          3
+        ],
+        "line-opacity": {
+          "stops": [
+            [
+              3,
+              0.5
+            ],
+            [
+              10,
+              1
+            ]
+          ]
+        },
+        "line-width": {
+          "base": 1,
+          "stops": [
+            [
+              4,
+              0.4
+            ],
+            [
+              5,
+              0.7
+            ],
+            [
+              12,
+              1.6
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "in",
+          "admin_level",
+          3,
+          4
+        ],
+        [
+          "==",
+          "maritime",
+          0
+        ]
+      ],
+      "order": 194
+    },
+    {
+      "id": "Country border",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "boundary",
+      "minzoom": 0,
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round",
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(303, 17%, 56%)",
+        "line-opacity": 1,
+        "line-width": {
+          "base": 1,
+          "stops": [
+            [
+              3,
+              0.5
+            ],
+            [
+              5,
+              1.2
+            ],
+            [
+              12,
+              3
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "admin_level",
+          2
+        ],
+        [
+          "==",
+          "disputed",
+          0
+        ]
+      ],
+      "order": 195
+    },
+    {
+      "id": "Disputed border",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "boundary",
+      "minzoom": 0,
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round",
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(246, 17%, 56%)",
+        "line-dasharray": [
+          4,
+          3
+        ],
+        "line-opacity": 1,
+        "line-width": {
+          "base": 1,
+          "stops": [
+            [
+              3,
+              0.5
+            ],
+            [
+              5,
+              1.2
+            ],
+            [
+              12,
+              3
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "admin_level",
+          2
+        ],
+        [
+          "==",
+          "disputed",
+          1
+        ]
+      ],
+      "order": 196
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "layers": [
+    {
+      "id": "House number labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "housenumber",
+      "minzoom": 17,
+      "layout": {
+        "symbol-avoid-edges": false,
+        "text-allow-overlap": false,
+        "text-field": "{housenumber}",
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-ignore-placement": false,
+        "text-line-height": -0.15,
+        "text-padding": 3,
+        "text-size": {
+          "stops": [
+            [
+              17,
+              9
+            ],
+            [
+              22,
+              11
+            ]
+          ]
+        }
+      },
+      "paint": {
+        "text-color": "hsl(0, 0%, 40%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1
+      },
+      "order": 200
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "layers": [
+    {
+      "id": "National parks",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "park",
+      "minzoom": 8,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(103, 36%, 66%)",
+        "line-offset": 1,
+        "line-opacity": 0.8,
+        "line-width": {
+          "base": 1,
+          "stops": [
+            [
+              8,
+              1.2
+            ],
+            [
+              9,
+              1.5
+            ],
+            [
+              10,
+              3.6
+            ],
+            [
+              24,
+              3.6
+            ]
+          ]
+        }
+      },
+      "order": 55
+    },
+    {
+      "id": "National park outline",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "park",
+      "minzoom": 14,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(107, 34%, 45%)",
+        "line-width": 1.5
+      },
+      "order": 56
+    },
+    {
+      "id": "National park labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "park",
+      "minzoom": 7,
+      "maxzoom": 12,
+      "layout": {
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "symbol-spacing": 150,
+        "text-allow-overlap": false,
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Semibold Italic",
+          "Noto Sans Italic"
+        ],
+        "text-size": 12,
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": {
+          "stops": [
+            [
+              7,
+              "hsl(120, 40%, 46%)"
+            ],
+            [
+              10,
+              "hsl(120, 100%, 25%)"
+            ]
+          ]
+        },
+        "text-halo-blur": 0.1,
+        "text-halo-color": {
+          "stops": [
+            [
+              7,
+              "hsl(100, 100%, 96%)"
+            ],
+            [
+              10,
+              "hsl(110, 83%, 88%)"
+            ]
+          ]
+        },
+        "text-halo-width": 0.3
+      },
+      "filter": [
+        "all",
+        [
+          "<=",
+          "rank",
+          2
+        ]
+      ],
+      "order": 238
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "layers": [
+    {
+      "id": "Aeroway",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "aeroway",
+      "minzoom": 11,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "fill-color": {
+          "stops": [
+            [
+              6,
+              "hsl(240, 8%, 88%)"
+            ],
+            [
+              12,
+              "hsl(53, 16%, 89%)"
+            ]
+          ]
+        },
+        "fill-opacity": 1
+      },
+      "metadata": {},
+      "filter": [
+        "==",
+        "$type",
+        "Polygon"
+      ],
+      "order": 12
+    },
+    {
+      "id": "Runway",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "aeroway",
+      "minzoom": 11,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(234, 25%, 76%)",
+        "line-opacity": 1,
+        "line-width": {
+          "base": 1.2,
+          "stops": [
+            [
+              11,
+              3
+            ],
+            [
+              20,
+              48
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "$type",
+          "LineString"
+        ],
+        [
+          "==",
+          "class",
+          "runway"
+        ]
+      ],
+      "order": 57
+    },
+    {
+      "id": "Taxiway",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "aeroway",
+      "minzoom": 11,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(234, 25%, 76%)",
+        "line-opacity": 1,
+        "line-width": {
+          "base": 1.2,
+          "stops": [
+            [
+              11,
+              1
+            ],
+            [
+              20,
+              24
+            ]
+          ]
+        }
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          "$type",
+          "LineString"
+        ],
+        [
+          "==",
+          "class",
+          "taxiway"
+        ]
+      ],
+      "order": 58
+    },
+    {
+      "id": "Airport labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "aeroway",
+      "minzoom": 14,
+      "layout": {
+        "symbol-placement": "line",
+        "symbol-sort-key": [
+          "to-number",
+          [
+            "get",
+            "rank"
+          ]
+        ],
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Italic",
+          "Noto Sans Italic"
+        ],
+        "text-size": {
+          "stops": [
+            [
+              15,
+              9
+            ],
+            [
+              19,
+              15
+            ]
+          ]
+        },
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(0, 0%, 20%)",
+        "text-halo-color": "hsla(0, 0%, 100%, 0.8)",
+        "text-halo-width": 1
+      },
+      "filter": [
+        "all",
+        [
+          "in",
+          "class",
+          "runway",
+          "taxiway"
+        ]
+      ],
+      "order": 234
+    },
+    {
+      "id": "Airport gate labels",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "aeroway",
+      "minzoom": 16.5,
+      "layout": {
+        "text-field": "{ref}",
+        "text-font": [
+          "Open Sans Semibold",
+          "Noto Sans Regular"
+        ],
+        "text-size": {
+          "stops": [
+            [
+              17,
+              9
+            ],
+            [
+              19,
+              15
+            ]
+          ]
+        },
+        "visibility": "visible"
+      },
+      "paint": {
+        "text-color": "hsl(0, 0%, 53%)",
+        "text-halo-color": "hsl(0, 0%, 100%)",
+        "text-halo-width": 1
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          "class",
+          "gate"
+        ]
+      ],
+      "order": 235
+    }
+  ]
+}
