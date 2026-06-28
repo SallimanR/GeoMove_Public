@@ -1,3 +1,4 @@
+**/.astro
 **/node_modules/
 **/dist/**
 **/package-lock.json
@@ -5,12 +6,12 @@
 # Data directories
 # **/.data/
 # **/data/
+**/tmp
 data
 docker/**/data/
 docker/**/.data/
 docker/**/certs/
 docker/**/ssl/
-**/tmp
 
 *.env
 *.env.dev
