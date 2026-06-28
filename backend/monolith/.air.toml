@@ -1,0 +1,14 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  entrypoint = "tmp/main"
+  cmd = "go build -o tmp/main cmd/main.go"
+  include_ext = ["go"]
+  exclude_dir = ["vendor", "tmp"]
+
+[log]
+  level = "debug"
+
+[misc]
+  clean_on_exit = false

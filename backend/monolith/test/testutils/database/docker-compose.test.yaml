@@ -1,0 +1,20 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: tow-test-postgres-postgis-h3
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    tmpfs:
+      - /var/lib/postgresql/18/docker:rw,noexec,nosuid,size=140m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1.5s
+      timeout: 5s
+      retries: 5

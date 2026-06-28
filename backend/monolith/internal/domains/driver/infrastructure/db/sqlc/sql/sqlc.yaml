@@ -1,0 +1,29 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "."
+    schema: "../../../../../../../migrations"
+    gen:
+      go:
+        package: "sqlc"
+        out: ".."
+        sql_package: "pgx/v5"
+        overrides:
+          # - db_type: "pg_catalog.timetz"
+          #   go_type: "github.com/jackc/pgx/v5/pgtype.Time"
+          # - column: "driver.location"
+          # - db_type: "geography"
+          #   go_type: "github.com/twpayne/go-geom.Point"
+          - column: "driver.id"
+            go_type: "uint32"
+
+          # - column: "driver.work_starts"
+          #   go_type: "string"
+          # - column: "driver.work_ends"
+          #   go_type: "string"
+
+          # - db_type: "geometry"
+          #   go_type:
+          #     import: "github.com/twpayne/go-geom"
+          #     package: "geom"
+          #     type: "Point"

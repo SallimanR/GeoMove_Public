@@ -1,0 +1,5 @@
+-- migrate:up
+CREATE EXTENSION IF NOT EXISTS h3;
+CREATE EXTENSION IF NOT EXISTS h3_postgis CASCADE;
+
+-- migrate:down

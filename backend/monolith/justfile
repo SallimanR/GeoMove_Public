@@ -1,0 +1,22 @@
+image_name := "tow-go-monolith:0.0.1"
+
+build:
+	podman build --target build -t {{image_name}} .
+
+dev:
+	podman build --target dev -t {{image_name}} .
+
+build-up:
+	podman compose up tow-go-backend-build
+
+dev-up:
+	podman compose up tow-go-backend-dev
+
+build-down:
+	podman compose down tow-go-backend-build
+
+dev-down:
+	podman compose down tow-go-backend-dev
+
+default:
+	just --list

@@ -1,0 +1,60 @@
+services:
+  tow-go-backend-dev:
+    build:
+      context: .
+      target: dev
+      dockerfile: ./Dockerfile
+      args:
+        - TARGET=dev
+    # image: docker-daemon:tow-go-monolith:0.0.1
+    ports:
+      - 8090:8089
+    volumes:
+      - ./:/app
+      - go-cache-dev:/root/.cache/go-build
+      - go-mod-cache-dev:/go/pkg/mod
+    environment:
+      # - GOPATH=/go
+      # - GOCACHE=/root/.cache/go-build
+      # - GOMODCACHE=/go/pkg/mod
+      # Development environment
+      - GO111MODULE=on
+      - CGO_ENABLED=0 # Turn off glibc (no C libraries needed)
+    networks:
+      - tow-network
+    logging:
+      driver: journald
+  # driver: passthrough-tty
+  tow-go-backend-build:
+    build:
+      context: .
+      target: build
+      dockerfile: ./Dockerfile
+      args:
+        - TARGET=build
+    ports:
+      - 8090:8089
+    volumes:
+      - go-cache-build:/root/.cache/go-build
+      - go-mod-cache-build:/go/pkg/mod
+    environment:
+      # - GOPATH=/go
+      # - GOCACHE=/root/.cache/go-build
+      # - GOMODCACHE=/go/pkg/mod
+      # Development environment
+      - GO111MODULE=on
+      - CGO_ENABLED=0 # Turn off glibc (no C libraries needed)
+    networks:
+      - tow-network
+
+volumes:
+  go-cache-dev:
+  go-mod-cache-dev:
+  go-cache-build:
+  go-mod-cache-build:
+#   air-build-cache:
+
+networks:
+  tow-network:
+    driver: bridge
+    name: tow-network

@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "."
+    schema: "../../../../../../../migrations/"
+    gen:
+      go:
+        package: "sqlc"
+        out: ".."
+        sql_package: "pgx/v5"
+        overrides:
+          - column: "driver_realtime.driver_id"
+            go_type: "uint32"
