@@ -157,8 +157,8 @@ export function useRouteDisplay(map: MaplibreMap) {
 			}
 			const start = $startPoint.get()
 			const end = $endPoint.get()
-			if (start && end && newRoute && newRoute.length > 0) {
-				updateRouteLayer({ lat: start.lat, lon: start.lon }, { lat: end.lat, lon: end.lon }, newRoute)
+			if (start && end && newRoute && newRoute.paths.length > 0) {
+				updateRouteLayer({ lat: start.lat, lon: start.lon }, { lat: end.lat, lon: end.lon }, newRoute.paths[0].points.coordinates)
 			}
 		},
 		{ deep: true }

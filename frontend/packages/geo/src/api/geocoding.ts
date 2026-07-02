@@ -5,6 +5,7 @@ const API_BASE = "http://localhost:2322"
 interface ReverseGeocodingResponse {
 	features: {
 		properties: {
+			name: string,
 			street: string,
 			housenumber: string,
 		}
@@ -15,7 +16,8 @@ interface ReverseGeocodingResponse {
 	}[]
 }
 export async function getReverseGeocoding(lat: number, lon: number): Promise<ReverseGeocodingResponse> {
-	const result = (await axios.get<ReverseGeocodingResponse>(`${API_BASE}/reverse?lon=${lon}&lat=${lat}`)).data
+	const result = (await axios.get<ReverseGeocodingResponse>(`${API_BASE}/reverse?lon=${lon}&lat=${lat}&limit=1&radius=1`)).data
+	console.log(result)
 	return result
 }
 

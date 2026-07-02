@@ -1,89 +1,139 @@
 <script setup lang="ts">
-import { onMounted, ref, watch, type Ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import {
   $endPoint,
   $isRouteLoading,
   $routePath,
   $startPoint,
 } from "../stores/routeStore";
-import { fetchRoute } from "geo";
+import { fetchRoute, getReverseGeocoding } from "geo";
 import { $mapInstance } from "../stores/mapsStore";
-import { Marker, type MapMouseEvent } from "maplibre-gl";
+import { LngLat, Marker, type MapMouseEvent } from "maplibre-gl";
 import MapsSearchField from "./MapsSearchField.vue";
 import { useStore } from "@nanostores/vue";
-import type { GeoPoint } from "../types/geoPoint";
+import { Map as MaplibreMap } from "maplibre-gl";
 
 enum RouteInputMode {
-  Deactivated = 0,
-  SelectStartPoint = 1,
-  SelectEndPoint = 2,
+  SelectStartPoint,
+  SelectEndPoint,
+  Ready,
 }
 
-const inputState = ref(RouteInputMode.Deactivated);
+const inputState = ref(RouteInputMode.SelectStartPoint);
 
 function changeInputeState(state: RouteInputMode) {
-  console.log("Click");
   inputState.value = state;
+}
+
+enum PanelState {
+  Inactive,
+  Active,
+  WaitingForClick,
+}
+
+const showPanel = ref(PanelState.Inactive);
+
+function openPanel() {
+  showPanel.value = PanelState.Active;
+}
+function closePanel() {
+  showPanel.value = PanelState.Inactive;
 }
 
 const startPoint = useStore($startPoint);
 const endPoint = useStore($endPoint);
+const routePath = useStore($routePath);
+
+const startMarker = new Marker({ draggable: true });
+const endMarker = new Marker({ draggable: true });
+
+async function changeStartPoint(point: LngLat, map: MaplibreMap) {
+  startMarker.setLngLat(point).addTo(map);
+  $startPoint.set({ lat: point.lat, lon: point.lng });
+  startLocation.value = await getLocationText(point);
+}
+
+async function changeEndPoint(point: LngLat, map: MaplibreMap) {
+  endMarker.setLngLat(point).addTo(map);
+  $endPoint.set({ lat: point.lat, lon: point.lng });
+  endLocation.value = await getLocationText(point);
+  inputState.value = RouteInputMode.Ready;
+}
+
+async function getLocationText(point: LngLat): Promise<string> {
+  const req = (await getReverseGeocoding(point.lat, point.lng)).features[0];
+  if (!req) return "";
+  return [
+    req.properties.name,
+    req.properties.street,
+    req.properties.housenumber,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+const startLocation = ref("");
+const endLocation = ref("");
+
+function onStartSearchResultClick(lat: number, lon: number) {
+  $startPoint.set({ lat, lon });
+  changeInputeState(RouteInputMode.SelectStartPoint);
+}
+function onEndSearchResultClick(lat: number, lon: number) {
+  $endPoint.set({ lat, lon });
+  changeInputeState(RouteInputMode.SelectEndPoint);
+}
+
+function handleRemoveRoute() {
+  changeInputeState(RouteInputMode.SelectStartPoint);
+  $startPoint.set(null);
+  $endPoint.set(null);
+  startMarker.remove();
+  endMarker.remove();
+  startLocation.value = "";
+  endLocation.value = "";
+  inputState.value = RouteInputMode.SelectStartPoint;
+}
 
 onMounted(() => {
   const map = $mapInstance.get();
-  // FIXME: map is not ready
   if (!map) {
     console.log("Map is not ready");
     return;
   }
 
-  const startMarker = new Marker({ draggable: true });
-  startMarker.on("dragend", () => {
-    const lngLat = startMarker.getLngLat();
-    $startPoint.set({ lat: lngLat.lat, lon: lngLat.lng });
-  });
-  const endMarker = new Marker({ draggable: true });
-  endMarker.on("dragend", () => {
-    const lngLat = endMarker.getLngLat();
-    $endPoint.set({ lat: lngLat.lat, lon: lngLat.lng });
-  });
-
   map.on("click", (e: MapMouseEvent) => {
+    showPanel.value = PanelState.Active;
     switch (inputState.value) {
-      case RouteInputMode.SelectStartPoint: {
-        startMarker.setLngLat(e.lngLat).addTo(map);
-        $startPoint.set({ lat: e.lngLat.lat, lon: e.lngLat.lng });
-        console.log("start point: ", $startPoint.get());
-      }
-      case RouteInputMode.SelectEndPoint: {
-        endMarker.setLngLat(e.lngLat).addTo(map);
-        $endPoint.set({ lat: e.lngLat.lat, lon: e.lngLat.lng });
-        console.log("end point: ", $endPoint.get());
-      }
+      case RouteInputMode.SelectStartPoint:
+        changeStartPoint(e.lngLat, map);
+        break;
+      case RouteInputMode.SelectEndPoint:
+        changeEndPoint(e.lngLat, map);
+        break;
     }
   });
+
+  // TODO: disable all ui
+  map.on("dragstart", () => {});
+
+  map.on("dragend", () => {
+    if (inputState.value === RouteInputMode.SelectStartPoint) {
+      const center = map.getCenter();
+      changeStartPoint(center, map);
+    }
+  });
+
+  startMarker.on("dragend", () => {
+    const lngLat = startMarker.getLngLat();
+    changeStartPoint(lngLat, map);
+  });
+
+  endMarker.on("dragend", () => {
+    const lngLat = endMarker.getLngLat();
+    changeEndPoint(lngLat, map);
+  });
 });
-
-const startLocation = ref("");
-const endLocation = ref("");
-
-function onStartSearchResultClick(lat: number, lon: number): void {
-  $startPoint.set({ lat: lat, lon: lon });
-  console.log("onStartSearchResultClick: ", lat, lon);
-  changeInputeState(RouteInputMode.SelectStartPoint);
-}
-
-function onEndSearchResultClick(lat: number, lon: number): void {
-  $endPoint.set({ lat: lat, lon: lon });
-  changeInputeState(RouteInputMode.SelectEndPoint);
-}
-
-function handleRemoveRoute() {
-  changeInputeState(RouteInputMode.Deactivated);
-  $startPoint.set(null);
-  $endPoint.set(null);
-  // $routePath.set(null);
-}
 
 watch(
   [startPoint, endPoint],
@@ -95,8 +145,6 @@ watch(
     $isRouteLoading.set(true);
     try {
       const route = await fetchRoute(newStart, newEnd);
-      console.log(route);
-
       $routePath.set(route);
     } catch (err) {
       $routePath.set(null);
@@ -107,45 +155,102 @@ watch(
   },
   { deep: true },
 );
+
+function handleOnMaps(state: RouteInputMode) {
+  inputState.value = state;
+  showPanel.value = PanelState.WaitingForClick;
+}
 </script>
+
 <template>
-  <div class="flex flex-col">
-    <div>
-      <MapsSearchField
-        v-model="startLocation"
-        :onSearchResultClick="onStartSearchResultClick"
-        placeholder="Start"
-      />
-      <button
-        @click="changeInputeState(RouteInputMode.SelectStartPoint)"
-        class="rounded-xl bg-green-300 p-2"
-      >
-        on maps
-      </button>
+  <div
+    v-if="startLocation"
+    class="flex justify-center pt-4 pointer-events-none"
+  >
+    <div
+      class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-sm font-medium text-gray-700"
+    >
+      {{ startLocation }}
     </div>
-    <div>
-      <MapsSearchField
-        v-model="endLocation"
-        :onSearchResultClick="onEndSearchResultClick"
-        placeholder="End"
-      />
-      <button
-        @click="changeInputeState(RouteInputMode.SelectEndPoint)"
-        class="rounded-xl bg-green-300 p-2"
-      >
-        on maps
-      </button>
+  </div>
+
+  <div
+    v-if="showPanel == PanelState.Inactive"
+    class="absolute bottom-4 left-4 right-4"
+  >
+    <div
+      @click="openPanel"
+      class="bg-white rounded-xl p-3 shadow-lg cursor-pointer text-gray-500 hover:bg-gray-50 transition text-center"
+    >
+      Where are we going?
     </div>
-    <button v-show="$routePath.get()" @click="handleRemoveRoute()">
-      Cancel
-    </button>
-    <!-- <div> -->
-    <!--   <button @click="handleFindRoute()" class="rounded-xl bg-orange-300 p-2"> -->
-    <!--     Find route -->
-    <!--   </button> -->
-    <!--   <button @click="handleRemoveRoute()" class="rounded-xl bg-red-300 p-2"> -->
-    <!--     Remove route -->
-    <!--   </button> -->
-    <!-- </div> -->
+  </div>
+
+  <div v-if="showPanel == PanelState.Active" class="absolute inset-0 z-100">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/30" @click="closePanel"></div>
+
+    <!-- Panel Content – takes 90% of viewport height from bottom -->
+    <div
+      class="absolute bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-2xl shadow-2xl overflow-y-auto p-4"
+    >
+      <button
+        @click="closePanel"
+        class="absolute top-3 right-4 text-2xl text-gray-500 bg-red-300 hover:text-gray-700"
+      >
+        ×
+      </button>
+
+      <div class="flex flex-col space-y-2 mt-4">
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <MapsSearchField
+              v-model="startLocation"
+              :onSearchResultClick="onStartSearchResultClick"
+              placeholder="Start"
+            />
+          </div>
+          <button
+            @click="handleOnMaps(RouteInputMode.SelectStartPoint)"
+            class="rounded-xl bg-green-300 p-2 whitespace-nowrap"
+          >
+            on maps
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <MapsSearchField
+              v-model="endLocation"
+              :onSearchResultClick="onEndSearchResultClick"
+              placeholder="End"
+            />
+          </div>
+          <button
+            @click="handleOnMaps(RouteInputMode.SelectEndPoint)"
+            class="rounded-xl bg-green-300 p-2 whitespace-nowrap"
+          >
+            on maps
+          </button>
+        </div>
+
+        <div class="flex gap-2">
+          <button v-show="routePath" class="rounded-xl bg-green-300 p-2">
+            Continue
+          </button>
+          <button
+            v-show="routePath"
+            @click="handleRemoveRoute"
+            class="rounded-xl bg-red-300 p-2"
+          >
+            Remove route
+          </button>
+        </div>
+
+        <div v-if="routePath">
+          <div>Route distance: {{ $routePath.value?.paths[0].distance }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
