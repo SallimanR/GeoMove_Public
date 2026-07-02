@@ -1,4 +1,4 @@
-import { ref, createApp, watch } from "vue";
+import { watch } from "vue";
 import { type AddLayerObject, type Map as MaplibreMap } from "maplibre-gl";
 import { $endPoint, $routePath, $startPoint } from "../stores/routeStore";
 import { useStore } from '@nanostores/vue';
@@ -148,7 +148,6 @@ export function useRouteDisplay(map: MaplibreMap) {
 
 	const routePath = useStore($routePath);
 	watch(
-		// () => { return $routePath.get() },
 		routePath,
 		(newRoute) => {
 			console.log("[DEBUG] new route useRouteDisplay")
