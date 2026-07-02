@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@layouts/BaseLayout.astro";
 import Maps from "@components/Maps.vue";
+import MapsDebugControls from "@components/Dev/MapsDebugControls.vue"
 import MapsOverlayControls from "@components/MapsOverlayControls.vue";
 
 export const prerender = false
@@ -8,7 +9,12 @@ export const prerender = false
 
 <BaseLayout>
   <div class="relative w-full h-full">
-    <Maps client:only="vue" />
+    <Maps 
+      client:only="vue"
+      styleApi={import.meta.env.PUBLIC_MAP_STYLE_API} 
+      tilesApi={import.meta.env.PUBLIC_MAP_TILES_API}
+    />
+	<MapsDebugControls client:only="vue" />
     <MapsOverlayControls client:only="vue" />
   </div>
 </BaseLayout>

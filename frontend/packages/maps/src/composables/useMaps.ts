@@ -1,9 +1,8 @@
-import { ref, provide, inject, onUnmounted } from 'vue'
+import { provide, inject, onUnmounted } from 'vue'
 import { Map as MaplibreMap, type MapOptions, GeolocateControl } from "maplibre-gl"
 import { MapboxOverlay } from '@deck.gl/mapbox';
-import { type Layer, type LayersList } from "@deck.gl/core"
 import { $coords, $deckOverlay, $mapInstance } from '../stores/mapsStore';
-import { MAP_CONFIG, MAP_TILES_API, MapLayer_3dLayer } from '../mapConfig';
+import { getMapConfig, MapLayer_3dLayer } from '../mapConfig';
 
 export type MapContext = {
 	map: MaplibreMap
@@ -16,16 +15,14 @@ const mapContextKey = Symbol('mapContext')
 export function useMaps() {
 	const map = $mapInstance
 	const deckOverlay = $deckOverlay
-	// const map = ref<MaplibreMap | null>(null)
-	// const deckOverlay = ref<MapboxOverlay | null>(null)
-	// const deckLayers = ref<Layer[]>([])
 
-	const initMap = (container: HTMLElement, options: Partial<MapOptions> = {}): void => {
+	const initMap = (container: HTMLElement, options: Partial<MapOptions> = {}, styleApi: string, tilesApi: string): void => {
 		if (map.value) return
 
+		const mapConfig = getMapConfig(styleApi)
 		const mapInstance = new MaplibreMap(
 			{
-				...MAP_CONFIG,
+				...mapConfig,
 				...options,
 				container,
 			}
@@ -49,9 +46,10 @@ export function useMaps() {
 			}
 
 			mapInstance.addSource("map-tiles", {
-				url: MAP_TILES_API,
+				url: tilesApi,
 				type: "vector",
 			});
+
 			mapInstance.addLayer(
 				MapLayer_3dLayer,
 				labelLayerId,
@@ -89,7 +87,6 @@ export function useMaps() {
 			deckOverlay.value.finalize()
 			deckOverlay.set(null)
 		}
-		// deckLayers.value = []
 	})
 
 	const provideMap = (): void => {
