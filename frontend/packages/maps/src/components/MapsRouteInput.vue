@@ -117,7 +117,7 @@ onMounted(() => {
   // TODO: disable all ui
   map.on("dragstart", () => {});
 
-  map.on("dragend", () => {
+  map.on("moveend", () => {
     if (inputState.value === RouteInputMode.SelectStartPoint) {
       const center = map.getCenter();
       changeStartPoint(center, map);
