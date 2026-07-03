@@ -26,7 +26,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div id="mapContainer" ref="mapContainer" class="relative h-[100vh] w-full">
+  <div id="mapContainer" ref="mapContainer" class="relative h-full w-full">
     <MapsCentralMarker />
   </div>
 </template>
