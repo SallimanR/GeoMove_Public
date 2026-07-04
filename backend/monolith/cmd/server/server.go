@@ -40,8 +40,10 @@ type Server struct {
 	dbManager *database.DBManager
 	db        *pgxpool.Pool
 
-	driverDomain      *driverSetup.DriverDomain
-	geolocationDomain *geoSetup.GeolocationDomain
+	withDriverDomain      bool
+	driverDomain          *driverSetup.DriverDomain
+	WithGeolocationDomain bool
+	geolocationDomain     *geoSetup.GeolocationDomain
 
 	logger zerolog.Logger
 }
@@ -137,33 +139,46 @@ func WithWebsocketServer(ws *websockethub.WebsocketServer) Option {
 
 func WithDriverDomain() Option {
 	return func(s *Server) error {
-		if s.geolocationDomain != nil {
-			return nil
-		}
-
-		domain := driverSetup.NewDriverDomain(s.db)
-		domain.RegisterHTTPRoutes(s.httpAPI)
-		s.driverDomain = domain
+		s.withDriverDomain = true
 		return nil
 	}
+}
+
+func (s *Server) setupDriverDomain() error {
+	if s.geolocationDomain != nil {
+		err := s.setupGeolocationDomain()
+		if err != nil {
+			return err
+		}
+	}
+
+	domain := driverSetup.NewDriverDomain(s.db)
+	domain.RegisterHTTPRoutes(s.httpAPI)
+	s.driverDomain = domain
+	return nil
 }
 
 func (s *Server) GetDriverDomain() *driverSetup.DriverDomain {
 	return s.driverDomain
 }
 
+func (s *Server) setupGeolocationDomain() error {
+	if s.geolocationDomain != nil {
+		return nil
+	}
+
+	domain, err := geoSetup.NewGeolocationDomain(s.db, s.wsServer, s.logger)
+	if err != nil {
+		return err
+	}
+	domain.RegisterHTTPRoutes(s.httpAPI)
+	s.geolocationDomain = domain
+	return nil
+}
+
 func WithGeolocationDomain() Option {
 	return func(s *Server) error {
-		if s.geolocationDomain != nil {
-			return nil
-		}
-
-		domain, err := geoSetup.NewGeolocationDomain(s.db, s.wsServer, s.logger)
-		if err != nil {
-			return err
-		}
-		domain.RegisterHTTPRoutes(s.httpAPI)
-		s.geolocationDomain = domain
+		s.WithGeolocationDomain = true
 		return nil
 	}
 }
@@ -185,6 +200,19 @@ func (s *Server) Start() error {
 
 	if s.db == nil && s.withDB {
 		s.connectToDatabase()
+	}
+
+	if s.WithGeolocationDomain {
+		err := s.setupGeolocationDomain()
+		if err != nil {
+			return err
+		}
+	}
+	if s.withDriverDomain {
+		err := s.setupDriverDomain()
+		if err != nil {
+			return err
+		}
 	}
 
 	go s.startWSServer()
