@@ -1,7 +1,5 @@
-import { watch } from "vue";
 import { type AddLayerObject, type Map as MaplibreMap } from "maplibre-gl";
 import { $endPoint, $routePath, $startPoint } from "../stores/routeStore";
-import { useStore } from '@nanostores/vue';
 
 const MapSourceID_StartPoint = "source-start-point"
 const MapLayerID_StartPoint = "layer-start-point"
@@ -146,22 +144,18 @@ export function useRouteDisplay(map: MaplibreMap) {
 
 	}
 
-	const routePath = useStore($routePath);
-	watch(
-		routePath,
-		(newRoute) => {
-			console.log("[DEBUG] new route useRouteDisplay")
-			if (!newRoute) {
-				removeRouteLayer()
-				return
-			}
-			const start = $startPoint.get()
-			const end = $endPoint.get()
-			if (start && end && newRoute && newRoute.paths.length > 0) {
-				updateRouteLayer({ lat: start.lat, lon: start.lon }, { lat: end.lat, lon: end.lon }, newRoute.paths[0].points.coordinates)
-			}
-		},
-		{ deep: true }
-	)
+	$routePath.subscribe(routePath => {
+		console.log("[DEBUG] new route useRouteDisplay")
+		if (!routePath) {
+			removeRouteLayer()
+			return
+		}
+		const start = $startPoint.get()
+		const end = $endPoint.get()
+		if (start && end && routePath && routePath.paths.length > 0) {
+			updateRouteLayer({ lat: start.lat, lon: start.lon }, { lat: end.lat, lon: end.lon }, routePath.paths[0].points.coordinates)
+		}
+	})
+
 	return { removeRouteLayer }
 }
