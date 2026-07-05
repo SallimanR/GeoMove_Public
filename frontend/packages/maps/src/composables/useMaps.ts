@@ -40,7 +40,6 @@ export function useMaps() {
 			for (const layer of layers) {
 				if (layer.type === "symbol" && layer.layout?.["text-field"]) {
 					labelLayerId = layer.id;
-					console.log("[DEBUG] labelLayerId", labelLayerId)
 					break;
 				}
 			}

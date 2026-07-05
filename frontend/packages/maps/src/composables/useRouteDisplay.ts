@@ -145,7 +145,6 @@ export function useRouteDisplay(map: MaplibreMap) {
 	}
 
 	$routePath.subscribe(routePath => {
-		console.log("[DEBUG] new route useRouteDisplay")
 		if (!routePath) {
 			removeRouteLayer()
 			return
