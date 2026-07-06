@@ -21,26 +21,30 @@ type DriverCommands struct {
 }
 
 type DriverQueries struct {
-	FindDriverByID *query.GetDriverByIDHandler
+	GetDriverByID      *query.GetDriverByIDHandler
+	GetFilteredDrivers *query.GetFilteredDriversHandler
 }
 
 func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 	driverRepo := postgres.NewDriverRepository(sqlc.New(db))
+
 	createHandler := command.NewCreateDriverHandler(driverRepo)
-	findByIDHandler := query.NewGetDriverByIDHandler(driverRepo)
+	getDriverByIDHandler := query.NewGetDriverByIDHandler(driverRepo)
+	getFilteredDriversHandler := query.NewGetFilteredDriversHandler(driverRepo)
 
 	driverDomain := &DriverDomain{
 		Commands: DriverCommands{
 			CreateDriver: createHandler,
 		},
 		Queries: DriverQueries{
-			FindDriverByID: findByIDHandler,
+			GetDriverByID:      getDriverByIDHandler,
+			GetFilteredDrivers: getFilteredDriversHandler,
 		},
 	}
 	return driverDomain
 }
 
 func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup) {
-	driverHandler := driverHTTP.NewDriverHandler(d.Commands.CreateDriver, d.Queries.FindDriverByID)
+	driverHandler := driverHTTP.NewDriverHandler(d.Commands.CreateDriver, d.Queries.GetDriverByID, d.Queries.GetFilteredDrivers)
 	driverHTTP.RegisterDriverRoutes(router, driverHandler)
 }

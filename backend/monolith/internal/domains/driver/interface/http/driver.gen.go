@@ -15,6 +15,17 @@ import (
 	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 
+// Driver defines model for Driver.
+type Driver struct {
+	Id         int32      `json:"id"`
+	Lat        float32    `json:"lat"`
+	Lon        float32    `json:"lon"`
+	Name       string     `json:"name"`
+	Rating     *float32   `json:"rating,omitempty"`
+	WorkEnds   *time.Time `json:"work_ends,omitempty"`
+	WorkStarts *time.Time `json:"work_starts,omitempty"`
+}
+
 // CreateDriverJSONBody defines parameters for CreateDriver.
 type CreateDriverJSONBody struct {
 	// Lat Latitude (WGS84)
@@ -30,17 +41,36 @@ type CreateDriverJSONBody struct {
 	WorkStarts time.Time `json:"work_starts"`
 }
 
+// GetFilteredDriversJSONBody defines parameters for GetFilteredDrivers.
+type GetFilteredDriversJSONBody struct {
+	MinRating *float32 `json:"min_rating,omitempty"`
+
+	// UserLat Latitude (WGS84)
+	UserLat float32 `json:"user_lat"`
+
+	// UserLon Longitude (WGS84)
+	UserLon    float32 `json:"user_lon"`
+	WorkEnds   *string `json:"work_ends,omitempty"`
+	WorkStarts *string `json:"work_starts,omitempty"`
+}
+
 // CreateDriverJSONRequestBody defines body for CreateDriver for application/json ContentType.
 type CreateDriverJSONRequestBody CreateDriverJSONBody
 
+// GetFilteredDriversJSONRequestBody defines body for GetFilteredDrivers for application/json ContentType.
+type GetFilteredDriversJSONRequestBody GetFilteredDriversJSONBody
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Create a new driver
+
 	// (POST /drivers)
 	CreateDriver(c *gin.Context)
-	// Get driver by ID
+
 	// (GET /drivers/{id})
-	FindDriverById(c *gin.Context, id int)
+	GetDriverById(c *gin.Context, id int)
+
+	// (POST /filer)
+	GetFilteredDrivers(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -65,8 +95,8 @@ func (siw *ServerInterfaceWrapper) CreateDriver(c *gin.Context) {
 	siw.Handler.CreateDriver(c)
 }
 
-// FindDriverById operation middleware
-func (siw *ServerInterfaceWrapper) FindDriverById(c *gin.Context) {
+// GetDriverById operation middleware
+func (siw *ServerInterfaceWrapper) GetDriverById(c *gin.Context) {
 
 	var err error
 
@@ -86,7 +116,20 @@ func (siw *ServerInterfaceWrapper) FindDriverById(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.FindDriverById(c, id)
+	siw.Handler.GetDriverById(c, id)
+}
+
+// GetFilteredDrivers operation middleware
+func (siw *ServerInterfaceWrapper) GetFilteredDrivers(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFilteredDrivers(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -117,7 +160,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.POST(options.BaseURL+"/drivers", wrapper.CreateDriver)
-	router.GET(options.BaseURL+"/drivers/:id", wrapper.FindDriverById)
+	router.GET(options.BaseURL+"/drivers/:id", wrapper.GetDriverById)
+	router.POST(options.BaseURL+"/filer", wrapper.GetFilteredDrivers)
 }
 
 type CreateDriverRequestObject struct {
@@ -148,15 +192,15 @@ func (response CreateDriver400Response) VisitCreateDriverResponse(w http.Respons
 	return nil
 }
 
-type FindDriverByIdRequestObject struct {
+type GetDriverByIdRequestObject struct {
 	Id int `json:"id"`
 }
 
-type FindDriverByIdResponseObject interface {
-	VisitFindDriverByIdResponse(w http.ResponseWriter) error
+type GetDriverByIdResponseObject interface {
+	VisitGetDriverByIdResponse(w http.ResponseWriter) error
 }
 
-type FindDriverById200JSONResponse struct {
+type GetDriverById200JSONResponse struct {
 	Id         int        `json:"id"`
 	Lat        *float32   `json:"lat,omitempty"`
 	Lon        *float32   `json:"lon,omitempty"`
@@ -165,29 +209,59 @@ type FindDriverById200JSONResponse struct {
 	WorkStarts *time.Time `json:"work_starts,omitempty"`
 }
 
-func (response FindDriverById200JSONResponse) VisitFindDriverByIdResponse(w http.ResponseWriter) error {
+func (response GetDriverById200JSONResponse) VisitGetDriverByIdResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type FindDriverById404Response struct {
+type GetDriverById404Response struct {
 }
 
-func (response FindDriverById404Response) VisitFindDriverByIdResponse(w http.ResponseWriter) error {
+func (response GetDriverById404Response) VisitGetDriverByIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type GetFilteredDriversRequestObject struct {
+	Body *GetFilteredDriversJSONRequestBody
+}
+
+type GetFilteredDriversResponseObject interface {
+	VisitGetFilteredDriversResponse(w http.ResponseWriter) error
+}
+
+type GetFilteredDrivers200JSONResponse struct {
+	Drivers *[]Driver `json:"drivers,omitempty"`
+}
+
+func (response GetFilteredDrivers200JSONResponse) VisitGetFilteredDriversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetFilteredDrivers404Response struct {
+}
+
+func (response GetFilteredDrivers404Response) VisitGetFilteredDriversResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
 	return nil
 }
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// Create a new driver
+
 	// (POST /drivers)
 	CreateDriver(ctx context.Context, request CreateDriverRequestObject) (CreateDriverResponseObject, error)
-	// Get driver by ID
+
 	// (GET /drivers/{id})
-	FindDriverById(ctx context.Context, request FindDriverByIdRequestObject) (FindDriverByIdResponseObject, error)
+	GetDriverById(ctx context.Context, request GetDriverByIdRequestObject) (GetDriverByIdResponseObject, error)
+
+	// (POST /filer)
+	GetFilteredDrivers(ctx context.Context, request GetFilteredDriversRequestObject) (GetFilteredDriversResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -235,17 +309,17 @@ func (sh *strictHandler) CreateDriver(ctx *gin.Context) {
 	}
 }
 
-// FindDriverById operation middleware
-func (sh *strictHandler) FindDriverById(ctx *gin.Context, id int) {
-	var request FindDriverByIdRequestObject
+// GetDriverById operation middleware
+func (sh *strictHandler) GetDriverById(ctx *gin.Context, id int) {
+	var request GetDriverByIdRequestObject
 
 	request.Id = id
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.FindDriverById(ctx, request.(FindDriverByIdRequestObject))
+		return sh.ssi.GetDriverById(ctx, request.(GetDriverByIdRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "FindDriverById")
+		handler = middleware(handler, "GetDriverById")
 	}
 
 	response, err := handler(ctx, request)
@@ -253,8 +327,41 @@ func (sh *strictHandler) FindDriverById(ctx *gin.Context, id int) {
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(FindDriverByIdResponseObject); ok {
-		if err := validResponse.VisitFindDriverByIdResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(GetDriverByIdResponseObject); ok {
+		if err := validResponse.VisitGetDriverByIdResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetFilteredDrivers operation middleware
+func (sh *strictHandler) GetFilteredDrivers(ctx *gin.Context) {
+	var request GetFilteredDriversRequestObject
+
+	var body GetFilteredDriversJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetFilteredDrivers(ctx, request.(GetFilteredDriversRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetFilteredDrivers")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetFilteredDriversResponseObject); ok {
+		if err := validResponse.VisitGetFilteredDriversResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

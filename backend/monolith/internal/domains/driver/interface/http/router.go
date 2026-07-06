@@ -7,9 +7,9 @@ import (
 func RegisterDriverRoutes(router *gin.RouterGroup, h *DriverHandler) {
 	driver := router.Group("/driver")
 	{
-		driver.POST("/find", h.FindDrivers)
 		driver.POST("/", h.CreateDriver)
 		driver.GET("/:id", h.GetDriverByID)
+		driver.POST("/filter", h.GetFilteredDrivers)
 		// driver.PUT("/")
 		// driver.DELETE("/")
 	}

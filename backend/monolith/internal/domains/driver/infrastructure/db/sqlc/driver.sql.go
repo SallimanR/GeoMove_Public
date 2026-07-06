@@ -14,10 +14,10 @@ import (
 const createDriver = `-- name: CreateDriver :one
 INSERT INTO
 	driver (
-			work_starts,
-			work_ends,
-			location,
-			rating
+		work_starts,
+		work_ends,
+		location,
+		rating
 	) VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3::REAL, $4::REAL), 4326), $5)
 RETURNING id
 `
@@ -43,7 +43,7 @@ func (q *Queries) CreateDriver(ctx context.Context, arg CreateDriverParams) (uin
 	return id, err
 }
 
-const findDriverByID = `-- name: FindDriverByID :one
+const getDriverByID = `-- name: GetDriverByID :one
 SELECT
 	id,
 	work_starts,
@@ -55,7 +55,7 @@ FROM driver
 WHERE id = $1
 `
 
-type FindDriverByIDRow struct {
+type GetDriverByIDRow struct {
 	ID         uint32
 	WorkStarts pgtype.Time
 	WorkEnds   pgtype.Time
@@ -64,9 +64,9 @@ type FindDriverByIDRow struct {
 	Lat        float32
 }
 
-func (q *Queries) FindDriverByID(ctx context.Context, id uint32) (FindDriverByIDRow, error) {
-	row := q.db.QueryRow(ctx, findDriverByID, id)
-	var i FindDriverByIDRow
+func (q *Queries) GetDriverByID(ctx context.Context, id uint32) (GetDriverByIDRow, error) {
+	row := q.db.QueryRow(ctx, getDriverByID, id)
+	var i GetDriverByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.WorkStarts,
