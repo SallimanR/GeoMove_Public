@@ -9,12 +9,12 @@ import (
 )
 
 type CreateDriverCommand struct {
+	UserID     int64
+	Name       string
 	WorkStarts *time.Time
 	WorkEnds   *time.Time
 	Latitude   float32
 	Longitude  float32
-	// TODO: would remove need for type conversion
-	// Location entities.Location
 }
 
 type CreateDriverHandler struct {
@@ -29,6 +29,8 @@ func NewCreateDriverHandler(repo repository.DriverRepository) *CreateDriverHandl
 
 func (h *CreateDriverHandler) Handle(ctx context.Context, cmd CreateDriverCommand) (*entity.Driver, error) {
 	driverOpts := entity.DriverOptions{
+		UserID:     cmd.UserID,
+		Name:       cmd.Name,
 		WorkStarts: cmd.WorkStarts,
 		WorkEnds:   cmd.WorkEnds,
 		Location:   entity.Location{Lat: cmd.Latitude, Lon: cmd.Longitude},

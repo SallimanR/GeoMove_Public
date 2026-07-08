@@ -1,0 +1,48 @@
+version: "2"
+
+overrides:
+  go:
+    overrides:
+      - column: "driver.id"
+        go_type: "uint32"
+      - db_type: "pg_catalog.timestamp"
+        nullable: true
+        engine: "postgresql"
+        go_type:
+          import: "time"
+          type: "Time"
+          pointer: true
+      - db_type: "pg_catalog.timestamp"
+        nullable: false
+        engine: "postgresql"
+        go_type:
+          import: "time"
+          type: "Time"
+      - db_type: "pg_catalog.time"
+        nullable: true
+        engine: "postgresql"
+        go_type:
+          import: "time"
+          type: "Time"
+          pointer: true
+
+sql:
+  - engine: "postgresql"
+    schema: "./migrations"
+    queries: "./internal/auth/sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "./internal/auth/sqlc"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true
+
+  - engine: "postgresql"
+    schema: "./migrations"
+    queries: "./internal/domains/driver/infrastructure/db/sqlc/sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "./internal/domains/driver/infrastructure/db/sqlc"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true

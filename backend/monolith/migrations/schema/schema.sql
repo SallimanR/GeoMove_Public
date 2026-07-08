@@ -1,4 +1,4 @@
-\restrict yUZtTqy2g1mHdsXDca1M0ASXFNQjgA6g6KLXCzUaKGEBNoxjjdfrzyShSKbbRwb
+\restrict bY9oMZC49cZa3sxTZ1gFhrEfPTt7dJyX8ZWhG3IYJ6E3oGs7NlvZ82nYe1YGMKr
 
 -- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
 -- Dumped by pg_dump version 18.4
@@ -95,13 +95,14 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.driver (
     id bigint NOT NULL,
+    user_id bigint NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone,
     name text NOT NULL,
     profile_image text,
     work_starts time without time zone,
     work_ends time without time zone,
-    is_available boolean DEFAULT true,
+    is_available boolean DEFAULT true NOT NULL,
     last_seen timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     location public.geography(Point,4326) NOT NULL,
     city_id integer,
@@ -311,6 +312,13 @@ CREATE INDEX idx_driver_realtime_location ON public.driver_realtime USING gist (
 
 
 --
+-- Name: idx_driver_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_driver_user_id ON public.driver USING btree (user_id);
+
+
+--
 -- Name: idx_session_expires_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -340,6 +348,14 @@ ALTER TABLE ONLY public.driver_realtime
 
 
 --
+-- Name: driver driver_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.driver
+    ADD CONSTRAINT driver_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
 -- Name: session session_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -359,7 +375,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict yUZtTqy2g1mHdsXDca1M0ASXFNQjgA6g6KLXCzUaKGEBNoxjjdfrzyShSKbbRwb
+\unrestrict bY9oMZC49cZa3sxTZ1gFhrEfPTt7dJyX8ZWhG3IYJ6E3oGs7NlvZ82nYe1YGMKr
 
 
 --

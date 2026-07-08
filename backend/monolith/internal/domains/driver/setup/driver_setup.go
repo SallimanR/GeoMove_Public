@@ -22,6 +22,7 @@ type DriverCommands struct {
 
 type DriverQueries struct {
 	GetDriverByID      *query.GetDriverByIDHandler
+	GetDriverByUserID  *query.GetDriverByUserIDHandler
 	GetFilteredDrivers *query.GetFilteredDriversHandler
 }
 
@@ -30,6 +31,7 @@ func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 
 	createHandler := command.NewCreateDriverHandler(driverRepo)
 	getDriverByIDHandler := query.NewGetDriverByIDHandler(driverRepo)
+	getDriverByUserIDHandler := query.NewGetDriverByUserIDHandler(driverRepo)
 	getFilteredDriversHandler := query.NewGetFilteredDriversHandler(driverRepo)
 
 	driverDomain := &DriverDomain{
@@ -38,13 +40,19 @@ func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 		},
 		Queries: DriverQueries{
 			GetDriverByID:      getDriverByIDHandler,
+			GetDriverByUserID:  getDriverByUserIDHandler,
 			GetFilteredDrivers: getFilteredDriversHandler,
 		},
 	}
 	return driverDomain
 }
 
-func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup) {
-	driverHandler := driverHTTP.NewDriverHandler(d.Commands.CreateDriver, d.Queries.GetDriverByID, d.Queries.GetFilteredDrivers)
-	driverHTTP.RegisterDriverRoutes(router, driverHandler)
+func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	driverHandler := driverHTTP.NewDriverHandler(
+		d.Commands.CreateDriver,
+		d.Queries.GetDriverByID,
+		d.Queries.GetDriverByUserID,
+		d.Queries.GetFilteredDrivers,
+	)
+	driverHTTP.RegisterDriverRoutes(router, driverHandler, authMiddleware)
 }

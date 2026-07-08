@@ -18,5 +18,6 @@ type DriverRepository interface {
 
 	// Read (queries)
 	GetDriverByID(ctx context.Context, id entity.DriverID) (*entity.Driver, error)
+	GetDriverByUserID(ctx context.Context, userID int64) (*entity.Driver, error)
 	GetFilteredDrivers(ctx context.Context, filter DriverFilter) ([]entity.Driver, error)
 }

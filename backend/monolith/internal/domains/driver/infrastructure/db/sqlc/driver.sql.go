@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -14,29 +15,35 @@ import (
 const createDriver = `-- name: CreateDriver :one
 INSERT INTO
 	driver (
+		user_id,
+		name,
 		work_starts,
 		work_ends,
 		location,
 		rating
-	) VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3::REAL, $4::REAL), 4326), $5)
+	) VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($6::REAL, $7::REAL), 4326), $5)
 RETURNING id
 `
 
 type CreateDriverParams struct {
-	WorkStarts pgtype.Time
-	WorkEnds   pgtype.Time
-	Column3    float32
-	Column4    float32
-	Rating     pgtype.Float4
+	UserID     int64
+	Name       string
+	WorkStarts *time.Time
+	WorkEnds   *time.Time
+	Rating     *float32
+	Lon        float32
+	Lat        float32
 }
 
 func (q *Queries) CreateDriver(ctx context.Context, arg CreateDriverParams) (uint32, error) {
 	row := q.db.QueryRow(ctx, createDriver,
+		arg.UserID,
+		arg.Name,
 		arg.WorkStarts,
 		arg.WorkEnds,
-		arg.Column3,
-		arg.Column4,
 		arg.Rating,
+		arg.Lon,
+		arg.Lat,
 	)
 	var id uint32
 	err := row.Scan(&id)
@@ -57,9 +64,9 @@ WHERE id = $1
 
 type GetDriverByIDRow struct {
 	ID         uint32
-	WorkStarts pgtype.Time
-	WorkEnds   pgtype.Time
-	Rating     pgtype.Float4
+	WorkStarts *time.Time
+	WorkEnds   *time.Time
+	Rating     *float32
 	Lon        float32
 	Lat        float32
 }
@@ -71,6 +78,56 @@ func (q *Queries) GetDriverByID(ctx context.Context, id uint32) (GetDriverByIDRo
 		&i.ID,
 		&i.WorkStarts,
 		&i.WorkEnds,
+		&i.Rating,
+		&i.Lon,
+		&i.Lat,
+	)
+	return i, err
+}
+
+const getDriverByUserID = `-- name: GetDriverByUserID :one
+SELECT
+	id,
+	user_id,
+	name,
+	profile_image,
+	work_starts,
+	work_ends,
+	is_available,
+	last_seen,
+	rating,
+	ST_X(location::geometry)::REAL as lon,
+	ST_Y(location::geometry)::REAL as lat
+FROM driver
+WHERE user_id = $1
+`
+
+type GetDriverByUserIDRow struct {
+	ID           uint32
+	UserID       int64
+	Name         string
+	ProfileImage *string
+	WorkStarts   *time.Time
+	WorkEnds     *time.Time
+	IsAvailable  bool
+	LastSeen     pgtype.Timestamptz
+	Rating       *float32
+	Lon          float32
+	Lat          float32
+}
+
+func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDriverByUserIDRow, error) {
+	row := q.db.QueryRow(ctx, getDriverByUserID, userID)
+	var i GetDriverByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.ProfileImage,
+		&i.WorkStarts,
+		&i.WorkEnds,
+		&i.IsAvailable,
+		&i.LastSeen,
 		&i.Rating,
 		&i.Lon,
 		&i.Lat,

@@ -7,8 +7,7 @@ package sqlc
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 const getFilteredDrivers = `-- name: GetFilteredDrivers :many
@@ -38,17 +37,17 @@ ORDER BY distance
 type GetFilteredDriversParams struct {
 	Lat        float32
 	Lon        float32
-	WorkStarts pgtype.Time
-	WorkEnds   pgtype.Time
-	MinRating  pgtype.Float4
+	WorkStarts *time.Time
+	WorkEnds   *time.Time
+	MinRating  *float32
 }
 
 type GetFilteredDriversRow struct {
 	ID         uint32
 	Name       string
-	WorkStarts pgtype.Time
-	WorkEnds   pgtype.Time
-	Rating     pgtype.Float4
+	WorkStarts *time.Time
+	WorkEnds   *time.Time
+	Rating     *float32
 	Lon        float32
 	Lat        float32
 	Distance   float32

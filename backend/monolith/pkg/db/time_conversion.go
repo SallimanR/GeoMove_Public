@@ -34,19 +34,15 @@ func float64FromNumeric(n pgtype.Numeric) float64 {
 	return f.Float64
 }
 
-func StringToPgTime(s string) pgtype.Time {
+func StringToPgTime(s string) *time.Time {
 	if s == "" {
-		return pgtype.Time{Valid: false}
+		return nil
 	}
 	t, err := time.Parse("15:04", s)
 	if err != nil {
-		return pgtype.Time{Valid: false}
+		return nil
 	}
-	micros := int64(t.Hour())*3600*1_000_000 +
-		int64(t.Minute())*60*1_000_000 +
-		int64(t.Second())*1_000_000 +
-		int64(t.Nanosecond()/1000)
-	return pgtype.Time{Microseconds: micros, Valid: true}
+	return &t
 }
 
 // func parseTimeToPgType(timeStr string) (pgtype.Time, error) {

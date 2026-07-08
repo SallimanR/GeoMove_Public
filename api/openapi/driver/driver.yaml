@@ -4,6 +4,13 @@ info:
   version: 1.0.0
 
 components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Session cookie set after OAuth login
+
   schemas:
     Driver:
       type: object
@@ -24,9 +31,13 @@ components:
           format: float
         name:
           type: string
+        profile_image:
+          type: string
         rating:
           type: number
           format: float
+        is_available:
+          type: boolean
         work_starts:
           type: string
           format: date-time
@@ -34,7 +45,82 @@ components:
           type: string
           format: date-time
 
+    DriverProfile:
+      type: object
+      required:
+        - name
+        - lat
+        - lon
+      properties:
+        name:
+          type: string
+          description: Driver's display name
+        lat:
+          type: number
+          format: float
+          description: Latitude (WGS84)
+        lon:
+          type: number
+          format: float
+          description: Longitude (WGS84)
+        work_starts:
+          type: string
+          format: time
+          description: Start of work time (HH:MM:SS)
+        work_ends:
+          type: string
+          format: time
+          description: End of work time (HH:MM:SS)
+
 paths:
+  /driver/profile:
+    post:
+      summary: Create driver profile
+      description: Creates a driver profile for the authenticated user. Each user can have at most one driver profile.
+      operationId: createDriverProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverProfile'
+      responses:
+        '201':
+          description: Driver profile created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the newly created driver
+        '400':
+          description: Invalid input or driver profile already exists
+        '401':
+          description: Unauthorized (no valid session)
+      security:
+        - CookieAuth: []
+    get:
+      summary: Get my driver profile
+      description: Returns the driver profile for the authenticated user.
+      operationId: getMyDriverProfile
+      responses:
+        '200':
+          description: Driver profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        '401':
+          description: Unauthorized (no valid session)
+        '404':
+          description: Driver profile not found
+      security:
+        - CookieAuth: []
+
   /drivers:
     post:
       operationId: createDriver
@@ -81,6 +167,7 @@ paths:
                     description: ID of the newly created driver
         '400':
           description: Invalid input
+
   /drivers/{id}:
     get:
       operationId: getDriverById
@@ -119,6 +206,7 @@ paths:
                     format: float
         '404':
           description: Driver not found
+
   /filer:
     post:
       operationId: getFilteredDrivers
@@ -142,12 +230,8 @@ paths:
                   description: Longitude (WGS84)
                 work_starts:
                   type: string
-                  # format: date-time
-                  # description: Start of work time (ISO 8601)
                 work_ends:
                   type: string
-                  # format: date-time
-                  # description: End of work time (ISO 8601)
                 min_rating:
                   type: number
                   format: float
