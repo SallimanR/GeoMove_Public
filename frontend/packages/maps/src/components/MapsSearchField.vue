@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { type SearchResult, type SearchResults, getMapSearch } from "geo";
+import {
+  type SearchResult,
+  type SearchResultList,
+  addressToText,
+  getMapSearch,
+} from "geo";
 import { $coords } from "../stores/mapsStore.ts";
+import SearchResultDisplay from "./SearchResultDisplay.vue";
 
 const props = defineProps<{
   modelValue: string;
   placeholder: string;
   onSearchResultClick: (lat: number, lon: number) => void;
+  onClear: () => void;
 }>();
+
+const isFocused = ref(false);
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: string): void;
 }>();
 
 const isTypingRequest = ref(false);
-const results = ref<SearchResults>();
+const results = ref<SearchResultList>();
 
 async function handleSearch(query: string) {
   if (!query.trim()) {
@@ -39,49 +48,61 @@ function onInput(e: Event) {
 // When a result is clicked: emit a display name and call the parent callback
 async function handleSearchResultClick(searchResult: SearchResult) {
   isTypingRequest.value = false;
-  const { properties } = searchResult;
 
-  const parts = [
-    properties.name,
-    properties.city,
-    properties.street,
-    properties.housenumber,
-  ].filter(Boolean);
-  const displayName =
-    parts.join(", ") ||
-    `${searchResult.geometry.coordinates[1].toFixed(4)}, ${searchResult.geometry.coordinates[0].toFixed(4)}`;
+  const displayName = addressToText(searchResult);
 
   // Update the input field with the address
   emit("update:modelValue", displayName);
 
-  // Pass the coordinates to the parent (which updates the store)
   props.onSearchResultClick(
     searchResult.geometry.coordinates[1],
     searchResult.geometry.coordinates[0],
   );
 }
+
+function clearInput() {
+  props.onClear();
+
+  emit("update:modelValue", "");
+  results.value = undefined;
+  isTypingRequest.value = false;
+}
 </script>
 
 <template>
-  <div class="relative">
-    <input
-      :value="modelValue"
-      @input="onInput"
-      :placeholder="placeholder"
-      class="rounded-2xl bg-gray-200 p-3 w-full"
-    />
+  <div
+    class="rounded-xl"
+    @focusin="isFocused = true"
+    @focusout="isFocused = false"
+  >
+    <div class="flex flex-row items-center gap-2">
+      <input
+        :value="modelValue"
+        @input="onInput"
+        :placeholder="placeholder"
+        class="rounded-xl bg-gray-200 p-3 w-full"
+      />
+      <button
+        @click="clearInput"
+        class="flex-shrink1 w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400 flex items-center justify-center text-gray-700 font-bold"
+      >
+        ✕
+      </button>
+    </div>
+
     <!-- Search results dropdown -->
     <div
       v-if="results && isTypingRequest && modelValue"
-      class="absolute bg-white border rounded shadow-lg mt-1 max-h-60 overflow-y-auto w-full z-10"
+      v-show="isFocused"
+      class="bg-white rounded-xl max-h-[41vh] w-full z-10 overflow-y-auto"
     >
       <div
         v-for="result in results.features"
+        @mousedown.prevent
         @click="handleSearchResultClick(result)"
-        class="p-2 hover:bg-gray-100 cursor-pointer"
+        class="m1 p-2 rounded-xl bg-gray-200 hover:bg-gray-300 cursor-pointer"
       >
-        {{ result.properties?.name }}, {{ result.properties?.city }},
-        {{ result.properties?.street }}, {{ result.properties?.housenumber }}
+        <SearchResultDisplay :result="result" />
       </div>
     </div>
   </div>

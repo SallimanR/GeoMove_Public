@@ -1,4 +1,4 @@
-import { $deckOverlay, $mapInstance } from "@stores/mapsStore"
+import { $deckOverlay, $mapInstance } from "../stores/mapsStore"
 import { type Layer, type LayersList } from "deck.gl"
 import { ref } from "vue"
 
@@ -27,9 +27,8 @@ export function useMapsActions() {
 			return
 		}
 		map.flyTo({
-			animate: false,
-			// speed: 3,
-			center: { lat: lat, lon: lon }
+			center: { lat: lat, lon: lon },
+			duration: 500,
 		})
 	}
 

@@ -30,3 +30,12 @@ onMounted(() => {
     <MapsCentralMarker />
   </div>
 </template>
+
+<style scoped>
+:deep(.maplibregl-popup-content) {
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+</style>

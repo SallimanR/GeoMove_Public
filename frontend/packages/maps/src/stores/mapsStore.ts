@@ -1,4 +1,3 @@
-import axios from "axios";
 import { atom, map } from "nanostores";
 
 import { Map as MaplibreMap } from "maplibre-gl";
