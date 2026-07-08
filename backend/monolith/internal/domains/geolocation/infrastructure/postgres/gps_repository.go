@@ -6,7 +6,7 @@ import (
 	"monolith/internal/domains/geolocation/application/dto"
 	"monolith/internal/domains/geolocation/domain/entity"
 	"monolith/internal/domains/geolocation/domain/repository"
-	"monolith/internal/domains/geolocation/infrastructure/db/sqlc"
+	"monolith/internal/domains/geolocation/infrastructure/postgres/sqlc"
 )
 
 type GeolocationRepository struct {

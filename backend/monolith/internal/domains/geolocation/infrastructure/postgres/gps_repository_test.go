@@ -11,8 +11,8 @@ import (
 	"monolith/internal/domains/driver/setup"
 	"monolith/internal/domains/geolocation/application/dto"
 	"monolith/internal/domains/geolocation/domain/entity"
-	"monolith/internal/domains/geolocation/infrastructure/db/postgres"
-	"monolith/internal/domains/geolocation/infrastructure/db/sqlc"
+	"monolith/internal/domains/geolocation/infrastructure/postgres"
+	"monolith/internal/domains/geolocation/infrastructure/postgres/sqlc"
 	"monolith/pkg/logger"
 	"monolith/test/testutils"
 )

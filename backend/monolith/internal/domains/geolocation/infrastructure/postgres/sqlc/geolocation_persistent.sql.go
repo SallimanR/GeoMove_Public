@@ -48,7 +48,7 @@ type FindWithinRadiusDriversParams struct {
 }
 
 type FindWithinRadiusDriversRow struct {
-	ID             int64
+	ID             uint32
 	Lon            float32
 	Lat            float32
 	DistanceMeters interface{}

@@ -7,8 +7,8 @@ import (
 
 	"monolith/internal/domains/geolocation/application/command"
 	"monolith/internal/domains/geolocation/application/query"
-	"monolith/internal/domains/geolocation/infrastructure/db/postgres"
-	"monolith/internal/domains/geolocation/infrastructure/db/sqlc"
+	"monolith/internal/domains/geolocation/infrastructure/postgres"
+	"monolith/internal/domains/geolocation/infrastructure/postgres/sqlc"
 	geoHTTP "monolith/internal/domains/geolocation/interface/http"
 	"monolith/internal/domains/geolocation/interface/websocket"
 	"monolith/internal/websockethub"

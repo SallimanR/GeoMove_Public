@@ -168,8 +168,9 @@ WITH user_location AS (
 )
 SELECT
 	dr.driver_id,
-	ST_X(dr.realtime_location::GEOMETRY)::REAL AS lon,
-	ST_Y(dr.realtime_location::GEOMETRY)::REAL AS lat,
+	-- TODO:
+	-- ST_X(dr.realtime_location::GEOMETRY)::REAL AS lon,
+	-- ST_Y(dr.realtime_location::GEOMETRY)::REAL AS lat,
 	st_distance(dr.realtime_location, user_location.geog)::INTEGER AS distance_meters
 FROM
 	driver_realtime AS dr
@@ -187,8 +188,6 @@ type FindClosestWithinRadiusDriversRealtimeParams struct {
 
 type FindClosestWithinRadiusDriversRealtimeRow struct {
 	DriverID       uint32
-	Lon            float32
-	Lat            float32
 	DistanceMeters int32
 }
 
@@ -203,12 +202,7 @@ func (q *Queries) FindClosestWithinRadiusDriversRealtime(ctx context.Context, ar
 	var items []FindClosestWithinRadiusDriversRealtimeRow
 	for rows.Next() {
 		var i FindClosestWithinRadiusDriversRealtimeRow
-		if err := rows.Scan(
-			&i.DriverID,
-			&i.Lon,
-			&i.Lat,
-			&i.DistanceMeters,
-		); err != nil {
+		if err := rows.Scan(&i.DriverID, &i.DistanceMeters); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

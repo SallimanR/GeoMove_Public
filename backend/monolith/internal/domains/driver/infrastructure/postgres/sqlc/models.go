@@ -28,7 +28,7 @@ type Driver struct {
 }
 
 type DriverRealtime struct {
-	DriverID            int64
+	DriverID            uint32
 	UpdatedAt           *time.Time
 	RealtimeLocation    interface{}
 	AverageSpeed        *float32

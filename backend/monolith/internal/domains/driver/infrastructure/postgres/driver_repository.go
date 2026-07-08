@@ -5,7 +5,7 @@ import (
 
 	"monolith/internal/domains/driver/domain/entity"
 	"monolith/internal/domains/driver/domain/repository"
-	"monolith/internal/domains/driver/infrastructure/db/sqlc"
+	"monolith/internal/domains/driver/infrastructure/postgres/sqlc"
 	"monolith/pkg/db"
 )
 

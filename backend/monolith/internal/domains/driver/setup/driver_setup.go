@@ -6,8 +6,8 @@ import (
 
 	"monolith/internal/domains/driver/application/command"
 	"monolith/internal/domains/driver/application/query"
-	"monolith/internal/domains/driver/infrastructure/db/postgres"
-	"monolith/internal/domains/driver/infrastructure/db/sqlc"
+	"monolith/internal/domains/driver/infrastructure/postgres"
+	"monolith/internal/domains/driver/infrastructure/postgres/sqlc"
 	driverHTTP "monolith/internal/domains/driver/interface/http"
 )
 

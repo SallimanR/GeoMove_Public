@@ -5,6 +5,8 @@ overrides:
     overrides:
       - column: "driver.id"
         go_type: "uint32"
+      - column: "driver_realtime.driver_id"
+        go_type: "uint32"
       - db_type: "pg_catalog.timestamp"
         nullable: true
         engine: "postgresql"
@@ -39,10 +41,21 @@ sql:
 
   - engine: "postgresql"
     schema: "./migrations"
-    queries: "./internal/domains/driver/infrastructure/db/sqlc/sql"
+    queries: "./internal/domains/driver/infrastructure/postgres/sql"
     gen:
       go:
         package: "sqlc"
-        out: "./internal/domains/driver/infrastructure/db/sqlc"
+        out: "./internal/domains/driver/infrastructure/postgres/sqlc"
         sql_package: "pgx/v5"
         emit_pointers_for_null_types: true
+
+  - engine: "postgresql"
+    schema: "./migrations"
+    queries: "./internal/domains/geolocation/infrastructure/postgres/sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "./internal/domains/geolocation/infrastructure/postgres/sqlc"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true
+
