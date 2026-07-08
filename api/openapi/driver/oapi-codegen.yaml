@@ -1,6 +1,6 @@
 package: http
 generate:
-  models: true         # Generates all schema types (e.g., Driver struct)
-  strict-server: true  # Generates the StrictServerInterface with parsed request/response objects[citation:1][citation:9]
+  models: true
+  strict-server: true
   gin-server: true
 output: ../../../backend/monolith/internal/domains/driver/interface/http/driver.gen.go
