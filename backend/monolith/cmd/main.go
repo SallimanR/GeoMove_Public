@@ -33,7 +33,6 @@ func main() {
 	srv, err := server.NewServer(
 		server.WithDB(),
 		server.WithDriverDomain(),
-		server.WithGeolocationDomain(),
 		server.WithAuth(),
 	)
 	if err != nil {

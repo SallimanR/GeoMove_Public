@@ -48,14 +48,3 @@ sql:
         out: "./internal/domains/driver/infrastructure/postgres/sqlc"
         sql_package: "pgx/v5"
         emit_pointers_for_null_types: true
-
-  - engine: "postgresql"
-    schema: "./migrations"
-    queries: "./internal/domains/geolocation/infrastructure/postgres/sql"
-    gen:
-      go:
-        package: "sqlc"
-        out: "./internal/domains/geolocation/infrastructure/postgres/sqlc"
-        sql_package: "pgx/v5"
-        emit_pointers_for_null_types: true
-

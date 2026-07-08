@@ -15,7 +15,6 @@ import (
 	"monolith/internal/auth/sqlc"
 	"monolith/internal/database"
 	driverSetup "monolith/internal/domains/driver/setup"
-	geoSetup "monolith/internal/domains/geolocation/setup"
 	"monolith/internal/websockethub"
 )
 
@@ -42,13 +41,11 @@ type Server struct {
 	dbManager *database.DBManager
 	db        *pgxpool.Pool
 
-	withDriverDomain      bool
-	driverDomain          *driverSetup.DriverDomain
-	withGeolocationDomain bool
-	geolocationDomain     *geoSetup.GeolocationDomain
+	withDriverDomain bool
+	driverDomain*driverSetup.DriverDomain
 
-	withAuth      bool
-	authService   *auth.Service
+	withAuth       bool
+	authService     *auth.Service
 	authMiddleware gin.HandlerFunc
 
 	logger zerolog.Logger
@@ -150,47 +147,14 @@ func WithDriverDomain() Option {
 	}
 }
 
-func (s *Server) setupDriverDomain() error {
-	if s.geolocationDomain != nil {
-		err := s.setupGeolocationDomain()
-		if err != nil {
-			return err
-		}
-	}
-
+func (s *Server) setupDriverDomain() {
 	domain := driverSetup.NewDriverDomain(s.db)
 	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware)
 	s.driverDomain = domain
-	return nil
 }
 
 func (s *Server) GetDriverDomain() *driverSetup.DriverDomain {
 	return s.driverDomain
-}
-
-func (s *Server) setupGeolocationDomain() error {
-	if s.geolocationDomain != nil {
-		return nil
-	}
-
-	domain, err := geoSetup.NewGeolocationDomain(s.db, s.wsServer, s.logger)
-	if err != nil {
-		return err
-	}
-	domain.RegisterHTTPRoutes(s.httpAPI)
-	s.geolocationDomain = domain
-	return nil
-}
-
-func WithGeolocationDomain() Option {
-	return func(s *Server) error {
-		s.withGeolocationDomain = true
-		return nil
-	}
-}
-
-func (s *Server) GetGeolocationDomain() *geoSetup.GeolocationDomain {
-	return s.geolocationDomain
 }
 
 func WithLogger(logger zerolog.Logger) Option {
@@ -211,17 +175,8 @@ func (s *Server) Start() error {
 	if s.withAuth {
 		s.setupAuth()
 	}
-	if s.withGeolocationDomain {
-		err := s.setupGeolocationDomain()
-		if err != nil {
-			return err
-		}
-	}
 	if s.withDriverDomain {
-		err := s.setupDriverDomain()
-		if err != nil {
-			return err
-		}
+		s.setupDriverDomain()
 	}
 
 	go s.startWSServer()

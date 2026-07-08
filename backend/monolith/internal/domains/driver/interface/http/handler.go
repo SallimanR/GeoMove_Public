@@ -10,15 +10,13 @@ import (
 	"monolith/internal/domains/driver/application/command"
 	"monolith/internal/domains/driver/application/query"
 	"monolith/internal/domains/driver/domain/entity"
-	geoQuery "monolith/internal/domains/geolocation/application/query"
 )
 
 type DriverHandler struct {
-	createDriver        *command.CreateDriverHandler
-	getDriverByID       *query.GetDriverByIDHandler
-	getDriverByUserID   *query.GetDriverByUserIDHandler
-	getFilteredDrivers  *query.GetFilteredDriversHandler
-	findClosestRealtime *geoQuery.FindClosestDriversRealtimeQuery
+	createDriver       *command.CreateDriverHandler
+	getDriverByID      *query.GetDriverByIDHandler
+	getDriverByUserID  *query.GetDriverByUserIDHandler
+	getFilteredDrivers *query.GetFilteredDriversHandler
 }
 
 func NewDriverHandler(
