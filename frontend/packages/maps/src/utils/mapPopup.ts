@@ -1,3 +1,4 @@
+import { $mapInstance } from "../stores/mapsStore";
 import { Marker, Popup, type LngLat, type Map as MaplibreMap, type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import { createApp, type Component, type App, type ComponentPublicInstance } from "vue";
 
@@ -11,7 +12,6 @@ interface PopupEntry {
 const popupGroups = new Map<string, PopupEntry[]>();
 
 export function addPopupToMap<T extends object = {}>(
-	map: MaplibreMap,
 	lngLat: LngLat,
 	component: Component,
 	props: T = {} as T,
@@ -25,7 +25,7 @@ export function addPopupToMap<T extends object = {}>(
 	popup
 		.setLngLat([lngLat.lng, lngLat.lat])
 		.setHTML(`<div id='${group}-map-popup'></div>`)
-		.addTo(map);
+		.addTo($mapInstance.value);
 
 	const mountPoint = popup
 		.getElement()
