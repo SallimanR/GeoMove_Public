@@ -3,4 +3,4 @@ generate:
   models: true
   strict-server: true
   gin-server: true
-output: ../../../backend/monolith/internal/domains/driver/interface/http/driver.gen.go
+output: backend/monolith/internal/domains/driver/interface/http/driver.gen.go

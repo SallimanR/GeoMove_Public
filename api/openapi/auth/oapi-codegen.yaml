@@ -3,4 +3,4 @@ generate:
   models: true
   strict-server: true
   gin-server: true
-output: ../../../backend/monolith/internal/auth/openapi/auth.gen.go
+output: backend/monolith/internal/auth/openapi/auth.gen.go
