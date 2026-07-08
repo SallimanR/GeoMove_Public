@@ -272,7 +272,7 @@ func (s *Server) setupAuth() {
 	s.authService = service
 	s.authMiddleware = service.AuthMiddleware()
 
-	auth.RegisterHTTPRoutes(s.httpAPI, service)
+	auth.RegisterHTTPRoutes(s.httpAPI, service, s.authMiddleware)
 }
 
 func WithAuth() Option {

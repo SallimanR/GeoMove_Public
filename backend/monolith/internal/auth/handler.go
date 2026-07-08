@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
-	"monolith/internal/auth/openapi"
 )
 
 type Handler struct {
@@ -17,7 +15,7 @@ type Handler struct {
 	cookieDomain string
 }
 
-func NewHandler(service *Service) openapi.ServerInterface {
+func NewHandler(service *Service) *Handler {
 	return &Handler{
 		service:      service,
 		cookieSecure: os.Getenv("COOKIE_SECURE") == "true",
@@ -25,8 +23,8 @@ func NewHandler(service *Service) openapi.ServerInterface {
 	}
 }
 
-func (h *Handler) PostAuthProviderCallback(c *gin.Context, params openapi.PostAuthProviderCallbackParamsProvider) {
-	provider := string(params)
+func (h *Handler) PostAuthProviderCallback(c *gin.Context) {
+	provider := c.Param("provider")
 
 	var req struct {
 		Code string `json:"code"`
@@ -137,4 +135,32 @@ func (h *Handler) clearAuthCookie(c *gin.Context) {
 		h.cookieSecure,
 		true,
 	)
+}
+
+func (h *Handler) GetMe(c *gin.Context) {
+	sessionVal, exists := c.Get("session")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*Session)
+
+	user, err := h.service.GetUserByID(c.Request.Context(), session.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"id":            user.ID,
+			"email":         user.Email,
+			"phone":         user.Phone,
+			"profile_image": user.ProfileImage,
+		},
+		"session": gin.H{
+			"roles":      session.Roles,
+			"expires_at": session.ExpiresAt,
+		},
+	})
 }

@@ -204,6 +204,10 @@ func (s *Service) UploadProfileImage(ctx context.Context, imageBase64 string) (s
 	return "/static/avatars/" + filename, nil
 }
 
+func (s *Service) GetUserByID(ctx context.Context, id int64) (*User, error) {
+	return s.repo.GetUserByID(ctx, id)
+}
+
 const (
 	defaultSessionTTL = 24 * time.Hour
 	tokenBytes        = 32

@@ -57,6 +57,21 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 	}, nil
 }
 
+func (r *Repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
+	row, err := r.q.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:           row.ID,
+		Phone:        row.Phone,
+		Email:        row.Email,
+		ProfileImage: row.ProfileImage,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+	}, nil
+}
+
 func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*User, error) {
 	row, err := r.q.GetUserByPhone(ctx, phone)
 	if err != nil {

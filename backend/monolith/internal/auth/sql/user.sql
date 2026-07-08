@@ -19,6 +19,11 @@ WHERE id = $1;
 UPDATE "user" SET deleted_at = NOW()
 WHERE id = $1;
 
+-- name: GetUserByID :one
+SELECT id, phone, email, profile_image, created_at, updated_at
+FROM "user"
+WHERE id = $1 AND deleted_at IS NULL;
+
 -- name: GetUserByEmail :one
 SELECT id, phone, email, profile_image, created_at, updated_at
 FROM "user"

@@ -19,7 +19,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [vk, yandex]
+            enum: [vk, yandex, google]
           description: OAuth provider identifier
       requestBody:
         required: true

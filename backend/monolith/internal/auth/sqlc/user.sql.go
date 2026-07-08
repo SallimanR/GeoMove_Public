@@ -74,6 +74,35 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 	return i, err
 }
 
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, phone, email, profile_image, created_at, updated_at
+FROM "user"
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+type GetUserByIDRow struct {
+	ID           int64
+	Phone        *string
+	Email        *string
+	ProfileImage *string
+	CreatedAt    time.Time
+	UpdatedAt    *time.Time
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i GetUserByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Phone,
+		&i.Email,
+		&i.ProfileImage,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByOAuth = `-- name: GetUserByOAuth :one
 SELECT u.id, u.phone, u.email, u.profile_image, u.created_at, u.updated_at
 FROM "user" u
