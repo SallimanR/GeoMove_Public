@@ -16,7 +16,6 @@ type Location struct {
 }
 
 type Driver struct {
-	ID           DriverID
 	UserID       int64
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
