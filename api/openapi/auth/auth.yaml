@@ -1,0 +1,148 @@
+openapi: "3.2.0"
+info:
+  title: Authentication API
+  version: 1.0.0
+  description: OAuth2 authentication with VK and Yandex, session management, and profile image upload.
+
+servers:
+  - url: http://localhost:8080/api
+    description: Development server
+
+paths:
+  /auth/{provider}/callback:
+    post:
+      summary: OAuth2 callback endpoint
+      description: Exchanges the authorization code for an access token, creates/updates a user, and establishes a session.
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [vk, yandex]
+          description: OAuth provider identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: Authorization code received from the provider
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int64
+                        example: 123
+                      email:
+                        type: string
+                        example: user@example.com
+        "400":
+          description: Bad request (invalid provider, missing code)
+        "401":
+          description: Unauthorized (invalid token)
+        "500":
+          description: Internal server error
+      security: []
+
+  /auth/logout:
+    post:
+      summary: Logout
+      description: Clears the session cookie and invalidates the session.
+      responses:
+        "200":
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: logged out
+        "401":
+          description: Not authenticated (no session)
+      security:
+        - CookieAuth: []
+    get:
+      summary: Logout (alternative method)
+      description: Same as POST, for convenience.
+      responses:
+        "200":
+          description: Logged out successfully
+        "401":
+          description: Not authenticated
+      security:
+        - CookieAuth: []
+
+  /profile/image:
+    post:
+      summary: Upload profile image
+      description: Receives a cropped image as Base64, stores it, and returns the public URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  description: Base64‑encoded image data (data URL format)
+                  example: data:image/jpeg;base64,/9j/4AAQSkZJR...
+      responses:
+        "200":
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_url:
+                    type: string
+                    example: /static/avatars/550e8400-e29b-41d4-a716-446655440000.jpg
+        "400":
+          description: Invalid image data (format, size, encoding)
+        "401":
+          description: Unauthorized (no valid session)
+        "500":
+          description: Internal server error
+      security:
+        - CookieAuth: []
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+      description: |
+        Opaque session token stored in an HttpOnly, Secure, SameSite=Lax cookie.
+        The cookie is automatically sent by the browser on each request.
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message

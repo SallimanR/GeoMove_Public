@@ -11,6 +11,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 
+	"monolith/internal/auth"
+	"monolith/internal/auth/sqlc"
 	"monolith/internal/database"
 	driverSetup "monolith/internal/domains/driver/setup"
 	geoSetup "monolith/internal/domains/geolocation/setup"
@@ -42,8 +44,12 @@ type Server struct {
 
 	withDriverDomain      bool
 	driverDomain          *driverSetup.DriverDomain
-	WithGeolocationDomain bool
+	withGeolocationDomain bool
 	geolocationDomain     *geoSetup.GeolocationDomain
+
+	withAuth      bool
+	authService   *auth.Service
+	authMiddleware gin.HandlerFunc
 
 	logger zerolog.Logger
 }
@@ -153,7 +159,7 @@ func (s *Server) setupDriverDomain() error {
 	}
 
 	domain := driverSetup.NewDriverDomain(s.db)
-	domain.RegisterHTTPRoutes(s.httpAPI)
+	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware)
 	s.driverDomain = domain
 	return nil
 }
@@ -178,7 +184,7 @@ func (s *Server) setupGeolocationDomain() error {
 
 func WithGeolocationDomain() Option {
 	return func(s *Server) error {
-		s.WithGeolocationDomain = true
+		s.withGeolocationDomain = true
 		return nil
 	}
 }
@@ -202,7 +208,10 @@ func (s *Server) Start() error {
 		s.connectToDatabase()
 	}
 
-	if s.WithGeolocationDomain {
+	if s.withAuth {
+		s.setupAuth()
+	}
+	if s.withGeolocationDomain {
 		err := s.setupGeolocationDomain()
 		if err != nil {
 			return err
@@ -245,6 +254,32 @@ func (s *Server) setupMonitoringRoutes() {
 	// 		"status": s.serviceManager.services,
 	// 	})
 	// })
+}
+
+func (s *Server) setupAuth() {
+	repo := auth.NewRepository(sqlc.New(s.db))
+
+	cfg := auth.LoadConfig()
+	log.Printf("Exchanging code with redirect_uri: %s", cfg.GoogleRedirectURL)
+	providers := auth.GetOAuthProviders(cfg)
+
+	service := auth.NewService(
+		repo,
+		providers,
+		cfg.StaticDir,
+	)
+
+	s.authService = service
+	s.authMiddleware = service.AuthMiddleware()
+
+	auth.RegisterHTTPRoutes(s.httpAPI, service)
+}
+
+func WithAuth() Option {
+	return func(s *Server) error {
+		s.withAuth = true
+		return nil
+	}
 }
 
 func (s *Server) startListening() {
