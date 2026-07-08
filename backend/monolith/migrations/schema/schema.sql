@@ -1,4 +1,4 @@
-\restrict LzSFgvljUIfCBIRHiFbLT4GHuPFjjfCATdwRyAQ285bPuovdfLjMeYRwg8d9xsm
+\restrict yUZtTqy2g1mHdsXDca1M0ASXFNQjgA6g6KLXCzUaKGEBNoxjjdfrzyShSKbbRwb
 
 -- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
 -- Dumped by pg_dump version 18.4
@@ -71,6 +71,20 @@ CREATE EXTENSION IF NOT EXISTS h3_postgis WITH SCHEMA public;
 COMMENT ON EXTENSION h3_postgis IS 'H3 PostGIS integration';
 
 
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -136,6 +150,60 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: session; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.session (
+    token_hash text NOT NULL,
+    session_id uuid DEFAULT public.uuid_generate_v4(),
+    user_id bigint NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    roles text[] DEFAULT '{}'::text[] NOT NULL
+);
+
+
+--
+-- Name: user; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."user" (
+    id bigint NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
+    phone text,
+    email text,
+    profile_image text
+);
+
+
+--
+-- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."user" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.user_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: user_oauth_links; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_oauth_links (
+    user_id bigint NOT NULL,
+    provider text NOT NULL,
+    provider_id text NOT NULL
+);
+
+
+--
 -- Name: driver driver_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -157,6 +225,54 @@ ALTER TABLE ONLY public.driver_realtime
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (token_hash);
+
+
+--
+-- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_email_key UNIQUE (email);
+
+
+--
+-- Name: user_oauth_links user_oauth_links_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_oauth_links
+    ADD CONSTRAINT user_oauth_links_pkey PRIMARY KEY (user_id, provider);
+
+
+--
+-- Name: user user_phone_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_phone_key UNIQUE (phone);
+
+
+--
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user user_profile_image_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_profile_image_key UNIQUE (profile_image);
 
 
 --
@@ -195,6 +311,27 @@ CREATE INDEX idx_driver_realtime_location ON public.driver_realtime USING gist (
 
 
 --
+-- Name: idx_session_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_session_expires_at ON public.session USING btree (expires_at);
+
+
+--
+-- Name: idx_session_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_session_user_id ON public.session USING btree (user_id);
+
+
+--
+-- Name: idx_user_oauth_links_provider; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_oauth_links_provider ON public.user_oauth_links USING btree (provider, provider_id);
+
+
+--
 -- Name: driver_realtime driver_realtime_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -203,10 +340,26 @@ ALTER TABLE ONLY public.driver_realtime
 
 
 --
+-- Name: session session_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_oauth_links user_oauth_links_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_oauth_links
+    ADD CONSTRAINT user_oauth_links_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LzSFgvljUIfCBIRHiFbLT4GHuPFjjfCATdwRyAQ285bPuovdfLjMeYRwg8d9xsm
+\unrestrict yUZtTqy2g1mHdsXDca1M0ASXFNQjgA6g6KLXCzUaKGEBNoxjjdfrzyShSKbbRwb
 
 
 --
@@ -216,5 +369,7 @@ ALTER TABLE ONLY public.driver_realtime
 INSERT INTO public.schema_migrations (version) VALUES
     ('20260110181007'),
     ('20260110181146'),
+    ('20260322214503'),
+    ('20260323100924'),
     ('20260705102447'),
     ('20260706094702');

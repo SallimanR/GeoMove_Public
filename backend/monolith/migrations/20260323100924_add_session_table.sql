@@ -1,25 +1,17 @@
 -- migrate:up
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE session (
-	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-	user_id BIGINT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-	created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	expires_at TIMESTAMP NOT NULL,
-	revoked_at TIMESTAMP WITHOUT TIME ZONE,
-	ip_adress INET,
-	user_agent TEXT
-	-- oauth2_id TEXT
+    token_hash   TEXT PRIMARY KEY,
+    session_id   UUID DEFAULT uuid_generate_v4(),
+    user_id      BIGINT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    created_at   TIMESTAMP NOT NULL DEFAULT NOW(),
+    expires_at   TIMESTAMP NOT NULL,
+    roles        TEXT[] NOT NULL DEFAULT '{}'
 );
 
-CREATE TABLE access_token (
-	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-	session_id BIGINT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-	token_hash TEXT NOT NULL UNIQUE,
-	expires_at TIMESTAMP NOT NULL,
-	revoked_at TIMESTAMP
-);
-
-CREATE INDEX idx_token_hash ON access_token(token_hash);
+CREATE INDEX idx_session_user_id ON session(user_id);
+CREATE INDEX idx_session_expires_at ON session(expires_at);
 
 -- migrate:down
-DROP TABLE access_token;
 DROP TABLE session;
