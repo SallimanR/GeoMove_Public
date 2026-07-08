@@ -11,7 +11,6 @@ import (
 )
 
 type Driver struct {
-	ID           uint32
 	UserID       int64
 	CreatedAt    *time.Time
 	UpdatedAt    *time.Time
@@ -28,7 +27,7 @@ type Driver struct {
 }
 
 type DriverRealtime struct {
-	DriverID            uint32
+	UserID              int64
 	UpdatedAt           *time.Time
 	RealtimeLocation    interface{}
 	AverageSpeed        *float32

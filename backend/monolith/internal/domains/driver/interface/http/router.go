@@ -8,8 +8,8 @@ func RegisterDriverRoutes(router *gin.RouterGroup, h *DriverHandler, authMiddlew
 	driver := router.Group("/driver")
 	{
 		driver.POST("/", h.CreateDriver)
-		driver.GET("/:id", h.GetDriverByID)
 		driver.POST("/filter", h.GetFilteredDrivers)
+		driver.GET("/:user_id", h.GetDriverByUserID)
 
 		profile := driver.Group("/profile")
 		profile.Use(authMiddleware)

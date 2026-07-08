@@ -7,10 +7,6 @@ import (
 	"monolith/internal/domains/driver/domain/repository"
 )
 
-type GetDriverByUserIDQuery struct {
-	UserID int64
-}
-
 type GetDriverByUserIDHandler struct {
 	driverRepo repository.DriverRepository
 }
@@ -21,8 +17,8 @@ func NewGetDriverByUserIDHandler(driverRepo repository.DriverRepository) *GetDri
 	}
 }
 
-func (h *GetDriverByUserIDHandler) Handle(ctx context.Context, query GetDriverByUserIDQuery) (*entity.Driver, error) {
-	driver, err := h.driverRepo.GetDriverByUserID(ctx, query.UserID)
+func (h *GetDriverByUserIDHandler) Handle(ctx context.Context, id int64) (*entity.Driver, error) {
+	driver, err := h.driverRepo.GetDriverByUserID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

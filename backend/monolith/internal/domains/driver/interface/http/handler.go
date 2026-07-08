@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,25 +10,21 @@ import (
 	"monolith/internal/auth"
 	"monolith/internal/domains/driver/application/command"
 	"monolith/internal/domains/driver/application/query"
-	"monolith/internal/domains/driver/domain/entity"
 )
 
 type DriverHandler struct {
 	createDriver       *command.CreateDriverHandler
-	getDriverByID      *query.GetDriverByIDHandler
 	getDriverByUserID  *query.GetDriverByUserIDHandler
 	getFilteredDrivers *query.GetFilteredDriversHandler
 }
 
 func NewDriverHandler(
 	createDriver *command.CreateDriverHandler,
-	findDriverByID *query.GetDriverByIDHandler,
 	getDriverByUserID *query.GetDriverByUserIDHandler,
 	getFilteredDrivers *query.GetFilteredDriversHandler,
 ) *DriverHandler {
 	return &DriverHandler{
 		createDriver:       createDriver,
-		getDriverByID:      findDriverByID,
 		getDriverByUserID:  getDriverByUserID,
 		getFilteredDrivers: getFilteredDrivers,
 	}
@@ -47,39 +44,13 @@ func (h *DriverHandler) CreateDriver(ctx *gin.Context) {
 		Latitude:   req.Lat,
 		Longitude:  req.Lon,
 	}
-	driver, err := h.createDriver.Handle(ctx.Request.Context(), cmd)
+	err = h.createDriver.Handle(ctx.Request.Context(), cmd)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	resp := CreateDriver201JSONResponse{Id: int(driver.ID)}
-	ctx.JSON(http.StatusCreated, resp)
-}
-
-func (h *DriverHandler) GetDriverByID(ctx *gin.Context) {
-	var req GetDriverByIdRequestObject
-	err := ctx.ShouldBindQuery(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{})
-		return
-	}
-
-	cmd := query.GetDriverByIDQuery{
-		DriverID: entity.DriverID(req.Id),
-	}
-	driver, err := h.getDriverByID.Handle(ctx.Request.Context(), cmd)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{})
-		return
-	}
-
-	resp := GetDriverById200JSONResponse{
-		WorkStarts: driver.WorkStarts,
-		WorkEnds:   driver.WorkEnds,
-		Rating:     driver.Rating,
-	}
-	ctx.JSON(http.StatusOK, resp)
+	ctx.JSON(http.StatusCreated, nil)
 }
 
 func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
@@ -128,13 +99,41 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 		Latitude:   req.Lat,
 		Longitude:  req.Lon,
 	}
-	driver, err := h.createDriver.Handle(ctx.Request.Context(), cmd)
+	err := h.createDriver.Handle(ctx.Request.Context(), cmd)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"id": int(driver.ID)})
+	ctx.JSON(http.StatusCreated, gin.H{})
+}
+
+func (h *DriverHandler) GetDriverByUserID(ctx *gin.Context) {
+	userIDStr := ctx.Param("user_id")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		return
+	}
+
+	driver, err := h.getDriverByUserID.Handle(ctx.Request.Context(), userID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "driver profile not found"})
+		return
+	}
+
+	resp := Driver{
+		UserId:       driver.UserID,
+		Name:         driver.Name,
+		Lat:          driver.Location.Lat,
+		Lon:          driver.Location.Lon,
+		ProfileImage: driver.ProfileImage,
+		IsAvailable:  &driver.IsAvailable,
+		WorkStarts:   driver.WorkStarts,
+		WorkEnds:     driver.WorkEnds,
+		Rating:       driver.Rating,
+	}
+	ctx.JSON(http.StatusOK, resp)
 }
 
 func (h *DriverHandler) GetMyDriverProfile(ctx *gin.Context) {
@@ -145,23 +144,22 @@ func (h *DriverHandler) GetMyDriverProfile(ctx *gin.Context) {
 	}
 	session := sessionVal.(*auth.Session)
 
-	qry := query.GetDriverByUserIDQuery{
-		UserID: session.UserID,
-	}
-	driver, err := h.getDriverByUserID.Handle(ctx.Request.Context(), qry)
+	driver, err := h.getDriverByUserID.Handle(ctx.Request.Context(), session.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "driver profile not found"})
 		return
 	}
 
 	resp := Driver{
-		Id:         int32(driver.ID),
-		Name:       driver.Name,
-		Lat:        driver.Location.Lat,
-		Lon:        driver.Location.Lon,
-		WorkStarts: driver.WorkStarts,
-		WorkEnds:   driver.WorkEnds,
-		Rating:     driver.Rating,
+		UserId:       driver.UserID,
+		Name:         driver.Name,
+		Lat:          driver.Location.Lat,
+		Lon:          driver.Location.Lon,
+		ProfileImage: driver.ProfileImage,
+		IsAvailable:  &driver.IsAvailable,
+		WorkStarts:   driver.WorkStarts,
+		WorkEnds:     driver.WorkEnds,
+		Rating:       driver.Rating,
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
@@ -191,13 +189,15 @@ func (h *DriverHandler) GetFilteredDrivers(ctx *gin.Context) {
 	driversRes := make([]Driver, 0, len(drivers))
 	for _, driver := range drivers {
 		driversRes = append(driversRes, Driver{
-			Id:         int32(driver.ID),
-			Name:       driver.Name,
-			Lat:        driver.Location.Lat,
-			Lon:        driver.Location.Lon,
-			WorkStarts: driver.WorkStarts,
-			WorkEnds:   driver.WorkEnds,
-			Rating:     driver.Rating,
+			UserId:       driver.UserID,
+			Name:         driver.Name,
+			Lat:          driver.Location.Lat,
+			Lon:          driver.Location.Lon,
+			ProfileImage: driver.ProfileImage,
+			IsAvailable:  &driver.IsAvailable,
+			WorkStarts:   driver.WorkStarts,
+			WorkEnds:     driver.WorkEnds,
+			Rating:       driver.Rating,
 		})
 	}
 

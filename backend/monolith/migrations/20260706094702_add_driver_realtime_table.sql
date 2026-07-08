@@ -1,6 +1,6 @@
 -- migrate:up
 CREATE TABLE driver_realtime (
-	driver_id BIGINT PRIMARY KEY REFERENCES driver(id) ON DELETE CASCADE,
+	user_id BIGINT PRIMARY KEY REFERENCES driver(user_id) ON DELETE CASCADE,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 	realtime_location public.geography(Point, 4326),

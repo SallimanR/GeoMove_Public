@@ -19,7 +19,7 @@ func NewDriverRepository(queries *sqlc.Queries) repository.DriverRepository {
 	}
 }
 
-func (r *DriverRepository) CreateDriver(ctx context.Context, driver *entity.Driver) (entity.DriverID, error) {
+func (r *DriverRepository) CreateDriver(ctx context.Context, driver *entity.Driver) error {
 	query := sqlc.CreateDriverParams{
 		UserID:     driver.UserID,
 		Name:       driver.Name,
@@ -28,26 +28,9 @@ func (r *DriverRepository) CreateDriver(ctx context.Context, driver *entity.Driv
 		Lat:        driver.Location.Lat,
 		Lon:        driver.Location.Lon,
 	}
-	driverID, err := r.queries.CreateDriver(ctx, query)
-	if err != nil {
-		return 0, err
-	}
-	return entity.DriverID(driverID), nil
-}
+	err := r.queries.CreateDriver(ctx, query)
 
-func (r *DriverRepository) GetDriverByID(ctx context.Context, id entity.DriverID) (*entity.Driver, error) {
-	row, err := r.queries.GetDriverByID(ctx, uint32(id))
-	if err != nil {
-		return nil, err
-	}
-
-	driver := &entity.Driver{
-		ID: entity.DriverID(row.ID),
-		// WorkStarts: row.WorkStarts,
-		Location: entity.Location{Lat: row.Lat, Lon: row.Lon},
-	}
-
-	return driver, nil
+	return err
 }
 
 func (r *DriverRepository) GetDriverByUserID(ctx context.Context, userID int64) (*entity.Driver, error) {
@@ -57,7 +40,6 @@ func (r *DriverRepository) GetDriverByUserID(ctx context.Context, userID int64) 
 	}
 
 	driver := &entity.Driver{
-		ID:           entity.DriverID(row.ID),
 		UserID:       row.UserID,
 		Name:         row.Name,
 		ProfileImage: row.ProfileImage,
@@ -93,18 +75,16 @@ func (r *DriverRepository) GetFilteredDrivers(ctx context.Context, filter reposi
 
 	resp := make([]entity.Driver, 0, len(rows))
 	for _, row := range rows {
-		driverID := entity.DriverID(row.ID)
-
 		resp = append(resp, entity.Driver{
-			ID:         driverID,
-			Name:       row.Name,
-			WorkStarts: row.WorkStarts,
-			WorkEnds:   row.WorkEnds,
-			Rating:     row.Rating,
-			Location: entity.Location{
-				Lat: row.Lat,
-				Lon: row.Lon,
-			},
+			UserID:       row.UserID,
+			Name:         row.Name,
+			ProfileImage: row.ProfileImage,
+			WorkStarts:   row.WorkStarts,
+			WorkEnds:     row.WorkEnds,
+			IsAvailable:  row.IsAvailable,
+			LastSeen:     row.LastSeen.Time,
+			Rating:       row.Rating,
+			Location:     entity.Location{Lat: row.Lat, Lon: row.Lon},
 		})
 	}
 

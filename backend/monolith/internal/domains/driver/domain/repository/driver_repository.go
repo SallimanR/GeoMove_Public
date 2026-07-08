@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"monolith/internal/domains/driver/domain/entity"
 )
 
@@ -13,11 +14,8 @@ type DriverFilter struct {
 }
 
 type DriverRepository interface {
-	// Write (commands)
-	CreateDriver(ctx context.Context, driver *entity.Driver) (entity.DriverID, error)
+	CreateDriver(ctx context.Context, driver *entity.Driver) error
 
-	// Read (queries)
-	GetDriverByID(ctx context.Context, id entity.DriverID) (*entity.Driver, error)
 	GetDriverByUserID(ctx context.Context, userID int64) (*entity.Driver, error)
 	GetFilteredDrivers(ctx context.Context, filter DriverFilter) ([]entity.Driver, error)
 }

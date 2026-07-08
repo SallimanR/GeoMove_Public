@@ -1,4 +1,4 @@
-\restrict ctTuwXJWAt6IaTZkFbzaLIMxjldCcMpV4uNPS9Le44Wwv5oe3nTS2FiyCNXqGVV
+\restrict ClFuQyMcrbAUMIpQfNuong3JhJ94E0bF3G8w0tbywRpwbMp2RHgcg0aZm70Gys9
 
 -- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
 -- Dumped by pg_dump version 18.4
@@ -94,7 +94,6 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.driver (
-    id bigint NOT NULL,
     user_id bigint NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone,
@@ -112,25 +111,11 @@ CREATE TABLE public.driver (
 
 
 --
--- Name: driver_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-ALTER TABLE public.driver ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME public.driver_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
-
---
 -- Name: driver_realtime; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.driver_realtime (
-    driver_id bigint NOT NULL,
+    user_id bigint NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     realtime_location public.geography(Point,4326),
     average_speed real,
@@ -205,19 +190,11 @@ CREATE TABLE public.user_oauth_links (
 
 
 --
--- Name: driver driver_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.driver
-    ADD CONSTRAINT driver_pkey PRIMARY KEY (id);
-
-
---
 -- Name: driver_realtime driver_realtime_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.driver_realtime
-    ADD CONSTRAINT driver_realtime_pkey PRIMARY KEY (driver_id);
+    ADD CONSTRAINT driver_realtime_pkey PRIMARY KEY (user_id);
 
 
 --
@@ -340,11 +317,11 @@ CREATE INDEX idx_user_oauth_links_provider ON public.user_oauth_links USING btre
 
 
 --
--- Name: driver_realtime driver_realtime_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: driver_realtime driver_realtime_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.driver_realtime
-    ADD CONSTRAINT driver_realtime_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(id) ON DELETE CASCADE;
+    ADD CONSTRAINT driver_realtime_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
 
 
 --
@@ -375,7 +352,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ctTuwXJWAt6IaTZkFbzaLIMxjldCcMpV4uNPS9Le44Wwv5oe3nTS2FiyCNXqGVV
+\unrestrict ClFuQyMcrbAUMIpQfNuong3JhJ94E0bF3G8w0tbywRpwbMp2RHgcg0aZm70Gys9
 
 
 --

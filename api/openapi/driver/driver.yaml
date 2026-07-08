@@ -15,14 +15,14 @@ components:
     Driver:
       type: object
       required:
-        - id
+        - user_id
         - lat
         - lon
         - name
       properties:
-        id:
+        user_id:
           type: integer
-          format: int32
+          format: int64
         lat:
           type: number
           format: float
@@ -87,16 +87,6 @@ paths:
       responses:
         '201':
           description: Driver profile created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - id
-                properties:
-                  id:
-                    type: integer
-                    description: ID of the newly created driver
         '400':
           description: Invalid input or driver profile already exists
         '401':
@@ -155,28 +145,19 @@ paths:
       responses:
         '201':
           description: Driver created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - id
-                properties:
-                  id:
-                    type: integer
-                    description: ID of the newly created driver
         '400':
           description: Invalid input
 
-  /drivers/{id}:
+  /drivers/{user_id}:
     get:
-      operationId: getDriverById
+      operationId: getDriverByUserId
       parameters:
-        - name: id
+        - name: user_id
           in: path
           required: true
           schema:
             type: integer
+            format: int64
       responses:
         '200':
           description: Driver details
@@ -184,26 +165,8 @@ paths:
             application/json:
               schema:
                 type: object
-                required:
-                  - id
-                properties:
-                  id:
-                    type: integer
-                  work_starts:
-                    type: string
-                    format: date-time
-                  work_ends:
-                    type: string
-                    format: date-time
-                  lat:
-                    type: number
-                    format: float
-                  lon:
-                    type: number
-                    format: float
-                  rating:
-                    type: number
-                    format: float
+                $ref: '#/components/schemas/Driver'
+
         '404':
           description: Driver not found
 

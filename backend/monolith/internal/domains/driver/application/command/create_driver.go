@@ -27,7 +27,7 @@ func NewCreateDriverHandler(repo repository.DriverRepository) *CreateDriverHandl
 	}
 }
 
-func (h *CreateDriverHandler) Handle(ctx context.Context, cmd CreateDriverCommand) (*entity.Driver, error) {
+func (h *CreateDriverHandler) Handle(ctx context.Context, cmd CreateDriverCommand) error {
 	driverOpts := entity.DriverOptions{
 		UserID:     cmd.UserID,
 		Name:       cmd.Name,
@@ -37,12 +37,8 @@ func (h *CreateDriverHandler) Handle(ctx context.Context, cmd CreateDriverComman
 	}
 	driver, err := entity.NewDriver(driverOpts)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	driverID, err := h.repo.CreateDriver(ctx, driver)
-	driver.ID = driverID
-	if err != nil {
-		return nil, err
-	}
-	return driver, nil
+	err = h.repo.CreateDriver(ctx, driver)
+	return err
 }

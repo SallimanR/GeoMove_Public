@@ -1,4 +1,4 @@
--- name: CreateDriver :one
+-- name: CreateDriver :exec
 INSERT INTO
 	driver (
 		user_id,
@@ -7,23 +7,10 @@ INSERT INTO
 		work_ends,
 		location,
 		rating
-	) VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint(@lon::REAL, @lat::REAL), 4326), $5)
-RETURNING id;
-
--- name: GetDriverByID :one
-SELECT
-	id,
-	work_starts,
-	work_ends,
-	rating,
-	ST_X(location::geometry)::REAL as lon,
-	ST_Y(location::geometry)::REAL as lat
-FROM driver
-WHERE id = $1;
+	) VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint(@lon::REAL, @lat::REAL), 4326), $5);
 
 -- name: GetDriverByUserID :one
 SELECT
-	id,
 	user_id,
 	name,
 	profile_image,
@@ -39,17 +26,20 @@ WHERE user_id = $1;
 
 -- name: GetFilteredDrivers :many
 SELECT 
-    id,
+    user_id,
 	name,
+	profile_image,
     work_starts, 
     work_ends, 
+	is_available,
+	last_seen,
     rating, 
 	ST_X(location::GEOMETRY)::REAL AS lon,
 	ST_Y(location::GEOMETRY)::REAL AS lat,
     st_distance(
         location, 
         st_setsrid(
-            st_makepoint(@lat::REAL, @lon::REAL), 
+            st_makepoint(@lon::REAL, @lat::REAL), 
             4326
         )::geometry
     )::real AS distance
@@ -59,4 +49,3 @@ WHERE
     AND (sqlc.narg('work_ends')::TIME IS NULL OR work_ends >= sqlc.narg('work_ends'))
     AND (sqlc.narg('min_rating')::REAL IS NULL OR rating >= sqlc.narg('min_rating'))
 ORDER BY distance;
-

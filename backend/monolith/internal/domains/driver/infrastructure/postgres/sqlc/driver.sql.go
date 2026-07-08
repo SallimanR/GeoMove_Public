@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createDriver = `-- name: CreateDriver :one
+const createDriver = `-- name: CreateDriver :exec
 INSERT INTO
 	driver (
 		user_id,
@@ -22,7 +22,6 @@ INSERT INTO
 		location,
 		rating
 	) VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($6::REAL, $7::REAL), 4326), $5)
-RETURNING id
 `
 
 type CreateDriverParams struct {
@@ -35,8 +34,8 @@ type CreateDriverParams struct {
 	Lat        float32
 }
 
-func (q *Queries) CreateDriver(ctx context.Context, arg CreateDriverParams) (uint32, error) {
-	row := q.db.QueryRow(ctx, createDriver,
+func (q *Queries) CreateDriver(ctx context.Context, arg CreateDriverParams) error {
+	_, err := q.db.Exec(ctx, createDriver,
 		arg.UserID,
 		arg.Name,
 		arg.WorkStarts,
@@ -45,49 +44,11 @@ func (q *Queries) CreateDriver(ctx context.Context, arg CreateDriverParams) (uin
 		arg.Lon,
 		arg.Lat,
 	)
-	var id uint32
-	err := row.Scan(&id)
-	return id, err
-}
-
-const getDriverByID = `-- name: GetDriverByID :one
-SELECT
-	id,
-	work_starts,
-	work_ends,
-	rating,
-	ST_X(location::geometry)::REAL as lon,
-	ST_Y(location::geometry)::REAL as lat
-FROM driver
-WHERE id = $1
-`
-
-type GetDriverByIDRow struct {
-	ID         uint32
-	WorkStarts *time.Time
-	WorkEnds   *time.Time
-	Rating     *float32
-	Lon        float32
-	Lat        float32
-}
-
-func (q *Queries) GetDriverByID(ctx context.Context, id uint32) (GetDriverByIDRow, error) {
-	row := q.db.QueryRow(ctx, getDriverByID, id)
-	var i GetDriverByIDRow
-	err := row.Scan(
-		&i.ID,
-		&i.WorkStarts,
-		&i.WorkEnds,
-		&i.Rating,
-		&i.Lon,
-		&i.Lat,
-	)
-	return i, err
+	return err
 }
 
 const getDriverByUserID = `-- name: GetDriverByUserID :one
 SELECT
-	id,
 	user_id,
 	name,
 	profile_image,
@@ -103,7 +64,6 @@ WHERE user_id = $1
 `
 
 type GetDriverByUserIDRow struct {
-	ID           uint32
 	UserID       int64
 	Name         string
 	ProfileImage *string
@@ -120,7 +80,6 @@ func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDrive
 	row := q.db.QueryRow(ctx, getDriverByUserID, userID)
 	var i GetDriverByUserIDRow
 	err := row.Scan(
-		&i.ID,
 		&i.UserID,
 		&i.Name,
 		&i.ProfileImage,
@@ -137,10 +96,13 @@ func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDrive
 
 const getFilteredDrivers = `-- name: GetFilteredDrivers :many
 SELECT 
-    id,
+    user_id,
 	name,
+	profile_image,
     work_starts, 
     work_ends, 
+	is_available,
+	last_seen,
     rating, 
 	ST_X(location::GEOMETRY)::REAL AS lon,
 	ST_Y(location::GEOMETRY)::REAL AS lat,
@@ -160,28 +122,31 @@ ORDER BY distance
 `
 
 type GetFilteredDriversParams struct {
-	Lat        float32
 	Lon        float32
+	Lat        float32
 	WorkStarts *time.Time
 	WorkEnds   *time.Time
 	MinRating  *float32
 }
 
 type GetFilteredDriversRow struct {
-	ID         uint32
-	Name       string
-	WorkStarts *time.Time
-	WorkEnds   *time.Time
-	Rating     *float32
-	Lon        float32
-	Lat        float32
-	Distance   float32
+	UserID       int64
+	Name         string
+	ProfileImage *string
+	WorkStarts   *time.Time
+	WorkEnds     *time.Time
+	IsAvailable  bool
+	LastSeen     pgtype.Timestamptz
+	Rating       *float32
+	Lon          float32
+	Lat          float32
+	Distance     float32
 }
 
 func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDriversParams) ([]GetFilteredDriversRow, error) {
 	rows, err := q.db.Query(ctx, getFilteredDrivers,
-		arg.Lat,
 		arg.Lon,
+		arg.Lat,
 		arg.WorkStarts,
 		arg.WorkEnds,
 		arg.MinRating,
@@ -194,10 +159,13 @@ func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDrivers
 	for rows.Next() {
 		var i GetFilteredDriversRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.UserID,
 			&i.Name,
+			&i.ProfileImage,
 			&i.WorkStarts,
 			&i.WorkEnds,
+			&i.IsAvailable,
+			&i.LastSeen,
 			&i.Rating,
 			&i.Lon,
 			&i.Lat,
@@ -211,4 +179,20 @@ func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDrivers
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateDriverProfileImage = `-- name: UpdateDriverProfileImage :exec
+UPDATE driver
+SET profile_image = $2, updated_at = NOW()
+WHERE user_id = $1
+`
+
+type UpdateDriverProfileImageParams struct {
+	UserID       int64
+	ProfileImage *string
+}
+
+func (q *Queries) UpdateDriverProfileImage(ctx context.Context, arg UpdateDriverProfileImageParams) error {
+	_, err := q.db.Exec(ctx, updateDriverProfileImage, arg.UserID, arg.ProfileImage)
+	return err
 }
