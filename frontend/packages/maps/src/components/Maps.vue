@@ -8,7 +8,7 @@ import { useRouteDisplay } from "../composables/useRouteDisplay.ts";
 
 import MapsCentralMarker from "./MapsCentralMarker.vue";
 
-const props = defineProps(["styleApi", "tilesApi"]);
+const props = defineProps(["styleApi"]);
 
 const { map, initMap } = useMaps();
 
@@ -16,7 +16,7 @@ const mapContainer = ref<HTMLElement>();
 
 onMounted(() => {
   if (!mapContainer.value) return;
-  initMap(mapContainer.value, {}, props.styleApi, props.tilesApi);
+  initMap(mapContainer.value, {}, props.styleApi);
 
   const mapInstance = map.value as MaplibreMaps | null;
   if (!mapInstance) return;

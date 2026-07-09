@@ -1,6 +1,8 @@
 import { provide, inject, onUnmounted } from 'vue'
-import { Map as MaplibreMap, type MapOptions, GeolocateControl } from "maplibre-gl"
+import { Map as MaplibreMap, type MapOptions, GeolocateControl, addProtocol } from "maplibre-gl"
+import { Protocol } from "pmtiles";
 import { MapboxOverlay } from '@deck.gl/mapbox';
+
 import { $coords, $deckOverlay, $mapInstance } from '../stores/mapsStore';
 import { getMapConfig, MapLayer_3dLayer } from '../mapConfig';
 
@@ -16,7 +18,7 @@ export function useMaps() {
 	const map = $mapInstance
 	const deckOverlay = $deckOverlay
 
-	const initMap = (container: HTMLElement, options: Partial<MapOptions> = {}, styleApi: string, tilesApi: string): void => {
+	const initMap = (container: HTMLElement, options: Partial<MapOptions> = {}, styleApi: string): void => {
 		if (map.value) return
 
 		const mapConfig = getMapConfig(styleApi)
@@ -27,6 +29,9 @@ export function useMaps() {
 				container,
 			}
 		)
+
+		let protocol = new Protocol();
+		addProtocol("pmtiles", protocol.tile);
 
 		const center = mapInstance.getCenter();
 		$coords.setKey("center", { lat: center.lat, lon: center.lng });
@@ -43,11 +48,6 @@ export function useMaps() {
 					break;
 				}
 			}
-
-			mapInstance.addSource("map-tiles", {
-				url: tilesApi,
-				type: "vector",
-			});
 
 			mapInstance.addLayer(
 				MapLayer_3dLayer,

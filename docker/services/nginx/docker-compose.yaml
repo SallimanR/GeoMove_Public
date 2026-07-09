@@ -10,6 +10,7 @@ services:
       - ./certs/nginx-selfsigned.crt:/etc/nginx/tls/localhost.crt:ro
       - ./certs/nginx-selfsigned.key:/etc/nginx/tls/localhost.key:ro
       - ../../../data/maps:/data/maps:ro
+      - ../../../data/static:/data/static:ro
     networks:
       - tow-network
 # volumes:
