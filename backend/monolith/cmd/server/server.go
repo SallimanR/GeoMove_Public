@@ -14,7 +14,7 @@ import (
 	"monolith/internal/auth"
 	"monolith/internal/auth/sqlc"
 	"monolith/internal/database"
-	driverSetup "monolith/internal/domains/driver/setup"
+	"monolith/internal/domains/driver"
 	"monolith/internal/websockethub"
 )
 
@@ -42,10 +42,10 @@ type Server struct {
 	db        *pgxpool.Pool
 
 	withDriverDomain bool
-	driverDomain*driverSetup.DriverDomain
+	driverDomain     *driver.DriverDomain
 
 	withAuth       bool
-	authService     *auth.Service
+	authService    *auth.Service
 	authMiddleware gin.HandlerFunc
 
 	logger zerolog.Logger
@@ -148,12 +148,12 @@ func WithDriverDomain() Option {
 }
 
 func (s *Server) setupDriverDomain() {
-	domain := driverSetup.NewDriverDomain(s.db)
+	domain := driver.NewDriverDomain(s.db)
 	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware)
 	s.driverDomain = domain
 }
 
-func (s *Server) GetDriverDomain() *driverSetup.DriverDomain {
+func (s *Server) GetDriverDomain() *driver.DriverDomain {
 	return s.driverDomain
 }
 

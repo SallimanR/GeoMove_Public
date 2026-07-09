@@ -1,4 +1,4 @@
-package setup
+package driver
 
 import (
 	"github.com/gin-gonic/gin"
