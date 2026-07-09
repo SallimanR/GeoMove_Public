@@ -75,7 +75,7 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 
 	var workStarts, workEnds *time.Time
 	if req.WorkStarts != nil {
-		t, err := time.Parse("15:04:05", *req.WorkStarts)
+		t, err := time.Parse("15:04", *req.WorkStarts)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_starts format, expected HH:MM:SS"})
 			return
@@ -83,7 +83,7 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 		workStarts = &t
 	}
 	if req.WorkEnds != nil {
-		t, err := time.Parse("15:04:05", *req.WorkEnds)
+		t, err := time.Parse("15:04", *req.WorkEnds)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_ends format, expected HH:MM:SS"})
 			return
