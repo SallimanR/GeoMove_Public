@@ -16,6 +16,7 @@ func RegisterDriverRoutes(router *gin.RouterGroup, h *DriverHandler, authMiddlew
 		{
 			profile.POST("/", h.CreateDriverProfile)
 			profile.GET("/", h.GetMyDriverProfile)
+			profile.POST("/image", h.UploadProfileImage)
 		}
 	}
 }

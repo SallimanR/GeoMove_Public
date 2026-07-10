@@ -15,6 +15,7 @@ type DriverFilter struct {
 
 type DriverRepository interface {
 	CreateDriver(ctx context.Context, driver *entity.Driver) error
+	UpdateProfileImage(ctx context.Context, userID int64, imageURL string) error
 
 	GetDriverByUserID(ctx context.Context, userID int64) (*entity.Driver, error)
 	GetFilteredDrivers(ctx context.Context, filter DriverFilter) ([]entity.Driver, error)

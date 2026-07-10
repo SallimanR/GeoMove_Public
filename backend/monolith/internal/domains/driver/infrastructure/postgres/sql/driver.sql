@@ -9,6 +9,11 @@ INSERT INTO
 		rating
 	) VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint(@lon::REAL, @lat::REAL), 4326), $5);
 
+-- name: UpdateDriverProfileImage :exec
+UPDATE driver
+SET profile_image = $2, updated_at = NOW()
+WHERE user_id = $1;
+
 -- name: GetDriverByUserID :one
 SELECT
 	user_id,

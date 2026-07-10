@@ -1,11 +1,19 @@
 package http
 
 import (
+	"bytes"
+	"encoding/base64"
+	"fmt"
+	"image"
+	"image/jpeg"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"monolith/internal/auth"
 	"monolith/internal/domains/driver/application/command"
@@ -16,17 +24,23 @@ type DriverHandler struct {
 	createDriver       *command.CreateDriverHandler
 	getDriverByUserID  *query.GetDriverByUserIDHandler
 	getFilteredDrivers *query.GetFilteredDriversHandler
+	updateProfileImage *command.UpdateProfileImageHandler
+	staticDir          string
 }
 
 func NewDriverHandler(
 	createDriver *command.CreateDriverHandler,
 	getDriverByUserID *query.GetDriverByUserIDHandler,
 	getFilteredDrivers *query.GetFilteredDriversHandler,
+	updateProfileImage *command.UpdateProfileImageHandler,
+	staticDir string,
 ) *DriverHandler {
 	return &DriverHandler{
 		createDriver:       createDriver,
 		getDriverByUserID:  getDriverByUserID,
 		getFilteredDrivers: getFilteredDrivers,
+		updateProfileImage: updateProfileImage,
+		staticDir:          staticDir,
 	}
 }
 
@@ -162,6 +176,82 @@ func (h *DriverHandler) GetMyDriverProfile(ctx *gin.Context) {
 		Rating:       driver.Rating,
 	}
 	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *DriverHandler) UploadProfileImage(ctx *gin.Context) {
+	sessionVal, exists := ctx.Get("session")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*auth.Session)
+
+	var req struct {
+		Image string `json:"image"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	imageURL, err := saveProfileImage(req.Image, h.staticDir)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cmd := command.UpdateProfileImageCommand{
+		UserID:   session.UserID,
+		ImageURL: imageURL,
+	}
+	if err := h.updateProfileImage.Handle(ctx.Request.Context(), cmd); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile image"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"image_url": imageURL})
+}
+
+func saveProfileImage(imageBase64, staticDir string) (string, error) {
+	parts := bytes.SplitN([]byte(imageBase64), []byte(","), 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid image data")
+	}
+	data, err := base64.StdEncoding.DecodeString(string(parts[1]))
+	if err != nil {
+		return "", fmt.Errorf("invalid base64")
+	}
+	const maxSize = 5 * 1024 * 1024
+	if len(data) > maxSize {
+		return "", fmt.Errorf("image too large")
+	}
+
+	img, format, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return "", fmt.Errorf("invalid image format")
+	}
+	if format != "jpeg" && format != "png" {
+		return "", fmt.Errorf("unsupported format: %s", format)
+	}
+
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 85}); err != nil {
+		return "", fmt.Errorf("encoding image: %w", err)
+	}
+
+	uploadDir := staticDir
+	if uploadDir == "" {
+		uploadDir = "../../data/static/avatars"
+	}
+	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+		return "", fmt.Errorf("mkdir: %w", err)
+	}
+	filename := uuid.New().String() + ".jpg"
+	filePath := filepath.Join(uploadDir, filename)
+	if err := os.WriteFile(filePath, buf.Bytes(), 0o644); err != nil {
+		return "", fmt.Errorf("write file: %w", err)
+	}
+	return "/static/avatars/" + filename, nil
 }
 
 func (h *DriverHandler) GetFilteredDrivers(ctx *gin.Context) {

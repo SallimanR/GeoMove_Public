@@ -33,6 +33,13 @@ func (r *DriverRepository) CreateDriver(ctx context.Context, driver *entity.Driv
 	return err
 }
 
+func (r *DriverRepository) UpdateProfileImage(ctx context.Context, userID int64, imageURL string) error {
+	return r.queries.UpdateDriverProfileImage(ctx, sqlc.UpdateDriverProfileImageParams{
+		UserID:       userID,
+		ProfileImage: &imageURL,
+	})
+}
+
 func (r *DriverRepository) GetDriverByUserID(ctx context.Context, userID int64) (*entity.Driver, error) {
 	row, err := r.queries.GetDriverByUserID(ctx, userID)
 	if err != nil {
