@@ -3,8 +3,8 @@ services:
     image: docker.io/library/nginx:mainline-alpine3.23
     container_name: tow-nginx
     ports:
-      - "8050:443/tcp"
-      - "8050:443/udp"
+      - "443:443/tcp"
+      - "443:443/udp"
       - "80:80/tcp"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
@@ -14,9 +14,11 @@ services:
       - ../../../data/static:/data/static:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - tow-network
+      - geoproj-network
 
 networks:
-  tow-network:
-    driver: bridge
+  geoproj-network:
+    external: true

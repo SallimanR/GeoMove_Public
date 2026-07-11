@@ -1,19 +1,22 @@
 services:
   photon:
     image: ghcr.io/rtuszik/photon-docker:latest
-    container_name: tow-photon
+    container_name: geoproj-photon
     environment:
       - UPDATE_STRATEGY=PARALLEL
       - UPDATE_INTERVAL=30d
       - LOG_LEVEL=DEBUG # Options: DEBUG, INFO, ERROR
       # - BASE_URL=https://r2.koalasec.org/public
-      # - REGION=andorra
-      - BASE_URL=https://download1.graphhopper.com/public/
+      # - BASE_URL=https://download1.graphhopper.com/public/
       - REGION=ru
     volumes:
-      - tow-photon_data:/photon/data
+      - ./data:/photon/data
     restart: unless-stopped
     ports:
       - "2322:2322"
-volumes:
-  tow-photon_data:
+    networks:
+      - geoproj-network
+
+networks:
+  geoproj-network:
+    external: true
