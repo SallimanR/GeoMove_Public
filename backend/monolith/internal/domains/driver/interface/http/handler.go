@@ -18,14 +18,20 @@ import (
 	"monolith/internal/auth"
 	"monolith/internal/domains/driver/application/command"
 	"monolith/internal/domains/driver/application/query"
+	"monolith/internal/domains/driver/domain/entity"
 )
 
 type DriverHandler struct {
-	createDriver       *command.CreateDriverHandler
-	getDriverByUserID  *query.GetDriverByUserIDHandler
-	getFilteredDrivers *query.GetFilteredDriversHandler
-	updateProfileImage *command.UpdateProfileImageHandler
-	staticDir          string
+	createDriver              *command.CreateDriverHandler
+	getDriverByUserID         *query.GetDriverByUserIDHandler
+	getFilteredDrivers        *query.GetFilteredDriversHandler
+	updateProfileImage        *command.UpdateProfileImageHandler
+	createFreelyAvailable     *command.CreateFreelyAvailableHandler
+	updateFreelyAvailable     *command.UpdateFreelyAvailableHandler
+	deleteFreelyAvailable     *command.DeleteFreelyAvailableHandler
+	getFreelyAvailableByID    *query.GetFreelyAvailableByUserIDHandler
+	getFreelyAvailableDrivers *query.GetFreelyAvailableDriversHandler
+	staticDir                 string
 }
 
 func NewDriverHandler(
@@ -33,38 +39,25 @@ func NewDriverHandler(
 	getDriverByUserID *query.GetDriverByUserIDHandler,
 	getFilteredDrivers *query.GetFilteredDriversHandler,
 	updateProfileImage *command.UpdateProfileImageHandler,
+	createFreelyAvailable *command.CreateFreelyAvailableHandler,
+	updateFreelyAvailable *command.UpdateFreelyAvailableHandler,
+	deleteFreelyAvailable *command.DeleteFreelyAvailableHandler,
+	getFreelyAvailableByID *query.GetFreelyAvailableByUserIDHandler,
+	getFreelyAvailableDrivers *query.GetFreelyAvailableDriversHandler,
 	staticDir string,
 ) *DriverHandler {
 	return &DriverHandler{
-		createDriver:       createDriver,
-		getDriverByUserID:  getDriverByUserID,
-		getFilteredDrivers: getFilteredDrivers,
-		updateProfileImage: updateProfileImage,
-		staticDir:          staticDir,
+		createDriver:              createDriver,
+		getDriverByUserID:         getDriverByUserID,
+		getFilteredDrivers:        getFilteredDrivers,
+		updateProfileImage:        updateProfileImage,
+		createFreelyAvailable:     createFreelyAvailable,
+		updateFreelyAvailable:     updateFreelyAvailable,
+		deleteFreelyAvailable:     deleteFreelyAvailable,
+		getFreelyAvailableByID:    getFreelyAvailableByID,
+		getFreelyAvailableDrivers: getFreelyAvailableDrivers,
+		staticDir:                 staticDir,
 	}
-}
-
-func (h *DriverHandler) CreateDriver(ctx *gin.Context) {
-	var req CreateDriverJSONBody
-	err := ctx.ShouldBindQuery(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	cmd := command.CreateDriverCommand{
-		WorkStarts: &req.WorkStarts,
-		WorkEnds:   &req.WorkEnds,
-		Latitude:   req.Lat,
-		Longitude:  req.Lon,
-	}
-	err = h.createDriver.Handle(ctx.Request.Context(), cmd)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, nil)
 }
 
 func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
@@ -295,4 +288,168 @@ func (h *DriverHandler) GetFilteredDrivers(ctx *gin.Context) {
 		Drivers: &driversRes,
 	}
 	ctx.JSON(http.StatusCreated, resp)
+}
+
+func (h *DriverHandler) CreateFreelyAvailable(ctx *gin.Context) {
+	sessionVal, exists := ctx.Get("session")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*auth.Session)
+
+	var req FreelyAvailable
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	toLocations := make([]entity.LocationWithAddress, 0)
+	if req.ToLocations != nil {
+		for _, l := range *req.ToLocations {
+			toLocations = append(toLocations, entity.LocationWithAddress{Lat: l.Lat, Lon: l.Lon})
+		}
+	}
+
+	cmd := command.CreateFreelyAvailableCommand{
+		UserID:       session.UserID,
+		FromDate:     req.FromDate,
+		ToDate:       req.ToDate,
+		FromLocation: entity.LocationWithAddress{Lat: req.FromLocation.Lat, Lon: req.FromLocation.Lon},
+		ToLocations:  toLocations,
+		EnRouteOrder: req.EnRouteOrder,
+		TariffPerKm:  req.TariffPerKm,
+	}
+	if err := h.createFreelyAvailable.Handle(ctx.Request.Context(), cmd); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{})
+}
+
+func (h *DriverHandler) UpdateFreelyAvailable(ctx *gin.Context) {
+	sessionVal, exists := ctx.Get("session")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*auth.Session)
+
+	var req FreelyAvailable
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	toLocations := make([]entity.LocationWithAddress, 0)
+	if req.ToLocations != nil {
+		for _, l := range *req.ToLocations {
+			toLocations = append(toLocations, entity.LocationWithAddress{Lat: l.Lat, Lon: l.Lon})
+		}
+	}
+
+	cmd := command.UpdateFreelyAvailableCommand{
+		UserID:       session.UserID,
+		FromDate:     req.FromDate,
+		ToDate:       req.ToDate,
+		FromLocation: entity.LocationWithAddress{Lat: req.FromLocation.Lat, Lon: req.FromLocation.Lon},
+		ToLocations:  toLocations,
+		EnRouteOrder: req.EnRouteOrder,
+		TariffPerKm:  req.TariffPerKm,
+	}
+	if err := h.updateFreelyAvailable.Handle(ctx.Request.Context(), cmd); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *DriverHandler) DeleteFreelyAvailable(ctx *gin.Context) {
+	sessionVal, exists := ctx.Get("session")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*auth.Session)
+
+	cmd := command.DeleteFreelyAvailableCommand{UserID: session.UserID}
+	if err := h.deleteFreelyAvailable.Handle(ctx.Request.Context(), cmd); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *DriverHandler) GetFreelyAvailableByID(ctx *gin.Context) {
+	userIDStr := ctx.Param("user_id")
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		return
+	}
+
+	fa, err := h.getFreelyAvailableByID.Handle(ctx.Request.Context(), userID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "freely available entry not found"})
+		return
+	}
+
+	toLocations := make([]Location, 0, len(fa.ToLocations))
+	for _, l := range fa.ToLocations {
+		toLocations = append(toLocations, Location{Lat: l.Lat, Lon: l.Lon, Address: &l.Address})
+	}
+
+	fromAddress := fa.FromLocation.Address
+	resp := FreelyAvailableResponse{
+		UserId:       fa.UserID,
+		FromDate:     fa.FromDate,
+		ToDate:       fa.ToDate,
+		FromLocation: Location{Lat: fa.FromLocation.Lat, Lon: fa.FromLocation.Lon, Address: &fromAddress},
+		ToLocations:  &toLocations,
+		EnRouteOrder: fa.EnRouteOrder,
+		TariffPerKm:  fa.TariffPerKm,
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *DriverHandler) GetFreelyAvailableDrivers(ctx *gin.Context) {
+	var req GetFreelyAvailableDriversRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	qry := query.GetFreelyAvailableDriversQuery{
+		UserLat:      req.UserLat,
+		UserLon:      req.UserLon,
+		EnRouteOrder: req.EnRouteOrder,
+		MinTariff:    req.MinTariff,
+		MaxTariff:    req.MaxTariff,
+	}
+	drivers, err := h.getFreelyAvailableDrivers.Handle(ctx, qry)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	items := make([]FreelyAvailableDriverResponse, 0, len(drivers))
+	for _, d := range drivers {
+		items = append(items, FreelyAvailableDriverResponse{
+			UserId:       d.UserID,
+			FromDate:     d.FromDate,
+			ToDate:       d.ToDate,
+			FromLocation: Location{Lat: d.FromLocation.Lat, Lon: d.FromLocation.Lon, Address: &d.FromLocation.Address},
+			EnRouteOrder: d.EnRouteOrder,
+			TariffPerKm:  d.TariffPerKm,
+			Name:         d.Name,
+			Rating:       d.Rating,
+			ProfileImage: d.ProfileImage,
+			Distance:     d.Distance,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"drivers": items})
 }

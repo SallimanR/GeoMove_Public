@@ -19,31 +19,48 @@ type DriverDomain struct {
 }
 
 type DriverCommands struct {
-	CreateDriver       *command.CreateDriverHandler
-	UpdateProfileImage *command.UpdateProfileImageHandler
+	CreateDriver           *command.CreateDriverHandler
+	UpdateProfileImage     *command.UpdateProfileImageHandler
+	CreateFreelyAvailable  *command.CreateFreelyAvailableHandler
+	UpdateFreelyAvailable  *command.UpdateFreelyAvailableHandler
+	DeleteFreelyAvailable  *command.DeleteFreelyAvailableHandler
 }
 
 type DriverQueries struct {
-	GetDriverByUserID  *query.GetDriverByUserIDHandler
-	GetFilteredDrivers *query.GetFilteredDriversHandler
+	GetDriverByUserID          *query.GetDriverByUserIDHandler
+	GetFilteredDrivers         *query.GetFilteredDriversHandler
+	GetFreelyAvailableByID     *query.GetFreelyAvailableByUserIDHandler
+	GetFreelyAvailableDrivers  *query.GetFreelyAvailableDriversHandler
 }
 
 func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 	driverRepo := postgres.NewDriverRepository(sqlc.New(db))
+	faRepo := postgres.NewFreelyAvailableRepository(sqlc.New(db))
 
 	createHandler := command.NewCreateDriverHandler(driverRepo)
 	updateProfileImageHandler := command.NewUpdateProfileImageHandler(driverRepo)
 	getDriverByUserIDHandler := query.NewGetDriverByUserIDHandler(driverRepo)
 	getFilteredDriversHandler := query.NewGetFilteredDriversHandler(driverRepo)
 
+	createFAHandler := command.NewCreateFreelyAvailableHandler(faRepo)
+	updateFAHandler := command.NewUpdateFreelyAvailableHandler(faRepo)
+	deleteFAHandler := command.NewDeleteFreelyAvailableHandler(faRepo)
+	getFAHandler := query.NewGetFreelyAvailableByUserIDHandler(faRepo)
+	getFADriversHandler := query.NewGetFreelyAvailableDriversHandler(faRepo)
+
 	driverDomain := &DriverDomain{
 		Commands: DriverCommands{
-			CreateDriver:       createHandler,
-			UpdateProfileImage: updateProfileImageHandler,
+			CreateDriver:          createHandler,
+			UpdateProfileImage:    updateProfileImageHandler,
+			CreateFreelyAvailable: createFAHandler,
+			UpdateFreelyAvailable: updateFAHandler,
+			DeleteFreelyAvailable: deleteFAHandler,
 		},
 		Queries: DriverQueries{
-			GetDriverByUserID:  getDriverByUserIDHandler,
-			GetFilteredDrivers: getFilteredDriversHandler,
+			GetDriverByUserID:         getDriverByUserIDHandler,
+			GetFilteredDrivers:        getFilteredDriversHandler,
+			GetFreelyAvailableByID:    getFAHandler,
+			GetFreelyAvailableDrivers: getFADriversHandler,
 		},
 	}
 	return driverDomain
@@ -57,6 +74,11 @@ func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddlewar
 		d.Queries.GetDriverByUserID,
 		d.Queries.GetFilteredDrivers,
 		d.Commands.UpdateProfileImage,
+		d.Commands.CreateFreelyAvailable,
+		d.Commands.UpdateFreelyAvailable,
+		d.Commands.DeleteFreelyAvailable,
+		d.Queries.GetFreelyAvailableByID,
+		d.Queries.GetFreelyAvailableDrivers,
 		staticDir,
 	)
 	driverHTTP.RegisterDriverRoutes(router, driverHandler, authMiddleware)

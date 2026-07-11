@@ -1,0 +1,249 @@
+openapi: 3.2.0
+info:
+  title: Driver Freely Available API
+  version: 1.0.0
+
+components:
+  schemas:
+    Location:
+      type: object
+      required:
+        - lat
+        - lon
+      properties:
+        lat:
+          type: number
+          format: float
+          description: Latitude (WGS84)
+        lon:
+          type: number
+          format: float
+          description: Longitude (WGS84)
+        address:
+          type: string
+          description: Reverse geocoded address
+
+    FreelyAvailable:
+      type: object
+      required:
+        - from_date
+        - to_date
+        - from_location
+      properties:
+        from_date:
+          type: string
+          format: date-time
+          description: Start of availability period
+        to_date:
+          type: string
+          format: date-time
+          description: End of availability period
+        from_location:
+          $ref: '#/components/schemas/Location'
+          description: Starting location
+        to_locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+          description: Destination locations
+        en_route_order:
+          type: boolean
+          description: Accept en-route orders along the way
+        tariff_per_km:
+          type: number
+          format: float
+          description: Price per 1 km
+
+    FreelyAvailableResponse:
+      type: object
+      required:
+        - user_id
+        - from_date
+        - to_date
+        - from_location
+      properties:
+        user_id:
+          type: integer
+          format: int64
+        from_date:
+          type: string
+          format: date-time
+        to_date:
+          type: string
+          format: date-time
+        from_location:
+          $ref: '#/components/schemas/Location'
+        to_locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+        en_route_order:
+          type: boolean
+          description: Accept en-route orders along the way
+        tariff_per_km:
+          type: number
+          format: float
+          description: Price per 1 km
+
+    FreelyAvailableDriverResponse:
+      type: object
+      required:
+        - user_id
+        - from_date
+        - to_date
+        - from_location
+        - name
+        - distance
+      properties:
+        user_id:
+          type: integer
+          format: int64
+        from_date:
+          type: string
+          format: date-time
+        to_date:
+          type: string
+          format: date-time
+        from_location:
+          $ref: '#/components/schemas/Location'
+        en_route_order:
+          type: boolean
+          description: Accept en-route orders along the way
+        tariff_per_km:
+          type: number
+          format: float
+          description: Price per 1 km
+        name:
+          type: string
+          description: Driver display name
+        rating:
+          type: number
+          format: float
+        profile_image:
+          type: string
+        distance:
+          type: number
+          format: float
+          description: Distance in meters from query point to driver's from_location
+
+    GetFreelyAvailableDriversRequest:
+      type: object
+      required:
+        - user_lat
+        - user_lon
+      properties:
+        user_lat:
+          type: number
+          format: float
+          description: User latitude (WGS84)
+        user_lon:
+          type: number
+          format: float
+          description: User longitude (WGS84)
+        en_route_order:
+          type: boolean
+          description: Filter by en-route order acceptance
+        min_tariff:
+          type: number
+          format: float
+          description: Minimum tariff per km
+        max_tariff:
+          type: number
+          format: float
+          description: Maximum tariff per km
+
+paths:
+  /driver/freely-available:
+    post:
+      summary: Create freely available entry
+      description: Creates a freely available entry for the authenticated driver.
+      operationId: createFreelyAvailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreelyAvailable'
+      responses:
+        '201':
+          description: Freely available entry created successfully
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized (no valid session)
+
+    put:
+      summary: Update freely available entry
+      description: Updates the freely available entry for the authenticated driver.
+      operationId: updateFreelyAvailable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreelyAvailable'
+      responses:
+        '200':
+          description: Freely available entry updated successfully
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized (no valid session)
+
+    delete:
+      summary: Delete freely available entry
+      description: Deletes the freely available entry for the authenticated driver.
+      operationId: deleteFreelyAvailable
+      responses:
+        '200':
+          description: Freely available entry deleted successfully
+        '401':
+          description: Unauthorized (no valid session)
+
+  /driver/{user_id}/freely-available:
+    get:
+      summary: Get freely available entry by user ID
+      description: Returns a driver's freely available entry. Open to all visitors.
+      operationId: getFreelyAvailableByUserId
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Freely available entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreelyAvailableResponse'
+        '404':
+          description: Freely available entry not found
+
+  /driver/freely-available/search:
+    get:
+      summary: Get freely available drivers
+      description: Returns a list of currently available drivers with freely available entries, sorted by distance.
+      operationId: getFreelyAvailableDrivers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFreelyAvailableDriversRequest'
+      responses:
+        '200':
+          description: List of freely available drivers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drivers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FreelyAvailableDriverResponse'
+        '400':
+          description: Invalid input

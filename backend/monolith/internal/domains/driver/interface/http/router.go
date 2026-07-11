@@ -7,9 +7,10 @@ import (
 func RegisterDriverRoutes(router *gin.RouterGroup, h *DriverHandler, authMiddleware gin.HandlerFunc) {
 	driver := router.Group("/driver")
 	{
-		driver.POST("/", h.CreateDriver)
-		driver.POST("/filter", h.GetFilteredDrivers)
 		driver.GET("/:user_id", h.GetDriverByUserID)
+		driver.GET("/:user_id/freely-available", h.GetFreelyAvailableByID)
+		driver.POST("/filter", h.GetFilteredDrivers)
+		driver.POST("/freely-available/search", h.GetFreelyAvailableDrivers)
 
 		profile := driver.Group("/profile")
 		profile.Use(authMiddleware)
@@ -17,6 +18,14 @@ func RegisterDriverRoutes(router *gin.RouterGroup, h *DriverHandler, authMiddlew
 			profile.POST("/", h.CreateDriverProfile)
 			profile.GET("/", h.GetMyDriverProfile)
 			profile.POST("/image", h.UploadProfileImage)
+		}
+
+		freely := driver.Group("/freely-available")
+		freely.Use(authMiddleware)
+		{
+			freely.POST("/", h.CreateFreelyAvailable)
+			freely.PUT("/", h.UpdateFreelyAvailable)
+			freely.DELETE("/", h.DeleteFreelyAvailable)
 		}
 	}
 }

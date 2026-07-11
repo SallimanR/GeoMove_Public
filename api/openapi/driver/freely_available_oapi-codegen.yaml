@@ -1,0 +1,4 @@
+package: http
+generate:
+  models: true
+output: backend/monolith/internal/domains/driver/interface/http/freely_available.gen.go

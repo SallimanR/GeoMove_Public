@@ -21,8 +21,6 @@ type Driver struct {
 	IsAvailable  bool
 	LastSeen     pgtype.Timestamptz
 	Location     interface{}
-	CityID       *int32
-	StateID      *int32
 	Rating       *float32
 }
 
@@ -44,6 +42,23 @@ type Session struct {
 	CreatedAt time.Time
 	ExpiresAt time.Time
 	Roles     []string
+}
+
+type TowDriverFreelyAvailable struct {
+	UserID       int64
+	FromDate     time.Time
+	ToDate       time.Time
+	FromLocation interface{}
+	FromAddress  string
+	EnRouteOrder *bool
+	TariffPerKm  *float32
+}
+
+type TowDriverFreelyAvailableToLocationList struct {
+	ID        int64
+	TowDriver int64
+	Location  interface{}
+	Address   string
 }
 
 type User struct {

@@ -13,8 +13,6 @@ CREATE TABLE driver (
 	last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 
 	location public.geography(Point, 4326) NOT NULL,
-	city_id INTEGER,
-	state_id INTEGER,
 
 	rating REAL
 );

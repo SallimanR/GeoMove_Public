@@ -1,6 +1,6 @@
-\restrict ClFuQyMcrbAUMIpQfNuong3JhJ94E0bF3G8w0tbywRpwbMp2RHgcg0aZm70Gys9
+\restrict EVDPHNEVRKApi6wvKeZ4I4OuL29ruHP4Hen45euV6frvpDSu9jiVR4g2T9HmbwW
 
--- Dumped from database version 18.1 (Debian 18.1-1.pgdg13+2)
+-- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
 
 SET statement_timeout = 0;
@@ -104,8 +104,6 @@ CREATE TABLE public.driver (
     is_available boolean DEFAULT true NOT NULL,
     last_seen timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     location public.geography(Point,4326) NOT NULL,
-    city_id integer,
-    state_id integer,
     rating real
 );
 
@@ -150,6 +148,52 @@ CREATE TABLE public.session (
 
 
 --
+-- Name: tow_driver_freely_available; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tow_driver_freely_available (
+    user_id bigint NOT NULL,
+    from_date timestamp without time zone NOT NULL,
+    to_date timestamp without time zone NOT NULL,
+    from_location public.geography(Point,4326) NOT NULL,
+    from_address text DEFAULT ''::text NOT NULL,
+    en_route_order boolean,
+    tariff_per_km real
+);
+
+
+--
+-- Name: tow_driver_freely_available_to_location_list; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tow_driver_freely_available_to_location_list (
+    id bigint NOT NULL,
+    tow_driver bigint CONSTRAINT tow_driver_freely_available_to_location_lis_tow_driver_not_null NOT NULL,
+    location public.geography(Point,4326) NOT NULL,
+    address text DEFAULT ''::text NOT NULL
+);
+
+
+--
+-- Name: tow_driver_freely_available_to_location_list_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tow_driver_freely_available_to_location_list_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tow_driver_freely_available_to_location_list_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tow_driver_freely_available_to_location_list_id_seq OWNED BY public.tow_driver_freely_available_to_location_list.id;
+
+
+--
 -- Name: user; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -190,6 +234,13 @@ CREATE TABLE public.user_oauth_links (
 
 
 --
+-- Name: tow_driver_freely_available_to_location_list id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list ALTER COLUMN id SET DEFAULT nextval('public.tow_driver_freely_available_to_location_list_id_seq'::regclass);
+
+
+--
 -- Name: driver_realtime driver_realtime_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -211,6 +262,22 @@ ALTER TABLE ONLY public.schema_migrations
 
 ALTER TABLE ONLY public.session
     ADD CONSTRAINT session_pkey PRIMARY KEY (token_hash);
+
+
+--
+-- Name: tow_driver_freely_available tow_driver_freely_available_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver_freely_available
+    ADD CONSTRAINT tow_driver_freely_available_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: tow_driver_freely_available_to_location_list tow_driver_freely_available_to_location_list_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list
+    ADD CONSTRAINT tow_driver_freely_available_to_location_list_pkey PRIMARY KEY (id);
 
 
 --
@@ -310,6 +377,34 @@ CREATE INDEX idx_session_user_id ON public.session USING btree (user_id);
 
 
 --
+-- Name: idx_tow_driv_fa_loc_geom; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_tow_driv_fa_loc_geom ON public.tow_driver_freely_available USING gist (from_location);
+
+
+--
+-- Name: idx_tow_drv_fa_loc_list_fk; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_tow_drv_fa_loc_list_fk ON public.tow_driver_freely_available_to_location_list USING btree (tow_driver);
+
+
+--
+-- Name: idx_tow_drv_fa_loc_list_geom; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_tow_drv_fa_loc_list_geom ON public.tow_driver_freely_available_to_location_list USING gist (location);
+
+
+--
+-- Name: idx_tow_fa_drv_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_tow_fa_drv_user_id ON public.tow_driver_freely_available USING btree (user_id);
+
+
+--
 -- Name: idx_user_oauth_links_provider; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -341,6 +436,22 @@ ALTER TABLE ONLY public.session
 
 
 --
+-- Name: tow_driver_freely_available_to_location_list tow_driver_freely_available_to_location_list_tow_driver_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list
+    ADD CONSTRAINT tow_driver_freely_available_to_location_list_tow_driver_fkey FOREIGN KEY (tow_driver) REFERENCES public.tow_driver_freely_available(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: tow_driver_freely_available tow_driver_freely_available_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver_freely_available
+    ADD CONSTRAINT tow_driver_freely_available_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
+
+
+--
 -- Name: user_oauth_links user_oauth_links_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -352,7 +463,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ClFuQyMcrbAUMIpQfNuong3JhJ94E0bF3G8w0tbywRpwbMp2RHgcg0aZm70Gys9
+\unrestrict EVDPHNEVRKApi6wvKeZ4I4OuL29ruHP4Hen45euV6frvpDSu9jiVR4g2T9HmbwW
 
 
 --
@@ -365,4 +476,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260322214503'),
     ('20260323100924'),
     ('20260705102447'),
-    ('20260706094702');
+    ('20260706094702'),
+    ('20260710043141');

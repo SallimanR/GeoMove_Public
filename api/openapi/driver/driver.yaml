@@ -111,43 +111,6 @@ paths:
       security:
         - CookieAuth: []
 
-  /drivers:
-    post:
-      operationId: createDriver
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - work_starts
-                - work_ends
-                - lat
-                - lon
-              properties:
-                work_starts:
-                  type: string
-                  format: date-time
-                  description: Start of work time (ISO 8601)
-                work_ends:
-                  type: string
-                  format: date-time
-                  description: End of work time (ISO 8601)
-                lat:
-                  type: number
-                  format: float
-                  description: Latitude (WGS84)
-                lon:
-                  type: number
-                  format: float
-                  description: Longitude (WGS84)
-      responses:
-        '201':
-          description: Driver created successfully
-        '400':
-          description: Invalid input
-
   /drivers/{user_id}:
     get:
       operationId: getDriverByUserId
