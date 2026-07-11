@@ -1,10 +1,29 @@
 <script setup lang="ts">
+import { displayDistance, haversineDistance } from "geo";
 import type { SearchResult } from "../../../geo/src/api/geocoding.ts";
 import { computed } from "vue";
+import { useStore } from "@nanostores/vue";
+import { $coords } from "../stores/mapsStore.ts";
 
 const props = defineProps<{
   result: SearchResult;
 }>();
+
+const coords = useStore($coords);
+
+const distanceText = computed(() => {
+  const center = coords.value?.center;
+  if (!center) return "";
+  return displayDistance(
+    haversineDistance(
+      [
+        props.result.geometry.coordinates[1],
+        props.result.geometry.coordinates[0],
+      ],
+      [center.lat, center.lon],
+    ),
+  );
+});
 
 const location = computed(() => {
   const parts: string[] = [];
@@ -39,5 +58,6 @@ const location = computed(() => {
     <div v-if="location" class="text-xs text-gray-400">
       {{ location }}
     </div>
+    <div>{{ distanceText }}</div>
   </div>
 </template>
