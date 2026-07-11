@@ -12,6 +12,7 @@ services:
       - ./certs/nginx-selfsigned.key:/etc/nginx/tls/localhost.key:ro
       - ../../../data/maps:/data/maps:ro
       - ../../../data/static:/data/static:ro
+      - ../../../frontend/apps/user_app/dist/client/:/webapps/user_app/:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
     extra_hosts:
