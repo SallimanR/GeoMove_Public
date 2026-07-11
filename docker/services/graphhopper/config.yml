@@ -26,9 +26,9 @@ server:
   application_connectors:
     - type: http
       port: 8989
-      bind_host: localhost
+      bind_host: 0.0.0.0
   admin_connectors:
     - type: http
       port: 8990
-      bind_host: localhost
+      bind_host: 0.0.0.0
 
