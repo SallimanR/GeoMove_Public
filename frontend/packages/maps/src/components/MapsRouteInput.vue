@@ -73,7 +73,7 @@ watch(
       $routePath.set(route);
     } catch (err) {
       $routePath.set(null);
-      console.error(err);
+      console.error("route watcher error: ", err);
     } finally {
       $isRouteLoading.set(false);
     }
