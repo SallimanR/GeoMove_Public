@@ -21,6 +21,7 @@ export function addPopupToMap<T extends object = {}>(
 	const popup = new Popup({
 		closeButton: false,
 		closeOnClick: false,
+		anchor: "bottom",
 	});
 	popup
 		.setLngLat([lngLat.lng, lngLat.lat])
