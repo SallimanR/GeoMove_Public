@@ -1,25 +1,5 @@
 services:
-  # martin:
-  #   image: ghcr.io/maplibre/martin
-  #   container_name: tow-martin
-  #   restart: unless-stopped
-  #   ports:
-  #     - "5050:5050"
-  #   # - RUST_LOG=debug
-  #   depends_on:
-  #     - postgres
-  #   volumes:
-  #     # - ./certs/ca-cert.pem:/ca-cert.pem:ro
-  #     - ./martin.yaml:/martin.yaml:ro
-  #     - ../../../data/openmaptiles/build/style:/data/style
-  #     - ../../../data/openmaptiles/data/fonts:/data/fonts
-  #
-  #   command: --config /martin.yaml
-  #   networks:
-  #     - postgres-network
-
   postgres:
-    # image: docker.io/postgis/postgis:18-3.6
     image: postgis-h3:pg18-3.6
     container_name: tow-postgres-postgis-h3-ssl
     restart: unless-stopped
@@ -31,7 +11,6 @@ services:
       - "5432:5432"
     volumes:
       - tow-postgis-data:/var/lib/postgresql/18/docker
-      #   - ./initdb:/docker-entrypoint-initdb.d
       - ./certs/server.crt:/certs/server.crt:ro
       - ./certs/server.key:/certs/server.key:ro
     command: -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
