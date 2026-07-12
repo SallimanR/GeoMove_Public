@@ -11,12 +11,16 @@ import {
 import { Map as MaplibreMap } from "maplibre-gl";
 
 import {
-  addressToText,
   fetchRoute,
-  getReverseGeocoding,
   displayDistance,
+  getReverseGeocoding,
+  addressToText,
 } from "geo";
-import { $mapInstance } from "../stores/mapsStore";
+import {
+  $mapCenterAddress,
+  $mapCenterAddressText,
+  $mapInstance,
+} from "../stores/mapsStore";
 import { LngLat, Marker } from "maplibre-gl";
 import MapsSearchField from "./MapsSearchField.vue";
 import { useStore } from "@nanostores/vue";
@@ -86,26 +90,21 @@ const endMarker = new Marker({ draggable: true, color: "#fc5b55" });
 
 const startAddressText = ref("");
 const endAddressText = ref("");
-const mapCenterAddressText = ref("");
 
 async function changeStartPoint(point: LngLat, map: MaplibreMap) {
   startMarker.setLngLat(point).addTo(map);
   $startPoint.set({ lat: point.lat, lon: point.lng });
 
-  const req = await getReverseGeocoding(point.lat, point.lng);
-  $startAddress.set(req);
-
-  startAddressText.value = addressToText(req);
+  $startAddress.set($mapCenterAddress.get());
+  startAddressText.value = $mapCenterAddressText.get();
 }
 
 async function changeEndPoint(point: LngLat, map: MaplibreMap) {
   endMarker.setLngLat(point).addTo(map);
   $endPoint.set({ lat: point.lat, lon: point.lng });
 
-  const req = await getReverseGeocoding(point.lat, point.lng);
-  $endAddress.set(req);
-
-  endAddressText.value = addressToText(req);
+  $endAddress.set($mapCenterAddress.get());
+  endAddressText.value = $mapCenterAddressText.get();
 
   inputState.value = RouteInputMode.Ready;
 }
@@ -152,30 +151,33 @@ $mapInstance.subscribe((map) => {
 });
 
 function setupMapListeners(map: MaplibreMap) {
-  async function changeCenter() {
-    const mapCenter = map.getCenter();
-    const req = await getReverseGeocoding(mapCenter.lat, mapCenter.lng);
-    mapCenterAddressText.value = addressToText(req);
-  }
-
-  changeCenter();
-
   map.on("movestart", () => {
     isMapMoving.value = true;
   });
   map.on("moveend", async () => {
     isMapMoving.value = false;
-    changeCenter();
   });
 
-  startMarker.on("dragend", () => {
-    const lngLat = startMarker.getLngLat();
-    changeStartPoint(lngLat, map);
+  startMarker.on("dragend", async () => {
+    const point = startMarker.getLngLat();
+    startMarker.setLngLat(point).addTo(map);
+    $startPoint.set({ lat: point.lat, lon: point.lng });
+
+    const req = await getReverseGeocoding(point.lat, point.lng);
+    $startAddress.set(req);
+    startAddressText.value = addressToText(req);
   });
 
-  endMarker.on("dragend", () => {
-    const lngLat = endMarker.getLngLat();
-    changeEndPoint(lngLat, map);
+  endMarker.on("dragend", async () => {
+    const point = endMarker.getLngLat();
+    endMarker.setLngLat(point).addTo(map);
+    $endPoint.set({ lat: point.lat, lon: point.lng });
+
+    const req = await getReverseGeocoding(point.lat, point.lng);
+    $endAddress.set(req);
+    endAddressText.value = addressToText(req);
+
+    inputState.value = RouteInputMode.Ready;
   });
 }
 
@@ -210,17 +212,6 @@ function handleContinue() {
 </script>
 
 <template>
-  <div
-    v-if="mapCenterAddressText"
-    class="flex justify-center pt-4 pointer-events-none"
-  >
-    <div
-      class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md text-sm font-medium text-gray-700"
-    >
-      {{ mapCenterAddressText }}
-    </div>
-  </div>
-
   <div v-if="needsConfirm && !isMapMoving" class="">
     <button
       @click="handleConfirm()"
