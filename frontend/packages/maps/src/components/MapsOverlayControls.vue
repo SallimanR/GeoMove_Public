@@ -14,6 +14,7 @@ import type { GeoPoint } from "../types/geoPoint";
 import MapsRouteInput from "./MapsRouteInput.vue";
 import MapsSearchInput from "./MapsSearchInput.vue";
 import MapsCurrentLocationBox from "./MapsCurrentLocationBox.vue";
+import MapsGPSLocation from "./MapsGPSLocation.vue";
 
 const isPicking = useStore($locationPicking);
 const address = ref("");
@@ -85,7 +86,10 @@ onUnmounted(() => {
 
 <template>
   <div class="absolute inset-0 flex flex-col pointer-events-none">
-    <MapsSearchInput class="mt-4 mr-4 ml-4 pointer-events-auto" />
+    <div class="flex gap-2 mt-4 mr-4 ml-4">
+      <MapsSearchInput class="flex-1 pointer-events-auto" />
+      <MapsGPSLocation class="pointer-events-auto" />
+    </div>
     <MapsCurrentLocationBox />
     <template v-if="isPicking">
       <div

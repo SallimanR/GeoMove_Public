@@ -60,16 +60,6 @@ export function useMaps() {
 			$coords.setKey("center", { lat: center.lat, lon: center.lng });
 		});
 
-		// GPS button on maps
-		mapInstance.addControl(
-			new GeolocateControl({
-				positionOptions: {
-					enableHighAccuracy: true
-				},
-				trackUserLocation: true
-			})
-		);
-
 		const overlay = new MapboxOverlay({})
 		mapInstance.addControl(overlay)
 
