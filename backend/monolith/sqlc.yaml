@@ -3,10 +3,6 @@ version: "2"
 overrides:
   go:
     overrides:
-      - column: "driver.id"
-        go_type: "uint32"
-      - column: "driver_realtime.driver_id"
-        go_type: "uint32"
       - db_type: "pg_catalog.timestamp"
         nullable: true
         engine: "postgresql"
