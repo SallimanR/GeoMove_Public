@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"image"
@@ -21,6 +22,10 @@ import (
 	"monolith/internal/domains/driver/domain/entity"
 )
 
+type UserRoleManager interface {
+	AddRole(ctx context.Context, userID int64, role string) error
+}
+
 type DriverHandler struct {
 	createDriver              *command.CreateDriverHandler
 	getDriverByUserID         *query.GetDriverByUserIDHandler
@@ -32,6 +37,7 @@ type DriverHandler struct {
 	getFreelyAvailableByID    *query.GetFreelyAvailableByUserIDHandler
 	getFreelyAvailableDrivers *query.GetFreelyAvailableDriversHandler
 	staticDir                 string
+	roleManager               UserRoleManager
 }
 
 func NewDriverHandler(
@@ -45,6 +51,7 @@ func NewDriverHandler(
 	getFreelyAvailableByID *query.GetFreelyAvailableByUserIDHandler,
 	getFreelyAvailableDrivers *query.GetFreelyAvailableDriversHandler,
 	staticDir string,
+	roleManager UserRoleManager,
 ) *DriverHandler {
 	return &DriverHandler{
 		createDriver:              createDriver,
@@ -57,6 +64,7 @@ func NewDriverHandler(
 		getFreelyAvailableByID:    getFreelyAvailableByID,
 		getFreelyAvailableDrivers: getFreelyAvailableDrivers,
 		staticDir:                 staticDir,
+		roleManager:               roleManager,
 	}
 }
 
@@ -110,6 +118,10 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	if h.roleManager != nil {
+		_ = h.roleManager.AddRole(ctx.Request.Context(), session.UserID, "tow_driver")
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{})

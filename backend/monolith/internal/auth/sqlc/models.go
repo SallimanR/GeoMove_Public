@@ -69,6 +69,7 @@ type User struct {
 	Phone        *string
 	Email        *string
 	ProfileImage *string
+	Roles        []string
 }
 
 type UserOauthLink struct {

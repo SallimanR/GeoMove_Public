@@ -20,10 +20,32 @@ import (
 	testws "monolith/test/testutils/websocket"
 )
 
-func startHTTPRouter(t testing.TB, wsServer *WebsocketServer) string {
+type mockSession struct {
+	userID int64
+	roles  []string
+}
+
+func (m *mockSession) GetUserID() int64   { return m.userID }
+func (m *mockSession) GetRoles() []string { return m.roles }
+
+func startHTTPRouter(t testing.TB, wsServer *WebsocketServer, defaultRole string) string {
 	t.Helper()
 	httpRouter := gin.New()
-	httpRouter.GET("/ws/:role/:id", wsServer.WebsocketUpgradeHandler)
+	httpRouter.Use(func(c *gin.Context) {
+		role := c.Param("role")
+		userID := int64(1)
+		if idStr := c.Query("id"); idStr != "" {
+			if parsed, err := fmt.Sscanf(idStr, "%d", &userID); err != nil || parsed != 1 {
+				userID = 1
+			}
+		}
+		mock := &mockSession{
+			userID: userID,
+			roles:  []string{role, defaultRole},
+		}
+		c.Set("user", mock)
+	})
+	httpRouter.GET("/ws/:role", wsServer.WebsocketUpgradeHandler)
 	wsPort := network.GetFreePort(t)
 	wsAddr := fmt.Sprintf("127.0.0.1:%d", wsPort)
 	go func() {
@@ -36,26 +58,6 @@ func startHTTPRouter(t testing.TB, wsServer *WebsocketServer) string {
 
 	return wsAddr
 }
-
-// func createWSConn(t *testing.T, role string, id uint32, wsAddr string, dialer *websocket.Dialer, wantErr bool) *websocket.Conn {
-// 	t.Helper()
-// 	connURL := fmt.Sprintf("ws://%s/ws/%s/%d", wsAddr, role, id)
-// 	conn, res, err := dialer.Dial(connURL, http.Header{})
-// 	if wantErr {
-// 		if err == nil {
-// 			t.Fatalf("Upgraded non existing role")
-// 		}
-// 	}
-// 	if err != nil {
-// 		if res != nil && res.Body != nil {
-// 			bReason, _ := io.ReadAll(res.Body)
-// 			t.Fatalf("dial failed: %v, reason: %v\n", err, string(bReason))
-// 		}
-// 		t.Fatalf("Client %d: Failed to connect: %v", id, err)
-// 	}
-//
-// 	return conn
-// }
 
 func TestWebsocketConnectionValidity(t *testing.T) {
 	t.Parallel()
@@ -76,23 +78,20 @@ func TestWebsocketConnectionValidity(t *testing.T) {
 	wsServer := NewWebsocketServer(wsOptions)
 	dialer := testws.SetupDialer(t, nil)
 	defer testws.SetupDialer(t, nil)
-	wsAddr := startHTTPRouter(t, wsServer)
+	wsAddr := startHTTPRouter(t, wsServer, role)
 
 	testCases := []struct {
 		name    string
-		userID  uint32
 		role    string
 		wantErr bool
 	}{
 		{
 			name:    "RoleExists",
-			userID:  1,
 			role:    role,
 			wantErr: false,
 		},
 		{
 			name:    "RoleDoesNotExists",
-			userID:  2,
 			role:    "penguin",
 			wantErr: true,
 		},
@@ -100,7 +99,7 @@ func TestWebsocketConnectionValidity(t *testing.T) {
 	for i := 0; i < len(testCases) && !t.Failed(); i++ {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
-			conn, res, err := dialer.Dial(fmt.Sprintf("ws://%s/ws/%s/%d", wsAddr, tc.role, tc.userID), http.Header{})
+			conn, res, err := dialer.Dial(fmt.Sprintf("ws://%s/ws/%s", wsAddr, tc.role), http.Header{})
 			if tc.wantErr {
 				require.Error(t, err, "Upgraded non existing role")
 				return
@@ -110,20 +109,19 @@ func TestWebsocketConnectionValidity(t *testing.T) {
 					bReason, _ := io.ReadAll(res.Body)
 					t.Fatalf("dial failed: %v, reason: %v\n", err, string(bReason))
 				}
-				t.Fatalf("Client %d: Failed to connect: %v", tc.userID, err)
+				t.Fatalf("Client %d: Failed to connect: %v", 1, err)
 			}
 
-			// FIXME: delay is needed when logger enabled
 			time.Sleep(1000 * time.Microsecond)
 			connPool, _ := wsServer.ConnectionsByRole[tc.role]
-			_, ok := connPool.activeConnections.Load(tc.userID)
+			_, ok := connPool.activeConnections.Load(1)
 			require.True(t, ok, "No connection in activeConnections")
 
 			err = conn.Close()
 			require.NoError(t, err, "Failed to close client connection")
 
 			time.Sleep(10 * time.Millisecond)
-			_, ok = connPool.activeConnections.Load(tc.userID)
+			_, ok = connPool.activeConnections.Load(1)
 			require.False(t, ok, "Connection in activeConnections, after it was closed")
 		})
 	}
@@ -145,7 +143,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 	}
 	wsServer := NewWebsocketServer(wsOptions)
 	dialer := testws.SetupDialer(t, nil)
-	wsAddr := startHTTPRouter(t, wsServer)
+	wsAddr := startHTTPRouter(t, wsServer, role)
 
 	// WARNING: increasing number of conenction causing timeouts, because lastency increases
 	connNumber := 10
@@ -209,7 +207,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 // 	wsServer := NewWebsocketServer(wsOptions)
 // 	dialer := testws.SetupDialer(t)
 // 	defer testws.SetupDialer(t)
-// 	wsAddr := startHTTPRouter(t, wsServer)
+// 	wsAddr := startHTTPRouter(t, wsServer, role)
 //
 // 	testCases := []struct {
 // 		name     string
@@ -282,8 +280,7 @@ func BenchmarkWebsocketConnection(b *testing.B) {
 	}
 	wsServer := NewWebsocketServer(wsOptions)
 	dialer := testws.SetupDialer(b, nil)
-	// defer testws.ShutdownDialer(b)
-	wsAddr := startHTTPRouter(b, wsServer)
+	wsAddr := startHTTPRouter(b, wsServer, role)
 
 	connNumber := 10000
 

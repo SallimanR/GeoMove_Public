@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,28 +15,39 @@ import (
 	datastructures "monolith/pkg/data_structures"
 )
 
-type WebsocketServerOptions struct {
-	Roles []string `json:"roles"`
+type AuthSession interface {
+	GetUserID() int64
+	GetRoles() []string
+}
 
-	Logger       zerolog.Logger `json:"-"`
-	DebugMode    bool           `json:"-"`
-	TraceMode    bool           `json:"-"`
-	TraceVerbose bool           `json:"-"`
+type WebsocketServerOptions struct {
+	Roles          []string       `json:"roles"`
+	AllowedOrigins []string       `json:"-"`
+	Logger         zerolog.Logger `json:"-"`
+	DebugMode      bool           `json:"-"`
+	TraceMode      bool           `json:"-"`
+	TraceVerbose   bool           `json:"-"`
 }
 
 type WebsocketServer struct {
 	upgrader          *websocket.Upgrader
 	msgScheduler      MessageScheduler
 	ConnectionsByRole map[string]*ConnectionsByRole
-	// roles             []string
 
-	logger    zerolog.Logger
-	debugMode bool
-	traceMode bool
+	logger         zerolog.Logger
+	allowedOrigins map[string]struct{}
+	debugMode      bool
+	traceMode      bool
 }
 
 func NewWebsocketServer(config WebsocketServerOptions) *WebsocketServer {
 	ws := &WebsocketServer{}
+
+	allowedOrigins := make(map[string]struct{}, len(config.AllowedOrigins))
+	for _, origin := range config.AllowedOrigins {
+		allowedOrigins[origin] = struct{}{}
+	}
+	ws.allowedOrigins = allowedOrigins
 
 	ws.upgrader = ws.newUpgrader()
 	ws.msgScheduler = *NewMessageScheduler(10*time.Millisecond, 500)
@@ -47,8 +56,7 @@ func NewWebsocketServer(config WebsocketServerOptions) *WebsocketServer {
 	for _, role := range config.Roles {
 		connectionsByRole[role] = &ConnectionsByRole{
 			activeConnections: &datastructures.SyncMap[uint32, *ConnectionData]{},
-			// channels:          make(map[string]ChannelActions),
-			channels: make([]ChannelActions, len(wsPB.Channel_name)),
+			channels:          make([]ChannelActions, len(wsPB.Channel_name)),
 		}
 	}
 	ws.ConnectionsByRole = connectionsByRole
@@ -95,50 +103,25 @@ func (ws *WebsocketServer) RegisterChannel(roles []string, name wsPB.Channel, ch
 // TODO:
 // func (ws *WebsocketServer) RegisterRoles(roles []string) {}
 
-func (ws *WebsocketServer) WebsocketAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Missing token", http.StatusUnauthorized)
-			return
-		}
-
-		// TODO: use valkey to get info by [token], fallback to main db if cache miss
-		// token := strings.TrimPrefix(authHeader, "Bearer ")
-
-		// TODO: Use local casbin instead of async network service
-		// done := make(chan bool, 1)
-		// go func() {
-		// 	select {
-		// 	case ok := <-done:
-		// 		if !ok {
-		// 			http.Error(w, "unauthorized", http.StatusUnauthorized)
-		// 		}
-		// 	case <-time.After(2 * time.Second):
-		// 		http.Error(w, "validation timeout", http.StatusGatewayTimeout)
-		// 	}
-		// }()
-
-		// TODO: context
-		// ctx := context.WithValue(parent context.Context, key any, val any)
-		// next.ServeHTTP(w, r.WithContext(ctx))
-		//
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (ws *WebsocketServer) WebsocketUpgradeHandler(ctx *gin.Context) {
-	idParam := ctx.Param("id")
-	connID64, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		ctx.String(http.StatusBadRequest, "invalid 'id' parameter: must be a positive integer")
+	userVal, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "missing user"})
 		return
 	}
-	connID := uint32(connID64)
-	// TODO: handle unregistered users
-	// if connID == 0 {
-	// }
+	user, ok := userVal.(AuthSession)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user"})
+		return
+	}
+
 	connRole := ctx.Param("role")
+	if !hasRole(user.GetRoles(), connRole) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "role not permitted"})
+		return
+	}
+
+	connID := uint32(user.GetUserID())
 
 	connPool, ok := ws.ConnectionsByRole[connRole]
 	if !ok {
@@ -155,30 +138,42 @@ func (ws *WebsocketServer) WebsocketUpgradeHandler(ctx *gin.Context) {
 	connData := &ConnectionData{
 		ID:             connID,
 		ConnectionPool: connPool,
-		// subscriptions:  make(map[string][]uint32),
-		subscriptions: make([][]uint32, 1),
+		subscriptions:  make([][]uint32, len(wsPB.Channel_name)),
 	}
 	conn.SetSession(connData)
 
-	// TODO: change active connections: currently we are using IDs from DB,
-	// however when unregistered user tries to log in we need to generate id for him =>
-	// => generate id as connection index in pool for every connection (also improves caching)
 	connPool.activeConnections.Store(connID, connData)
+}
+
+func hasRole(roles []string, target string) bool {
+	for _, r := range roles {
+		if r == target {
+			return true
+		}
+	}
+	return false
 }
 
 func (ws *WebsocketServer) newUpgrader() *websocket.Upgrader {
 	upgrader := websocket.NewUpgrader()
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		if len(ws.allowedOrigins) == 0 {
+			return true
+		}
+		origin := r.Header.Get("Origin")
+		_, ok := ws.allowedOrigins[origin]
+		return ok
+	}
 
 	upgrader.OnOpen(ws.handleWebsocketConnect)
 	upgrader.OnClose(ws.handleWebsocketDisconnect)
 
 	// If we care about error of writing back to connection, than retry. Else handling write error is NO-OP
 	upgrader.OnMessage(func(conn *websocket.Conn, messageType websocket.MessageType, data []byte) {
-		// TODO: change to event
-		// ws.logger.Debug().
-		// 	Int("bytes received", len(data)).
-		// 	Any("from client", conn.RemoteAddr()).
-		// 	Send()
+		ws.logger.Debug().
+			Int("bytes received", len(data)).
+			Any("from client", conn.RemoteAddr()).
+			Send()
 
 		msg := &wsPB.Request{}
 		err := proto.Unmarshal(data, msg)
@@ -186,8 +181,9 @@ func (ws *WebsocketServer) newUpgrader() *websocket.Upgrader {
 			sendErrorResponse(conn, "", http.StatusBadRequest, "incorrect message")
 			return
 		}
-		// if msg.RequestId == "" {
-		// }
+		if msg.RequestId == "" {
+			return
+		}
 		resp := wsPB.ResponseMessage{
 			RequestId: msg.RequestId,
 		}

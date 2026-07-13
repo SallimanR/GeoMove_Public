@@ -258,6 +258,10 @@ func (s *Service) DeleteSession(ctx context.Context, token string) error {
 	return s.repo.DeleteSession(ctx, tokenHash)
 }
 
+func (s *Service) AddRole(ctx context.Context, userID int64, role string) error {
+	return s.repo.AddUserRole(ctx, userID, role)
+}
+
 func generateRandomToken(bytesLen int) (string, error) {
 	b := make([]byte, bytesLen)
 	if _, err := rand.Read(b); err != nil {

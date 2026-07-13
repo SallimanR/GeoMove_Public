@@ -1,4 +1,4 @@
-\restrict EVDPHNEVRKApi6wvKeZ4I4OuL29ruHP4Hen45euV6frvpDSu9jiVR4g2T9HmbwW
+\restrict gageyEPAFLB1AZMg3sb0bKHLrSNo3RV8ZWdx2VaOGqjwMFdegiBs6p4jeOH7Vna
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -204,7 +204,8 @@ CREATE TABLE public."user" (
     deleted_at timestamp without time zone,
     phone text,
     email text,
-    profile_image text
+    profile_image text,
+    roles text[] DEFAULT '{user}'::text[] NOT NULL
 );
 
 
@@ -463,7 +464,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EVDPHNEVRKApi6wvKeZ4I4OuL29ruHP4Hen45euV6frvpDSu9jiVR4g2T9HmbwW
+\unrestrict gageyEPAFLB1AZMg3sb0bKHLrSNo3RV8ZWdx2VaOGqjwMFdegiBs6p4jeOH7Vna
 
 
 --
@@ -477,4 +478,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260323100924'),
     ('20260705102447'),
     ('20260706094702'),
-    ('20260710043141');
+    ('20260710043141'),
+    ('20260713162812');

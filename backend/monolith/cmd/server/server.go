@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -74,14 +76,6 @@ func NewServer(options ...Option) (*Server, error) {
 		s.httpAPI = s.httpRouter.Group("/api/v1")
 	}
 
-	if s.wsServer == nil {
-		wsOptions := websockethub.WebsocketServerOptions{
-			Roles: []string{"tow_driver", "tow_subscriber"},
-		}
-		s.wsServer = websockethub.NewWebsocketServer(wsOptions)
-		s.httpRouter.GET("/ws/:role/:id", s.wsServer.WebsocketUpgradeHandler)
-	}
-
 	// Apply options
 	for _, option := range options {
 		if err := option(s); err != nil {
@@ -135,7 +129,6 @@ func WithDBConnection(db *pgxpool.Pool) Option {
 func WithWebsocketServer(ws *websockethub.WebsocketServer) Option {
 	return func(s *Server) error {
 		s.wsServer = ws
-		s.httpRouter.GET("/ws/:role/:id", s.wsServer.WebsocketUpgradeHandler)
 		return nil
 	}
 }
@@ -149,7 +142,7 @@ func WithDriverDomain() Option {
 
 func (s *Server) setupDriverDomain() {
 	domain := driver.NewDriverDomain(s.db)
-	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware)
+	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware, s.authService)
 	s.driverDomain = domain
 }
 
@@ -175,6 +168,9 @@ func (s *Server) Start() error {
 	if s.withAuth {
 		s.setupAuth()
 	}
+
+	s.registerWSRoutes()
+
 	if s.withDriverDomain {
 		s.setupDriverDomain()
 	}
@@ -199,6 +195,20 @@ func (s *Server) startWSServer() {
 	s.wsServer.Run()
 }
 
+func loadAllowedOrigins() []string {
+	raw := os.Getenv("ALLOWED_WS_ORIGINS")
+	if raw == "" {
+		return nil
+	}
+	parts := make([]string, 0)
+	for _, p := range strings.Split(raw, ",") {
+		if t := strings.TrimSpace(p); t != "" {
+			parts = append(parts, t)
+		}
+	}
+	return parts
+}
+
 func (s *Server) setupMonitoringRoutes() {
 	s.httpRouter.GET("/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{"status": "ok"})
@@ -209,6 +219,23 @@ func (s *Server) setupMonitoringRoutes() {
 	// 		"status": s.serviceManager.services,
 	// 	})
 	// })
+}
+
+func (s *Server) registerWSRoutes() {
+	if s.wsServer == nil {
+		allowedOrigins := loadAllowedOrigins()
+		wsOptions := websockethub.WebsocketServerOptions{
+			Roles:          []string{"tow_driver", "tow_subscriber"},
+			AllowedOrigins: allowedOrigins,
+			Logger:         s.logger,
+		}
+		s.wsServer = websockethub.NewWebsocketServer(wsOptions)
+	}
+	wsGroup := s.httpRouter.Group("/ws")
+	if s.authMiddleware != nil {
+		wsGroup.Use(s.authMiddleware)
+	}
+	wsGroup.GET("/:role", s.wsServer.WebsocketUpgradeHandler)
 }
 
 func (s *Server) setupAuth() {

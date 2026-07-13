@@ -6,7 +6,8 @@ CREATE TABLE "user" (
 	deleted_at TIMESTAMP WITHOUT TIME ZONE, -- soft delete
 	phone TEXT UNIQUE,
 	email TEXT UNIQUE,
-	profile_image TEXT UNIQUE
+	profile_image TEXT UNIQUE,
+	roles TEXT[] NOT NULL DEFAULT '{user}'
 );
 
 CREATE TABLE user_oauth_links (

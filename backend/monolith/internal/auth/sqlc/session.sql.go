@@ -69,3 +69,17 @@ func (q *Queries) GetSessionByToken(ctx context.Context, tokenHash string) (GetS
 	)
 	return i, err
 }
+
+const updateSessionRoles = `-- name: UpdateSessionRoles :exec
+UPDATE session SET roles = $1 WHERE token_hash = $2
+`
+
+type UpdateSessionRolesParams struct {
+	Roles     []string
+	TokenHash string
+}
+
+func (q *Queries) UpdateSessionRoles(ctx context.Context, arg UpdateSessionRolesParams) error {
+	_, err := q.db.Exec(ctx, updateSessionRoles, arg.Roles, arg.TokenHash)
+	return err
+}

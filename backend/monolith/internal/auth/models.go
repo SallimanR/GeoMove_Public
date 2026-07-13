@@ -9,7 +9,11 @@ type User struct {
 	Phone        *string
 	Email        *string
 	ProfileImage *string
+	Roles        []string
 }
+
+func (u *User) GetUserID() int64   { return u.ID }
+func (u *User) GetRoles() []string { return u.Roles }
 
 type Session struct {
 	UserID    int64     `json:"user_id"`

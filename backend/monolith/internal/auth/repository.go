@@ -52,6 +52,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 		Phone:        row.Phone,
 		Email:        row.Email,
 		ProfileImage: row.ProfileImage,
+		Roles:        row.Roles,
 		CreatedAt:    row.CreatedAt,
 		UpdatedAt:    row.UpdatedAt,
 	}, nil
@@ -67,6 +68,7 @@ func (r *Repository) GetUserByID(ctx context.Context, id int64) (*User, error) {
 		Phone:        row.Phone,
 		Email:        row.Email,
 		ProfileImage: row.ProfileImage,
+		Roles:        row.Roles,
 		CreatedAt:    row.CreatedAt,
 		UpdatedAt:    row.UpdatedAt,
 	}, nil
@@ -82,6 +84,7 @@ func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*User, e
 		Phone:        row.Phone,
 		Email:        row.Email,
 		ProfileImage: row.ProfileImage,
+		Roles:        row.Roles,
 		CreatedAt:    row.CreatedAt,
 		UpdatedAt:    row.UpdatedAt,
 	}, nil
@@ -108,9 +111,32 @@ func (r *Repository) GetUserByOAuth(ctx context.Context, provider, providerID st
 		Phone:        row.Phone,
 		Email:        row.Email,
 		ProfileImage: row.ProfileImage,
+		Roles:        row.Roles,
 		CreatedAt:    row.CreatedAt,
 		UpdatedAt:    row.UpdatedAt,
 	}, nil
+}
+
+func (r *Repository) UpdateUserRoles(ctx context.Context, userID int64, roles []string) error {
+	err := r.q.UpdateUserRoles(ctx, sqlc.UpdateUserRolesParams{
+		UserID: userID,
+		Roles:  roles,
+	})
+	return err
+}
+
+func (r *Repository) AddUserRole(ctx context.Context, userID int64, role string) error {
+	user, err := r.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	for _, r := range user.Roles {
+		if r == role {
+			return nil
+		}
+	}
+	user.Roles = append(user.Roles, role)
+	return r.UpdateUserRoles(ctx, userID, user.Roles)
 }
 
 // ---- Session methods -----

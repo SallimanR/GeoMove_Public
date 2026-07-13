@@ -66,7 +66,7 @@ func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 	return driverDomain
 }
 
-func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddleware gin.HandlerFunc, roleManager driverHTTP.UserRoleManager) {
 	staticDir := os.Getenv("STATIC_DIR")
 
 	driverHandler := driverHTTP.NewDriverHandler(
@@ -80,6 +80,7 @@ func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddlewar
 		d.Queries.GetFreelyAvailableByID,
 		d.Queries.GetFreelyAvailableDrivers,
 		staticDir,
+		roleManager,
 	)
 	driverHTTP.RegisterDriverRoutes(router, driverHandler, authMiddleware)
 }

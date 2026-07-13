@@ -9,3 +9,6 @@ DELETE FROM session WHERE token_hash = $1;
 SELECT session_id, user_id, roles, created_at, expires_at
 FROM session
 WHERE token_hash = $1 AND expires_at > NOW();
+
+-- name: UpdateSessionRoles :exec
+UPDATE session SET roles = $1 WHERE token_hash = $2;

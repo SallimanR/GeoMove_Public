@@ -46,7 +46,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int64, 
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, phone, email, profile_image, created_at, updated_at
+SELECT id, phone, email, profile_image, roles, created_at, updated_at
 FROM "user"
 WHERE email = $1::TEXT AND deleted_at IS NULL
 `
@@ -56,6 +56,7 @@ type GetUserByEmailRow struct {
 	Phone        *string
 	Email        *string
 	ProfileImage *string
+	Roles        []string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 }
@@ -68,6 +69,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.Phone,
 		&i.Email,
 		&i.ProfileImage,
+		&i.Roles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -75,7 +77,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, phone, email, profile_image, created_at, updated_at
+SELECT id, phone, email, profile_image, roles, created_at, updated_at
 FROM "user"
 WHERE id = $1 AND deleted_at IS NULL
 `
@@ -85,6 +87,7 @@ type GetUserByIDRow struct {
 	Phone        *string
 	Email        *string
 	ProfileImage *string
+	Roles        []string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 }
@@ -97,6 +100,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, er
 		&i.Phone,
 		&i.Email,
 		&i.ProfileImage,
+		&i.Roles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -104,7 +108,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, er
 }
 
 const getUserByOAuth = `-- name: GetUserByOAuth :one
-SELECT u.id, u.phone, u.email, u.profile_image, u.created_at, u.updated_at
+SELECT u.id, u.phone, u.email, u.profile_image, u.roles, u.created_at, u.updated_at
 FROM "user" u
 JOIN user_oauth_links l ON u.id = l.user_id
 WHERE l.provider = $1 AND l.provider_id = $2 AND u.deleted_at IS NULL
@@ -120,6 +124,7 @@ type GetUserByOAuthRow struct {
 	Phone        *string
 	Email        *string
 	ProfileImage *string
+	Roles        []string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 }
@@ -132,6 +137,7 @@ func (q *Queries) GetUserByOAuth(ctx context.Context, arg GetUserByOAuthParams) 
 		&i.Phone,
 		&i.Email,
 		&i.ProfileImage,
+		&i.Roles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -139,7 +145,7 @@ func (q *Queries) GetUserByOAuth(ctx context.Context, arg GetUserByOAuthParams) 
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, phone, email, profile_image, created_at, updated_at
+SELECT id, phone, email, profile_image, roles, created_at, updated_at
 FROM "user"
 WHERE phone = $1::TEXT AND deleted_at IS NULL
 `
@@ -149,6 +155,7 @@ type GetUserByPhoneRow struct {
 	Phone        *string
 	Email        *string
 	ProfileImage *string
+	Roles        []string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 }
@@ -161,6 +168,7 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (GetUserByPh
 		&i.Phone,
 		&i.Email,
 		&i.ProfileImage,
+		&i.Roles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -219,5 +227,20 @@ type UpdateUserProfileImageParams struct {
 
 func (q *Queries) UpdateUserProfileImage(ctx context.Context, arg UpdateUserProfileImageParams) error {
 	_, err := q.db.Exec(ctx, updateUserProfileImage, arg.ID, arg.ProfileImage)
+	return err
+}
+
+const updateUserRoles = `-- name: UpdateUserRoles :exec
+UPDATE "user" SET roles = $1::TEXT[], updated_at = NOW()
+WHERE id = $2::BIGINT
+`
+
+type UpdateUserRolesParams struct {
+	Roles  []string
+	UserID int64
+}
+
+func (q *Queries) UpdateUserRoles(ctx context.Context, arg UpdateUserRolesParams) error {
+	_, err := q.db.Exec(ctx, updateUserRoles, arg.Roles, arg.UserID)
 	return err
 }

@@ -20,7 +20,14 @@ func (s *Service) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		user, err := s.GetUserByID(c.Request.Context(), session.UserID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+			return
+		}
+
 		c.Set("session", session)
+		c.Set("user", user)
 
 		c.Next()
 	}
