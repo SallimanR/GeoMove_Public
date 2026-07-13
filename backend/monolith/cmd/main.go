@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,21 +14,17 @@ import (
 )
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-	// zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	// debug := flag.Bool("debug", false, "sets log level to debug")
-	// flag.Parse()
-
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	// zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	// if *debug {
-	// 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	// }
+	output := zerolog.ConsoleWriter{Out: os.Stdout}
+	logger := zerolog.New(output).
+		Level(zerolog.DebugLevel).
+		With().
+		Timestamp().
+		Logger()
 
 	srv, err := server.NewServer(
+		server.WithLogger(logger),
 		server.WithDB(),
 		server.WithDriverDomain(),
 		server.WithAuth(),
@@ -40,7 +34,7 @@ func main() {
 	}
 	err = srv.Start()
 	if err != nil {
-		log.Fatal("Server failed", err)
+		log.Fatal("Server failed: ", err)
 	}
 
 	// TODO: graceful shutdown
