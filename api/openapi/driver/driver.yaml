@@ -133,7 +133,7 @@ paths:
         '404':
           description: Driver not found
 
-  /filer:
+  /filter:
     post:
       operationId: getFilteredDrivers
       requestBody:

@@ -81,7 +81,7 @@ type ServerInterface interface {
 	// (GET /drivers/{user_id})
 	GetDriverByUserId(c *gin.Context, userId int64)
 
-	// (POST /filer)
+	// (POST /filter)
 	GetFilteredDrivers(c *gin.Context)
 }
 
@@ -191,7 +191,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/driver/profile", wrapper.GetMyDriverProfile)
 	router.POST(options.BaseURL+"/driver/profile", wrapper.CreateDriverProfile)
 	router.GET(options.BaseURL+"/drivers/:user_id", wrapper.GetDriverByUserId)
-	router.POST(options.BaseURL+"/filer", wrapper.GetFilteredDrivers)
+	router.POST(options.BaseURL+"/filter", wrapper.GetFilteredDrivers)
 }
 
 type GetMyDriverProfileRequestObject struct {
@@ -322,7 +322,7 @@ type StrictServerInterface interface {
 	// (GET /drivers/{user_id})
 	GetDriverByUserId(ctx context.Context, request GetDriverByUserIdRequestObject) (GetDriverByUserIdResponseObject, error)
 
-	// (POST /filer)
+	// (POST /filter)
 	GetFilteredDrivers(ctx context.Context, request GetFilteredDriversRequestObject) (GetFilteredDriversResponseObject, error)
 }
 

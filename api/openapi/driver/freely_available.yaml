@@ -223,7 +223,7 @@ paths:
           description: Freely available entry not found
 
   /driver/freely-available/search:
-    get:
+    post:
       summary: Get freely available drivers
       description: Returns a list of currently available drivers with freely available entries, sorted by distance.
       operationId: getFreelyAvailableDrivers
