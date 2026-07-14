@@ -92,6 +92,50 @@ paths:
       security:
         - CookieAuth: []
 
+  /auth/me:
+    get:
+      summary: Get current user
+      description: Returns authenticated user profile and session information.
+      responses:
+        "200":
+          description: User profile with session data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        format: int64
+                      email:
+                        type: string
+                        nullable: true
+                      phone:
+                        type: string
+                        nullable: true
+                      profile_image:
+                        type: string
+                        nullable: true
+                  session:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+        "401":
+          description: Unauthorized (no valid session)
+        "500":
+          description: Internal server error
+      security:
+        - CookieAuth: []
+
   /profile/image:
     post:
       summary: Upload profile image

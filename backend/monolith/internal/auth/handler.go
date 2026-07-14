@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"monolith/internal/auth/openapi"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,16 +21,14 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{
 		service:      service,
 		cookieSecure: os.Getenv("COOKIE_SECURE") == "true",
-		cookieDomain: os.Getenv("COOKIE_DOMAIN"), // empty = current domain
+		cookieDomain: os.Getenv("COOKIE_DOMAIN"),
 	}
 }
 
 func (h *Handler) PostAuthProviderCallback(c *gin.Context) {
 	provider := c.Param("provider")
 
-	var req struct {
-		Code string `json:"code"`
-	}
+	var req openapi.PostAuthProviderCallbackJSONRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
@@ -53,21 +53,26 @@ func (h *Handler) PostAuthProviderCallback(c *gin.Context) {
 
 	h.setAuthCookie(c, token, int(24*time.Hour.Seconds()))
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"user": gin.H{
-			"id":    userID,
-			"email": email,
+	c.JSON(http.StatusOK, openapi.PostAuthProviderCallback200JSONResponse{
+		Status: ptr("success"),
+		User: &struct {
+			Email *string `json:"email,omitempty"`
+			Id    *int64  `json:"id,omitempty"`
+		}{
+			Id:    &userID,
+			Email: &email,
 		},
 	})
 }
 
-func (h *Handler) PostAuthLogout(c *gin.Context) {
-	h.logout(c)
-}
-
 func (h *Handler) GetAuthLogout(c *gin.Context) {
 	h.logout(c)
+	c.JSON(http.StatusOK, struct{}{})
+}
+
+func (h *Handler) PostAuthLogout(c *gin.Context) {
+	h.logout(c)
+	c.JSON(http.StatusOK, openapi.PostAuthLogout200JSONResponse{Status: ptr("logged out")})
 }
 
 func (h *Handler) logout(c *gin.Context) {
@@ -76,7 +81,46 @@ func (h *Handler) logout(c *gin.Context) {
 		_ = h.service.DeleteSession(c.Request.Context(), cookie)
 	}
 	h.clearAuthCookie(c)
-	c.JSON(http.StatusOK, gin.H{"status": "logged out"})
+}
+
+func (h *Handler) GetMe(c *gin.Context) {
+	sessionVal, exists := c.Get("session")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*Session)
+
+	user, err := h.service.GetUserByID(c.Request.Context(), session.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
+		return
+	}
+
+	var roles *[]string
+	if len(session.Roles) > 0 {
+		roles = &session.Roles
+	}
+	c.JSON(http.StatusOK, openapi.GetAuthMe200JSONResponse{
+		User: &struct {
+			Email        *string `json:"email"`
+			Id           *int64  `json:"id,omitempty"`
+			Phone        *string `json:"phone"`
+			ProfileImage *string `json:"profile_image"`
+		}{
+			Id:           &user.ID,
+			Email:        user.Email,
+			Phone:        user.Phone,
+			ProfileImage: user.ProfileImage,
+		},
+		Session: &struct {
+			ExpiresAt *time.Time `json:"expires_at,omitempty"`
+			Roles     *[]string  `json:"roles,omitempty"`
+		}{
+			ExpiresAt: &session.ExpiresAt,
+			Roles:     roles,
+		},
+	})
 }
 
 func (h *Handler) PostProfileImage(c *gin.Context) {
@@ -87,9 +131,7 @@ func (h *Handler) PostProfileImage(c *gin.Context) {
 	}
 	session := sessionVal.(*Session)
 
-	var req struct {
-		Image string `json:"image"`
-	}
+	var req openapi.PostProfileImageJSONRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
@@ -110,57 +152,17 @@ func (h *Handler) PostProfileImage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"image_url": imageURL})
+	c.JSON(http.StatusOK, openapi.PostProfileImage200JSONResponse{ImageUrl: &imageURL})
 }
 
 func (h *Handler) setAuthCookie(c *gin.Context, token string, maxAge int) {
-	c.SetCookie(
-		"session",
-		token,
-		maxAge,
-		"/",
-		h.cookieDomain,
-		h.cookieSecure,
-		true,
-	)
+	c.SetCookie("session", token, maxAge, "/", h.cookieDomain, h.cookieSecure, true)
 }
 
 func (h *Handler) clearAuthCookie(c *gin.Context) {
-	c.SetCookie(
-		"session",
-		"",
-		-1,
-		"/",
-		h.cookieDomain,
-		h.cookieSecure,
-		true,
-	)
+	c.SetCookie("session", "", -1, "/", h.cookieDomain, h.cookieSecure, true)
 }
 
-func (h *Handler) GetMe(c *gin.Context) {
-	sessionVal, exists := c.Get("session")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-	session := sessionVal.(*Session)
-
-	user, err := h.service.GetUserByID(c.Request.Context(), session.UserID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"id":            user.ID,
-			"email":         user.Email,
-			"phone":         user.Phone,
-			"profile_image": user.ProfileImage,
-		},
-		"session": gin.H{
-			"roles":      session.Roles,
-			"expires_at": session.ExpiresAt,
-		},
-	})
+func ptr[T any](v T) *T {
+	return &v
 }
