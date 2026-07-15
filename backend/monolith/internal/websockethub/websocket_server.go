@@ -257,7 +257,7 @@ func (ws *WebsocketServer) handlePublish(channelIdx wsPB.Channel, msg []byte, co
 	}
 	err = channel.Publish(connData.ID, msg)
 	if err != nil {
-		return fmt.Errorf("failed to publish message")
+		return fmt.Errorf("failed to publish message: %s", err)
 	}
 	return nil
 }
