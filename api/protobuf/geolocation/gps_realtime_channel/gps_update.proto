@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./;pb";
+
+message GPSUpdate {
+  repeated Point coordinates = 1;
+  repeated int64 timestamps = 2;
+}
+
+message Point {
+  float latitude = 1;
+  float longitude = 2;
+}

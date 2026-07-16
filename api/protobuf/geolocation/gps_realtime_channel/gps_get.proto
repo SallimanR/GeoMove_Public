@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./;pb";
+
+message DriverRealtime {
+    uint32 driver_id = 1;
+	float distance = 2;
+	uint32 time = 3;
+	// repeated float points = 4;
+	repeated Coordinates  points = 4;
+}
+
+message Coordinates {
+  repeated float coordinates = 1;
+  // float latitude = 1;
+  // float longitude = 2;
+}

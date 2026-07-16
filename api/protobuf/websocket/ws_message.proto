@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package websocket;
+
+option go_package = "./;pb";
+
+message Request {
+  Channel channel = 1;
+  string request_id = 2;
+  oneof payload {
+    PublishMessage publish = 3;
+    SubscribeMessage subscribe = 4;
+    UnsubscribeMessage unsubscribe = 5;
+  }
+}
+
+message PublishMessage {
+  bytes data = 1;
+}
+
+message SubscribeMessage {
+  repeated int64 indexes = 1;
+}
+
+message UnsubscribeMessage {
+  repeated int64 indexes = 1;
+}
+
+message Response {
+  oneof payload {
+    ResponseMessage response = 1;
+    BroadcastMessage broadcast = 2;
+  }
+}
+
+message ResponseMessage {
+  string request_id = 1;
+  uint32 status_code = 2;
+  string error_message = 3;
+  bytes data = 4;
+}
+
+message BroadcastMessage {
+    Channel channel = 1;
+    bytes data = 2;
+}
+
+enum Channel {
+  GPS_REALTIME = 0;
+}
+
+message MessageBatch {
+  repeated bytes data = 1;
+}
