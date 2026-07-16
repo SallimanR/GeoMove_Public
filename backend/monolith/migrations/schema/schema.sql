@@ -1,4 +1,4 @@
-\restrict gageyEPAFLB1AZMg3sb0bKHLrSNo3RV8ZWdx2VaOGqjwMFdegiBs6p4jeOH7Vna
+\restrict dZ882t0xCG2xGijeFniuK5Rml0oZiK9RgUbN8UjPfFrMM4QeDiRWut3veA0aHif
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -109,15 +109,15 @@ CREATE TABLE public.driver (
 
 
 --
--- Name: driver_realtime; Type: TABLE; Schema: public; Owner: -
+-- Name: moving_driver; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.driver_realtime (
-    user_id bigint NOT NULL,
+CREATE TABLE public.moving_driver (
+    driver_id bigint NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     realtime_location public.geography(Point,4326),
-    average_speed real,
-    predicted_bearing real,
+    travel_time time without time zone NOT NULL,
+    path_meters integer NOT NULL,
     coarse_h3 public.h3index GENERATED ALWAYS AS (public.h3_latlng_to_cell(realtime_location, 2)) STORED,
     destination_location public.geography(Point,4326),
     destination_time timestamp without time zone
@@ -242,11 +242,11 @@ ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list ALTER COLUM
 
 
 --
--- Name: driver_realtime driver_realtime_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: moving_driver moving_driver_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.driver_realtime
-    ADD CONSTRAINT driver_realtime_pkey PRIMARY KEY (user_id);
+ALTER TABLE ONLY public.moving_driver
+    ADD CONSTRAINT moving_driver_pkey PRIMARY KEY (driver_id);
 
 
 --
@@ -325,14 +325,14 @@ ALTER TABLE ONLY public."user"
 -- Name: idx_destination_location; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_destination_location ON public.driver_realtime USING gist (destination_location);
+CREATE INDEX idx_destination_location ON public.moving_driver USING gist (destination_location);
 
 
 --
 -- Name: idx_destination_time; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_destination_time ON public.driver_realtime USING btree (destination_time);
+CREATE INDEX idx_destination_time ON public.moving_driver USING btree (destination_time);
 
 
 --
@@ -343,24 +343,24 @@ CREATE INDEX idx_driver_location_geom ON public.driver USING gist (location);
 
 
 --
--- Name: idx_driver_realtime_coarse_h3; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_driver_realtime_coarse_h3 ON public.driver_realtime USING btree (coarse_h3);
-
-
---
--- Name: idx_driver_realtime_location; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_driver_realtime_location ON public.driver_realtime USING gist (realtime_location);
-
-
---
 -- Name: idx_driver_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX idx_driver_user_id ON public.driver USING btree (user_id);
+
+
+--
+-- Name: idx_moving_driver_coarse_h3; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_moving_driver_coarse_h3 ON public.moving_driver USING btree (coarse_h3);
+
+
+--
+-- Name: idx_moving_driver_location; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_moving_driver_location ON public.moving_driver USING gist (realtime_location);
 
 
 --
@@ -413,19 +413,19 @@ CREATE INDEX idx_user_oauth_links_provider ON public.user_oauth_links USING btre
 
 
 --
--- Name: driver_realtime driver_realtime_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.driver_realtime
-    ADD CONSTRAINT driver_realtime_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
-
-
---
 -- Name: driver driver_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.driver
     ADD CONSTRAINT driver_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: moving_driver moving_driver_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.moving_driver
+    ADD CONSTRAINT moving_driver_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
 
 
 --
@@ -464,7 +464,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gageyEPAFLB1AZMg3sb0bKHLrSNo3RV8ZWdx2VaOGqjwMFdegiBs6p4jeOH7Vna
+\unrestrict dZ882t0xCG2xGijeFniuK5Rml0oZiK9RgUbN8UjPfFrMM4QeDiRWut3veA0aHif
 
 
 --
@@ -479,4 +479,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260705102447'),
     ('20260706094702'),
     ('20260710043141'),
-    ('20260713162812');
+    ('20260713162812'),
+    ('20260713193617');

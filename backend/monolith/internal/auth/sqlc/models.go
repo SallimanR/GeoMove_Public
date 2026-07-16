@@ -24,12 +24,12 @@ type Driver struct {
 	Rating       *float32
 }
 
-type DriverRealtime struct {
-	UserID              int64
+type MovingDriver struct {
+	DriverID            int64
 	UpdatedAt           *time.Time
 	RealtimeLocation    interface{}
-	AverageSpeed        *float32
-	PredictedBearing    *float32
+	TravelTime          time.Time
+	PathMeters          int32
 	CoarseH3            interface{}
 	DestinationLocation interface{}
 	DestinationTime     *time.Time
