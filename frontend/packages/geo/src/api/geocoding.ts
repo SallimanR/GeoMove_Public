@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_BASE = "http://localhost:2322"
+const API_BASE = import.meta.env.VITE_GEO_SEARCH_API
 
 export interface SearchResult {
 	properties: Partial<{
@@ -41,5 +41,5 @@ export async function getReverseGeocoding(lat: number, lon: number): Promise<Sea
 			"Accept-Language": "ru"
 		}
 	})
-	return result.data.features[0]
+	return result.data.features[0] ?? null
 }
