@@ -27,6 +27,10 @@ func (r *GeolocationRepository) UpdateMovingDriver(ctx context.Context, gps *ent
 	})
 }
 
+func (r *GeolocationRepository) DeleteStaleMovingDrivers(ctx context.Context, cutoff string) error {
+	return r.queries.DeleteStaleMovingDrivers(ctx, cutoff)
+}
+
 func (r *GeolocationRepository) GetMovingDriverByID(ctx context.Context, id int64) (*entity.MovingDriver, error) {
 	result, err := r.queries.GetMovingDriverByID(ctx, id)
 	if err != nil {

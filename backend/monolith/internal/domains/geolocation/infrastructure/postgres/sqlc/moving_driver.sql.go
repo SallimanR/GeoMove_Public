@@ -10,6 +10,16 @@ import (
 	"time"
 )
 
+const deleteStaleMovingDrivers = `-- name: DeleteStaleMovingDrivers :exec
+DELETE FROM moving_driver
+WHERE updated_at < NOW() - ($1::TEXT)::INTERVAL
+`
+
+func (q *Queries) DeleteStaleMovingDrivers(ctx context.Context, cutoff string) error {
+	_, err := q.db.Exec(ctx, deleteStaleMovingDrivers, cutoff)
+	return err
+}
+
 const getClosestWithinRadiusMovingDriver = `-- name: GetClosestWithinRadiusMovingDriver :many
 WITH user_location AS (
 	SELECT st_setsrid(st_makepoint($2::REAL, $3::REAL), 4326)::GEOGRAPHY AS geog

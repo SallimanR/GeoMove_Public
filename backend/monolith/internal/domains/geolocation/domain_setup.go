@@ -1,6 +1,9 @@
 package geolocation
 
 import (
+	"context"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
@@ -15,14 +18,22 @@ import (
 	"monolith/internal/websockethub"
 )
 
+const (
+	staleDriverCutoff          = "2 minutes"
+	staleDriverCleanupInterval = 30 * time.Second
+)
+
 type GeolocationDomain struct {
 	Commands   GeolocationCommands
 	Queries    GeolocationQueries
 	gpsChannel *websockethub.PubSubChannel[entity.MovingDriverWithPoints]
+
+	stopCleanup chan struct{}
 }
 
 type GeolocationCommands struct {
-	UpdateMovingDriver *command.UpdateMovingDriverHandler
+	UpdateMovingDriver       *command.UpdateMovingDriverHandler
+	DeleteStaleMovingDrivers *command.DeleteStaleMovingDriversHandler
 }
 
 type GeolocationQueries struct {
@@ -34,6 +45,7 @@ func NewGeolocationDomain(db *pgxpool.Pool, wsServer *websockethub.WebsocketServ
 	geoRepo := postgres.NewGeolocationRepository(sqlc.New(db))
 
 	updateCmd := command.NewUpdateMovingDriverHandler(geoRepo)
+	deleteStaleCmd := command.NewDeleteStaleMovingDriversHandler(geoRepo)
 	getDriverQuery := query.NewGetMovingDriverByIDHandler(geoRepo)
 	getClosestQuery := query.NewGetClosestWithinRadiusMovingDriversHandler(geoRepo)
 
@@ -42,19 +54,46 @@ func NewGeolocationDomain(db *pgxpool.Pool, wsServer *websockethub.WebsocketServ
 		return nil, err
 	}
 
-	return &GeolocationDomain{
+	domain := &GeolocationDomain{
 		Commands: GeolocationCommands{
-			UpdateMovingDriver: updateCmd,
+			UpdateMovingDriver:       updateCmd,
+			DeleteStaleMovingDrivers: deleteStaleCmd,
 		},
 		Queries: GeolocationQueries{
 			GetMovingDriversByID:                getDriverQuery,
 			GetClosestWithinRadiusMovingDrivers: getClosestQuery,
 		},
-		gpsChannel: gpsChan.Channel,
-	}, nil
+		gpsChannel:  gpsChan.Channel,
+		stopCleanup: make(chan struct{}),
+	}
+
+	go domain.runStaleDriverCleanup(logger)
+
+	return domain, nil
 }
 
 func (d *GeolocationDomain) RegisterHTTPRoutes(router *gin.RouterGroup) {
 	geoHandler := geoHTTP.NewGeolocationHandler(d.Queries.GetClosestWithinRadiusMovingDrivers, d.gpsChannel)
 	geoHTTP.RegisterGeolocationRoutes(router, geoHandler)
+}
+
+func (d *GeolocationDomain) Stop() {
+	close(d.stopCleanup)
+}
+
+func (d *GeolocationDomain) runStaleDriverCleanup(logger zerolog.Logger) {
+	ticker := time.NewTicker(staleDriverCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			err := d.Commands.DeleteStaleMovingDrivers.Handle(context.Background(), staleDriverCutoff)
+			if err != nil {
+				logger.Err(err).Msg("failed to cleanup stale moving drivers")
+			}
+		case <-d.stopCleanup:
+			return
+		}
+	}
 }

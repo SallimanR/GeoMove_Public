@@ -44,3 +44,7 @@ CROSS JOIN user_location
 WHERE st_dwithin(md.realtime_location, user_location.geog, @radius::INTEGER)
 ORDER BY md.realtime_location <-> user_location.geog
 LIMIT 20;
+
+-- name: DeleteStaleMovingDrivers :exec
+DELETE FROM moving_driver
+WHERE updated_at < NOW() - (@cutoff::TEXT)::INTERVAL;
