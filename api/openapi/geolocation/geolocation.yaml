@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 
 paths:
-  /drivers/moving/closest:
+  /driver/moving/closest:
     get:
       operationId: getClosestWithinRadiusMovingDriversByIDs
       parameters:
@@ -38,7 +38,7 @@ paths:
         "500":
           description: Internal server error
 
-  /drivers/moving:
+  /driver/moving:
     post:
       operationId: getMovingDriversByIDs 
       requestBody:

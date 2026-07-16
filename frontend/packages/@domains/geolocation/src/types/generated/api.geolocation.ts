@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/drivers/moving/closest": {
+    "/driver/moving/closest": {
         parameters: {
             query?: never;
             header?: never;
@@ -20,7 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drivers/moving": {
+    "/driver/moving": {
         parameters: {
             query?: never;
             header?: never;

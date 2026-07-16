@@ -28,7 +28,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/drivers/{user_id}": {
+    "/driver/{user_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -44,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/filter": {
+    "/driver/filter": {
         parameters: {
             query?: never;
             header?: never;

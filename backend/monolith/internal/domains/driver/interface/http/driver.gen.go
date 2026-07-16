@@ -63,14 +63,17 @@ type GetFilteredDriversJSONBody struct {
 	WorkStarts *string `json:"work_starts,omitempty"`
 }
 
-// CreateDriverProfileJSONRequestBody defines body for CreateDriverProfile for application/json ContentType.
-type CreateDriverProfileJSONRequestBody = DriverProfile
-
 // GetFilteredDriversJSONRequestBody defines body for GetFilteredDrivers for application/json ContentType.
 type GetFilteredDriversJSONRequestBody GetFilteredDriversJSONBody
 
+// CreateDriverProfileJSONRequestBody defines body for CreateDriverProfile for application/json ContentType.
+type CreateDriverProfileJSONRequestBody = DriverProfile
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
+	// (POST /driver/filter)
+	GetFilteredDrivers(c *gin.Context)
 	// Get my driver profile
 	// (GET /driver/profile)
 	GetMyDriverProfile(c *gin.Context)
@@ -78,11 +81,8 @@ type ServerInterface interface {
 	// (POST /driver/profile)
 	CreateDriverProfile(c *gin.Context)
 
-	// (GET /drivers/{user_id})
+	// (GET /driver/{user_id})
 	GetDriverByUserId(c *gin.Context, userId int64)
-
-	// (POST /filter)
-	GetFilteredDrivers(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -93,6 +93,19 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetFilteredDrivers operation middleware
+func (siw *ServerInterfaceWrapper) GetFilteredDrivers(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetFilteredDrivers(c)
+}
 
 // GetMyDriverProfile operation middleware
 func (siw *ServerInterfaceWrapper) GetMyDriverProfile(c *gin.Context) {
@@ -148,19 +161,6 @@ func (siw *ServerInterfaceWrapper) GetDriverByUserId(c *gin.Context) {
 	siw.Handler.GetDriverByUserId(c, userId)
 }
 
-// GetFilteredDrivers operation middleware
-func (siw *ServerInterfaceWrapper) GetFilteredDrivers(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetFilteredDrivers(c)
-}
-
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -188,10 +188,37 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.POST(options.BaseURL+"/driver/filter", wrapper.GetFilteredDrivers)
 	router.GET(options.BaseURL+"/driver/profile", wrapper.GetMyDriverProfile)
 	router.POST(options.BaseURL+"/driver/profile", wrapper.CreateDriverProfile)
-	router.GET(options.BaseURL+"/drivers/:user_id", wrapper.GetDriverByUserId)
-	router.POST(options.BaseURL+"/filter", wrapper.GetFilteredDrivers)
+	router.GET(options.BaseURL+"/driver/:user_id", wrapper.GetDriverByUserId)
+}
+
+type GetFilteredDriversRequestObject struct {
+	Body *GetFilteredDriversJSONRequestBody
+}
+
+type GetFilteredDriversResponseObject interface {
+	VisitGetFilteredDriversResponse(w http.ResponseWriter) error
+}
+
+type GetFilteredDrivers200JSONResponse struct {
+	Drivers *[]Driver `json:"drivers,omitempty"`
+}
+
+func (response GetFilteredDrivers200JSONResponse) VisitGetFilteredDriversResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetFilteredDrivers404Response struct {
+}
+
+func (response GetFilteredDrivers404Response) VisitGetFilteredDriversResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
 }
 
 type GetMyDriverProfileRequestObject struct {
@@ -283,35 +310,11 @@ func (response GetDriverByUserId404Response) VisitGetDriverByUserIdResponse(w ht
 	return nil
 }
 
-type GetFilteredDriversRequestObject struct {
-	Body *GetFilteredDriversJSONRequestBody
-}
-
-type GetFilteredDriversResponseObject interface {
-	VisitGetFilteredDriversResponse(w http.ResponseWriter) error
-}
-
-type GetFilteredDrivers200JSONResponse struct {
-	Drivers *[]Driver `json:"drivers,omitempty"`
-}
-
-func (response GetFilteredDrivers200JSONResponse) VisitGetFilteredDriversResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type GetFilteredDrivers404Response struct {
-}
-
-func (response GetFilteredDrivers404Response) VisitGetFilteredDriversResponse(w http.ResponseWriter) error {
-	w.WriteHeader(404)
-	return nil
-}
-
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+
+	// (POST /driver/filter)
+	GetFilteredDrivers(ctx context.Context, request GetFilteredDriversRequestObject) (GetFilteredDriversResponseObject, error)
 	// Get my driver profile
 	// (GET /driver/profile)
 	GetMyDriverProfile(ctx context.Context, request GetMyDriverProfileRequestObject) (GetMyDriverProfileResponseObject, error)
@@ -319,11 +322,8 @@ type StrictServerInterface interface {
 	// (POST /driver/profile)
 	CreateDriverProfile(ctx context.Context, request CreateDriverProfileRequestObject) (CreateDriverProfileResponseObject, error)
 
-	// (GET /drivers/{user_id})
+	// (GET /driver/{user_id})
 	GetDriverByUserId(ctx context.Context, request GetDriverByUserIdRequestObject) (GetDriverByUserIdResponseObject, error)
-
-	// (POST /filter)
-	GetFilteredDrivers(ctx context.Context, request GetFilteredDriversRequestObject) (GetFilteredDriversResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -336,6 +336,39 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// GetFilteredDrivers operation middleware
+func (sh *strictHandler) GetFilteredDrivers(ctx *gin.Context) {
+	var request GetFilteredDriversRequestObject
+
+	var body GetFilteredDriversJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetFilteredDrivers(ctx, request.(GetFilteredDriversRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetFilteredDrivers")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetFilteredDriversResponseObject); ok {
+		if err := validResponse.VisitGetFilteredDriversResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetMyDriverProfile operation middleware
@@ -416,39 +449,6 @@ func (sh *strictHandler) GetDriverByUserId(ctx *gin.Context, userId int64) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetDriverByUserIdResponseObject); ok {
 		if err := validResponse.VisitGetDriverByUserIdResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// GetFilteredDrivers operation middleware
-func (sh *strictHandler) GetFilteredDrivers(ctx *gin.Context) {
-	var request GetFilteredDriversRequestObject
-
-	var body GetFilteredDriversJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetFilteredDrivers(ctx, request.(GetFilteredDriversRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetFilteredDrivers")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetFilteredDriversResponseObject); ok {
-		if err := validResponse.VisitGetFilteredDriversResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

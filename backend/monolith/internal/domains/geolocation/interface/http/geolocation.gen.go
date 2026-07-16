@@ -42,10 +42,10 @@ type GetMovingDriversByIDsJSONRequestBody GetMovingDriversByIDsJSONBody
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (POST /drivers/moving)
+	// (POST /driver/moving)
 	GetMovingDriversByIDs(c *gin.Context)
 
-	// (GET /drivers/moving/closest)
+	// (GET /driver/moving/closest)
 	GetClosestWithinRadiusMovingDriversByIDs(c *gin.Context, params GetClosestWithinRadiusMovingDriversByIDsParams)
 }
 
@@ -161,8 +161,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.POST(options.BaseURL+"/drivers/moving", wrapper.GetMovingDriversByIDs)
-	router.GET(options.BaseURL+"/drivers/moving/closest", wrapper.GetClosestWithinRadiusMovingDriversByIDs)
+	router.POST(options.BaseURL+"/driver/moving", wrapper.GetMovingDriversByIDs)
+	router.GET(options.BaseURL+"/driver/moving/closest", wrapper.GetClosestWithinRadiusMovingDriversByIDs)
 }
 
 type GetMovingDriversByIDsRequestObject struct {
@@ -234,10 +234,10 @@ func (response GetClosestWithinRadiusMovingDriversByIDs500Response) VisitGetClos
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
-	// (POST /drivers/moving)
+	// (POST /driver/moving)
 	GetMovingDriversByIDs(ctx context.Context, request GetMovingDriversByIDsRequestObject) (GetMovingDriversByIDsResponseObject, error)
 
-	// (GET /drivers/moving/closest)
+	// (GET /driver/moving/closest)
 	GetClosestWithinRadiusMovingDriversByIDs(ctx context.Context, request GetClosestWithinRadiusMovingDriversByIDsRequestObject) (GetClosestWithinRadiusMovingDriversByIDsResponseObject, error)
 }
 

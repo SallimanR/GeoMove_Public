@@ -13,7 +13,7 @@ export interface MovingDriverProvider {
 
 class HttpMovingDriverProvider implements MovingDriverProvider {
 	async getClosestMovingDrivers(lat: number, lon: number): Promise<MovingDriver[]> {
-		const { data, error } = await geolocationClient.GET("/drivers/moving/closest", {
+		const { data, error } = await geolocationClient.GET("/driver/moving/closest", {
 			params: { query: { lat, lon, radius_meters: 30_000 } },
 		})
 		if (error) throw new Error(`getClosestMovingDrivers failed: ${error}`)
@@ -21,7 +21,7 @@ class HttpMovingDriverProvider implements MovingDriverProvider {
 	}
 
 	async getMovingDriversByIDs(ids: number[]): Promise<MovingDriver[]> {
-		const { data, error } = await geolocationClient.POST("/drivers/moving", {
+		const { data, error } = await geolocationClient.POST("/driver/moving", {
 			body: { ids },
 		})
 		if (error) throw new Error(`getMovingDriversByIDs failed: ${error}`)
