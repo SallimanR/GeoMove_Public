@@ -5,5 +5,10 @@
   "main": "index.js",
   "scripts": {},
   "keywords": [],
-  "author": ""
+  "author": "",
+  "devDependencies": {
+    "openapi-fetch": "^0.17.0",
+    "openapi-typescript": "^7.13.0",
+    "ts-proto": "^2.11.9"
+  }
 }
