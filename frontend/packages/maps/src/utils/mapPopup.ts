@@ -2,31 +2,36 @@ import { $mapInstance } from "../stores/mapsStore";
 import { Marker, Popup, type LngLat, type Map as MaplibreMap, type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import { createApp, type Component, type App, type ComponentPublicInstance } from "vue";
 
-interface PopupEntry {
+export interface PopupEntry {
 	popup: Popup;
-	app: App;
-	instance: ComponentPublicInstance;
+	app?: App;
+	instance?: ComponentPublicInstance;
 	destroy: () => void;
 }
 
 const popupGroups = new Map<string, PopupEntry[]>();
 
 export function addPopupToMap<T extends object = {}>(
-	lngLat: LngLat,
+	lat: number,
+	lon: number,
 	component: Component,
 	props: T = {} as T,
 	group: string,
 	popupOptions: PopupOptions = { offset: 0, closeOnClick: false },
 ): PopupEntry | undefined {
+	const map = $mapInstance.value;
+	if (!map) return undefined;
+
 	const popup = new Popup({
 		closeButton: false,
 		closeOnClick: false,
 		anchor: "bottom",
+		...popupOptions,
 	});
 	popup
-		.setLngLat([lngLat.lng, lngLat.lat])
+		.setLngLat([lon, lat])
 		.setHTML(`<div id='${group}-map-popup'></div>`)
-		.addTo($mapInstance.value);
+		.addTo(map);
 
 	const mountPoint = popup
 		.getElement()
@@ -59,13 +64,13 @@ export function addPopupToMap<T extends object = {}>(
 export function removePopupsByGroup(group: string): void {
 	const entries = popupGroups.get(group);
 	if (!entries) return;
-	entries.forEach(({ destroy }) => destroy());
+	entries.forEach(({ destroy }) => { destroy(); });
 	popupGroups.delete(group);
 }
 
 export function removeAllPopups(): void {
 	for (const entries of popupGroups.values()) {
-		entries.forEach(({ destroy }) => destroy());
+		entries.forEach(({ destroy }) => { destroy(); });
 	}
 	popupGroups.clear();
 }
