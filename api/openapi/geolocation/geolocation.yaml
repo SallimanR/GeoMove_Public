@@ -1,0 +1,102 @@
+openapi: "3.2.0"
+info:
+  title: Geolocation API
+  version: 1.0.0
+
+paths:
+  /drivers/moving/closest:
+    get:
+      operationId: getClosestWithinRadiusMovingDriversByIDs
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: lon
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: radius_meters
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MovingDriver"
+        "400":
+          description: Invalid parameters
+        "500":
+          description: Internal server error
+
+  /drivers/moving:
+    post:
+      operationId: getMovingDriversByIDs 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MovingDriver"
+        "400":
+          description: Invalid request
+        "500":
+          description: Internal server error
+
+components:
+  schemas:
+    MovingDriver:
+      required:
+        - driver_id
+        - lat
+        - lon
+        - path_meters
+        - travel_time
+        - points
+      type: object
+      properties:
+        driver_id:
+          type: integer
+        lat:
+          type: number
+          format: float
+        lon:
+          type: number
+          format: float
+        path_meters:
+          type: integer
+        travel_time:
+          type: number
+          format: float
+        points:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: float
+            minItems: 2
+            maxItems: 2

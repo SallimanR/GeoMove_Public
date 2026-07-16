@@ -1,0 +1,6 @@
+package: http
+generate:
+  models: true
+  strict-server: true
+  gin-server: true
+output: backend/monolith/internal/domains/geolocation/interface/http/geolocation.gen.go
