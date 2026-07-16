@@ -19,12 +19,12 @@ type MessageData struct {
 }
 
 type ChannelActions interface {
-	Publish(publisherID uint32, msg []byte) error
-	GetMessages(publisherIDs []uint32) ([]byte, error)
+	Publish(publisherID int64, msg []byte) error
+	GetMessages(publisherIDs []int64) ([]byte, error)
 }
 
 type PubSubChannel struct {
-	Messages *datastructures.SyncMap[uint32, []byte]
+	Messages *datastructures.SyncMap[int64, []byte]
 
 	muMessageQueue sync.Mutex
 	messageQueue   []*[]byte
@@ -35,13 +35,13 @@ type PubSubChannel struct {
 
 func NewPubSubChannel() *PubSubChannel {
 	return &PubSubChannel{
-		Messages: &datastructures.SyncMap[uint32, []byte]{},
+		Messages: &datastructures.SyncMap[int64, []byte]{},
 	}
 }
 
 func (c *PubSubChannel) Publish() {}
 
-func (c *PubSubChannel) GetMessages(publisherIDs []uint32) ([]byte, error) {
+func (c *PubSubChannel) GetMessages(publisherIDs []int64) ([]byte, error) {
 	messages := make([][]byte, 0, len(publisherIDs))
 	for _, publisherID := range publisherIDs {
 		message, ok := c.Messages.Load(publisherID)

@@ -9,7 +9,7 @@ import (
 	"github.com/lesismal/nbio/nbhttp/websocket"
 )
 
-func CreateWSConn(t testing.TB, role string, id uint32, httpAddr string, dialer *websocket.Dialer) *websocket.Conn {
+func CreateWSConn(t testing.TB, role string, id int64, httpAddr string, dialer *websocket.Dialer) *websocket.Conn {
 	t.Helper()
 	connURL := fmt.Sprintf("ws://%s/ws/%s?id=%d", httpAddr, role, id)
 	conn, res, err := dialer.Dial(connURL, http.Header{})

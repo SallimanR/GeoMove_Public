@@ -55,7 +55,7 @@ func NewWebsocketServer(config WebsocketServerOptions) *WebsocketServer {
 	connectionsByRole := make(map[string]*ConnectionsByRole)
 	for _, role := range config.Roles {
 		connectionsByRole[role] = &ConnectionsByRole{
-			activeConnections: &datastructures.SyncMap[uint32, *ConnectionData]{},
+			activeConnections: &datastructures.SyncMap[int64, *ConnectionData]{},
 			channels:          make([]ChannelActions, len(wsPB.Channel_name)),
 		}
 	}
@@ -121,7 +121,7 @@ func (ws *WebsocketServer) WebsocketUpgradeHandler(ctx *gin.Context) {
 		return
 	}
 
-	connID := uint32(user.GetUserID())
+	connID := user.GetUserID()
 
 	connPool, ok := ws.ConnectionsByRole[connRole]
 	if !ok {
@@ -138,7 +138,7 @@ func (ws *WebsocketServer) WebsocketUpgradeHandler(ctx *gin.Context) {
 	connData := &ConnectionData{
 		ID:             connID,
 		ConnectionPool: connPool,
-		subscriptions:  make([][]uint32, len(wsPB.Channel_name)),
+		subscriptions:  make([][]int64, len(wsPB.Channel_name)),
 	}
 	conn.SetSession(connData)
 
@@ -262,7 +262,7 @@ func (ws *WebsocketServer) handlePublish(channelIdx wsPB.Channel, msg []byte, co
 	return nil
 }
 
-func (ws *WebsocketServer) handleSubscribe(channelIdx wsPB.Channel, publisherIDs []uint32, conn *websocket.Conn) ([]byte, error) {
+func (ws *WebsocketServer) handleSubscribe(channelIdx wsPB.Channel, publisherIDs []int64, conn *websocket.Conn) ([]byte, error) {
 	err := ws.validatePubSubChannel(channelIdx)
 	if err != nil {
 		return nil, err
@@ -291,7 +291,7 @@ func (ws *WebsocketServer) handleSubscribe(channelIdx wsPB.Channel, publisherIDs
 	return fetchedMessages, nil
 }
 
-func (ws *WebsocketServer) handleUnsubscribe(channelIdx wsPB.Channel, publisherIDs []uint32, conn *websocket.Conn) {
+func (ws *WebsocketServer) handleUnsubscribe(channelIdx wsPB.Channel, publisherIDs []int64, conn *websocket.Conn) {
 	err := ws.validatePubSubChannel(channelIdx)
 	if err != nil {
 		return

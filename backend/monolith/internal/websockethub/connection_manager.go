@@ -8,21 +8,18 @@ import (
 )
 
 type ConnectionData struct {
-	ID             uint32
+	ID             int64
 	ConnectionPool *ConnectionsByRole
 
-	mu sync.RWMutex
-	// subscriptions map[string][]uint32
-	subscriptions [][]uint32
+	mu            sync.RWMutex
+	subscriptions [][]int64
 }
 
 type ConnectionsByRole struct {
-	activeConnections *datastructures.SyncMap[uint32, *ConnectionData]
-	// connections       *datastructures.SyncMap[*websocket.Conn, *ConnectionData]
-	stats struct {
+	activeConnections *datastructures.SyncMap[int64, *ConnectionData]
+	stats             struct {
 		totalConns atomic.Int64
 	}
 
-	// channels map[string]ChannelActions
 	channels []ChannelActions
 }

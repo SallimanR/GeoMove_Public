@@ -6,8 +6,6 @@ import (
 	wsPB "monolith/internal/websockethub/proto"
 )
 
-// TODO: make batches of multiple types of messages and batch messages?
-
 // func MarshalProtobufBatch[T proto.Message](data []byte, newMsg func() T) ([]byte, error) {
 // }
 

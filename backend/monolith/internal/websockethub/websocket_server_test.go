@@ -153,7 +153,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 
 	// TODO: workers instead of go routine per connection
 	for i := 0; i < connNumber; i++ {
-		conn := testws.CreateWSConn(t, role, uint32(i), wsAddr, dialer)
+		conn := testws.CreateWSConn(t, role, int64(i), wsAddr, dialer)
 		conns[i] = conn
 
 		done := make(chan bool)
@@ -174,7 +174,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 	log.Printf("timeout count: %d", timeoutCount)
 	connPool := wsServer.ConnectionsByRole[role]
 
-	for i := uint32(0); i < uint32(connNumber); i++ {
+	for i := int64(0); i < int64(connNumber); i++ {
 		_, ok := connPool.activeConnections.Load(i)
 		require.True(t, ok, "No connection in activeConnections")
 	}
@@ -184,7 +184,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 	}
 	// TODO: proper synchronization
 	time.Sleep(100 * time.Millisecond)
-	for i := uint32(0); i < uint32(connNumber); i++ {
+	for i := int64(0); i < int64(connNumber); i++ {
 		_, ok := connPool.activeConnections.Load(i)
 		require.False(t, ok, "connection is in activeConnections after it was closed")
 	}
@@ -211,7 +211,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 //
 // 	testCases := []struct {
 // 		name     string
-// 		userID   uint32
+// 		userID   int64
 // 		userRole string
 // 		message  wsPB.Request
 // 	}{
@@ -232,7 +232,7 @@ func TestWebsocketConnectionPersistence(t *testing.T) {
 // 	for i := 0; i < len(testCases) && !t.Failed(); i++ {
 // 		tc := &testCases[i]
 // 		t.Run(tc.name, func(t *testing.T) {
-// 			conn := testws.CreateWSConn(t, role, uint32(i), wsAddr, dialer)
+// 			conn := testws.CreateWSConn(t, role, int64(i), wsAddr, dialer)
 // 			gotResponse := make(chan []byte, 1)
 // 			conn.OnMessage(func(conn *websocket.Conn, msgType websocket.MessageType, data []byte) {
 // 				gotResponse <- data
@@ -290,7 +290,7 @@ func BenchmarkWebsocketConnection(b *testing.B) {
 	// trace.NewFlightRecorder
 	b.ResetTimer()
 	for i := 0; i < connNumber; i++ {
-		conn := testws.CreateWSConn(b, role, uint32(i), wsAddr, dialer)
+		conn := testws.CreateWSConn(b, role, int64(i), wsAddr, dialer)
 
 		done := make(chan bool)
 		conn.OnMessage(func(conn *websocket.Conn, msgType websocket.MessageType, data []byte) {
