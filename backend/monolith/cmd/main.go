@@ -27,6 +27,7 @@ func main() {
 		server.WithLogger(logger),
 		server.WithDB(),
 		server.WithDriverDomain(),
+		server.WithGeolocationDomain(),
 		server.WithAuth(),
 	)
 	if err != nil {

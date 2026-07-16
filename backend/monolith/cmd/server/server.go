@@ -17,6 +17,7 @@ import (
 	"monolith/internal/auth/sqlc"
 	"monolith/internal/database"
 	"monolith/internal/domains/driver"
+	"monolith/internal/domains/geolocation"
 	"monolith/internal/websockethub"
 )
 
@@ -43,8 +44,10 @@ type Server struct {
 	dbManager *database.DBManager
 	db        *pgxpool.Pool
 
-	withDriverDomain bool
-	driverDomain     *driver.DriverDomain
+	withDriverDomain      bool
+	driverDomain          *driver.DriverDomain
+	withGeolocationDomain bool
+	geolocationDomain     *geolocation.GeolocationDomain
 
 	withAuth       bool
 	authService    *auth.Service
@@ -140,14 +143,46 @@ func WithDriverDomain() Option {
 	}
 }
 
-func (s *Server) setupDriverDomain() {
+func (s *Server) setupDriverDomain() error {
+	if s.geolocationDomain != nil {
+		err := s.setupGeolocationDomain()
+		if err != nil {
+			return err
+		}
+	}
 	domain := driver.NewDriverDomain(s.db)
 	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware, s.authService)
 	s.driverDomain = domain
+	return nil
 }
 
 func (s *Server) GetDriverDomain() *driver.DriverDomain {
 	return s.driverDomain
+}
+
+func WithGeolocationDomain() Option {
+	return func(s *Server) error {
+		s.withGeolocationDomain = true
+		return nil
+	}
+}
+
+func (s *Server) setupGeolocationDomain() error {
+	if s.geolocationDomain != nil {
+		return nil
+	}
+
+	domain, err := geolocation.NewGeolocationDomain(s.db, s.wsServer, s.logger)
+	if err != nil {
+		return err
+	}
+	domain.RegisterHTTPRoutes(s.httpAPI)
+	s.geolocationDomain = domain
+	return nil
+}
+
+func (s *Server) GetGeolocationDomain() *geolocation.GeolocationDomain {
+	return s.geolocationDomain
 }
 
 func WithLogger(logger zerolog.Logger) Option {
@@ -171,8 +206,17 @@ func (s *Server) Start() error {
 
 	s.registerWSRoutes()
 
+	if s.withGeolocationDomain {
+		err := s.setupGeolocationDomain()
+		if err != nil {
+			return err
+		}
+	}
 	if s.withDriverDomain {
-		s.setupDriverDomain()
+		err := s.setupDriverDomain()
+		if err != nil {
+			return err
+		}
 	}
 
 	go s.startWSServer()
