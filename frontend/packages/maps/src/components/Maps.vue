@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { type Map as MaplibreMaps } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 
 import { useMaps } from "../composables/useMaps.ts";
 import { useRouteDisplay } from "../composables/useRouteDisplay.ts";
