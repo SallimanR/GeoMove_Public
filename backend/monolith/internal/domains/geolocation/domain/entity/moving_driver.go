@@ -10,6 +10,11 @@ type MovingDriver struct {
 	PathMeters int32
 }
 
+type MovingDriverWithPoints struct {
+	MovingDriver
+	Points [][2]float32
+}
+
 func NewMovingDriver(driverID int64, gpsPoints []LocationPoint, travelTime time.Time, pathMeters uint32) *MovingDriver {
 	pointsNumber := len(gpsPoints)
 	if pointsNumber < 2 {

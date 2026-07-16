@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"monolith/internal/domains/geolocation/application/command"
+	"monolith/internal/domains/geolocation/domain/entity"
 	"monolith/internal/domains/geolocation/infrastructure/graphopper"
 	geoHTTP "monolith/internal/domains/geolocation/interface/http"
 	"monolith/internal/domains/geolocation/interface/websocket/pb"
@@ -18,7 +19,7 @@ import (
 )
 
 type GPSRealtimeChannel struct {
-	Channel *websockethub.PubSubChannel
+	Channel *websockethub.PubSubChannel[entity.MovingDriverWithPoints]
 
 	updateMovingDriver *command.UpdateMovingDriverHandler
 
@@ -28,7 +29,7 @@ type GPSRealtimeChannel struct {
 func NewGPSRealtimeChannel(wsServer *websockethub.WebsocketServer, roles []string, updateMovingDriver *command.UpdateMovingDriverHandler, logger zerolog.Logger) (*GPSRealtimeChannel, wsPB.Channel, error) {
 	const channelName = wsPB.Channel_GPS_REALTIME
 	channel := &GPSRealtimeChannel{
-		Channel:            websockethub.NewPubSubChannel(),
+		Channel:            websockethub.NewPubSubChannel[entity.MovingDriverWithPoints](),
 		updateMovingDriver: updateMovingDriver,
 		logger:             logger,
 	}
@@ -68,27 +69,26 @@ func (c *GPSRealtimeChannel) Publish(publisherID int64, msg []byte) error {
 	lon := lastCoord[0]
 	lat := lastCoord[1]
 
-	points := make([][]float32, coordinatesNumber)
+	points := make([][2]float32, coordinatesNumber)
 	for i, c := range matchResp.Points.Coordinates {
-		points[i] = []float32{c[0], c[1]}
+		points[i] = [2]float32{c[0], c[1]}
 	}
-
-	dr := geoHTTP.MovingDriver{
-		DriverId:   int(publisherID),
-		Lat:        lat,
-		Lon:        lon,
-		TravelTime: float32(matchResp.Time),
-		PathMeters: int(matchResp.Distance),
-		Points:     points,
-	}
-
-	msgJSON, err := json.Marshal(dr)
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %s", err)
-	}
-	c.Channel.Messages.Store(publisherID, msgJSON)
 
 	travelDuration := time.Duration(matchResp.Time) * time.Millisecond
+
+	gpsData := entity.MovingDriverWithPoints{
+		MovingDriver: entity.MovingDriver{
+			DriverID:   publisherID,
+			Latitude:   lat,
+			Longitude:  lon,
+			TravelTime: time.Time{}.Add(travelDuration),
+			PathMeters: int32(matchResp.Distance),
+		},
+		Points: points,
+	}
+
+	c.Channel.Messages.Store(publisherID, gpsData)
+
 	err = c.updateMovingDriver.Handle(ctx, command.UpdateMovingDriverCommand{
 		DriverID:    publisherID,
 		Coordinates: matchResp.Points.Coordinates,
@@ -104,6 +104,34 @@ func (c *GPSRealtimeChannel) Publish(publisherID int64, msg []byte) error {
 }
 
 func (c *GPSRealtimeChannel) GetMessages(publisherIDs []int64) ([]byte, error) {
-	messages, err := c.Channel.GetMessages(publisherIDs)
-	return messages, err
+	items := c.Channel.GetMessages(publisherIDs)
+
+	messages := make([][]byte, 0, len(items))
+	for _, item := range items {
+		md := geoHTTP.MovingDriver{
+			DriverId:   int(item.DriverID),
+			Lat:        item.Latitude,
+			Lon:        item.Longitude,
+			TravelTime: float32(item.TravelTime.Sub(time.Time{}).Seconds()),
+			PathMeters: int(item.PathMeters),
+			Points:     convertPointsToSlice(item.Points),
+		}
+		msgJSON, err := json.Marshal(md)
+		if err != nil {
+			continue
+		}
+		messages = append(messages, msgJSON)
+	}
+
+	var messagesProtobuf wsPB.MessageBatch
+	messagesProtobuf.Data = messages
+	return proto.Marshal(&messagesProtobuf)
+}
+
+func convertPointsToSlice(points [][2]float32) [][]float32 {
+	result := make([][]float32, len(points))
+	for i, p := range points {
+		result[i] = []float32{p[0], p[1]}
+	}
+	return result
 }

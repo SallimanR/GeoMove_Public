@@ -7,6 +7,7 @@ import (
 
 	"monolith/internal/domains/geolocation/application/command"
 	"monolith/internal/domains/geolocation/application/query"
+	"monolith/internal/domains/geolocation/domain/entity"
 	"monolith/internal/domains/geolocation/infrastructure/postgres"
 	"monolith/internal/domains/geolocation/infrastructure/postgres/sqlc"
 	geoHTTP "monolith/internal/domains/geolocation/interface/http"
@@ -17,7 +18,7 @@ import (
 type GeolocationDomain struct {
 	Commands   GeolocationCommands
 	Queries    GeolocationQueries
-	gpsChannel *websockethub.PubSubChannel
+	gpsChannel *websockethub.PubSubChannel[entity.MovingDriverWithPoints]
 }
 
 type GeolocationCommands struct {

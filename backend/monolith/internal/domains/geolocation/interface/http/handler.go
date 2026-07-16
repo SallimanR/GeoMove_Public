@@ -2,21 +2,22 @@ package http
 
 import (
 	"context"
-	"encoding/json"
+	"time"
 
 	"monolith/internal/domains/geolocation/application/dto"
 	"monolith/internal/domains/geolocation/application/query"
+	"monolith/internal/domains/geolocation/domain/entity"
 	"monolith/internal/websockethub"
 )
 
 type GeolocationHandler struct {
 	getClosestWithinRadiusMovingDrivers query.GetClosestWithinRadiusMovingDriversHandler
-	gpsChannel                          *websockethub.PubSubChannel
+	gpsChannel                          *websockethub.PubSubChannel[entity.MovingDriverWithPoints]
 }
 
 func NewGeolocationHandler(
 	getClosestMovingDrivers query.GetClosestWithinRadiusMovingDriversHandler,
-	gpsChannel *websockethub.PubSubChannel,
+	gpsChannel *websockethub.PubSubChannel[entity.MovingDriverWithPoints],
 ) GeolocationHandler {
 	return GeolocationHandler{
 		getClosestWithinRadiusMovingDrivers: getClosestMovingDrivers,
@@ -44,17 +45,25 @@ func (h *GeolocationHandler) GetClosestWithinRadiusMovingDriversByIDs(
 		return GetClosestWithinRadiusMovingDriversByIDs500Response{}, nil
 	}
 
-	resp := make(GetClosestWithinRadiusMovingDriversByIDs200JSONResponse, len(drivers))
-	for i, d := range drivers {
-		resp[i] = MovingDriver{
-			DriverId:   int(d.DriverID),
-			Lat:        d.Latitude,
-			Lon:        d.Longitude,
-			TravelTime: float32(d.TravelTime.Hour()*3600 + d.TravelTime.Minute()*60 + d.TravelTime.Second()),
-			PathMeters: int(d.PathMeters),
-			Points:     nil,
+	resp := make(GetClosestWithinRadiusMovingDriversByIDs200JSONResponse, 0, len(drivers))
+	for _, driver := range drivers {
+		data, ok := h.gpsChannel.Messages.Load(driver.DriverID)
+		if !ok {
+			continue
 		}
+
+		md := MovingDriver{
+			DriverId:   int(data.DriverID),
+			Lat:        data.Latitude,
+			Lon:        data.Longitude,
+			TravelTime: float32(data.TravelTime.Sub(time.Time{}).Milliseconds()),
+			PathMeters: int(data.PathMeters),
+			Points:     convertPointsForAPI(data.Points),
+		}
+
+		resp = append(resp, md)
 	}
+
 	return resp, nil
 }
 
@@ -73,18 +82,30 @@ func (h *GeolocationHandler) GetMovingDriversByIDs(ctx context.Context, request 
 
 	resp := make(GetMovingDriversByIDs200JSONResponse, 0, len(ids))
 	for _, id := range ids {
-		msgBytes, ok := h.gpsChannel.Messages.Load(int64(id))
+		data, ok := h.gpsChannel.Messages.Load(int64(id))
 		if !ok {
 			continue
 		}
 
-		var md MovingDriver
-		if err := json.Unmarshal(msgBytes, &md); err != nil {
-			continue
+		md := MovingDriver{
+			DriverId:   int(data.DriverID),
+			Lat:        data.Latitude,
+			Lon:        data.Longitude,
+			TravelTime: float32(data.TravelTime.Sub(time.Time{}).Milliseconds()),
+			PathMeters: int(data.PathMeters),
+			Points:     convertPointsForAPI(data.Points),
 		}
 
 		resp = append(resp, md)
 	}
 
 	return resp, nil
+}
+
+func convertPointsForAPI(points [][2]float32) [][]float32 {
+	result := make([][]float32, len(points))
+	for i, p := range points {
+		result[i] = []float32{p[0], p[1]}
+	}
+	return result
 }
