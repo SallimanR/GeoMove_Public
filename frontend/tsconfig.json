@@ -1,6 +1,16 @@
 {
-	"exclude": [
-		"**/dist/**/*",
-		"**/node_modules/**/*"
-	],
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "exclude": [
+    "**/dist/**/*",
+    "**/node_modules/**/*"
+  ]
 }
