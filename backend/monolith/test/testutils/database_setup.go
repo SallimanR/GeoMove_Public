@@ -51,7 +51,7 @@ func CreateAdminDB(ctx context.Context) (*pgxpool.Pool, string, func(), error) {
 	)
 	err = dockerCompose.Up(ctx)
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("failed to up posrgres docker compose: %w", err)
+		return nil, "", nil, fmt.Errorf("failed to up postgres docker compose: %w", err)
 	}
 
 	dockerContainer, err := dockerCompose.ServiceContainer(ctx, containerName)
@@ -246,13 +246,17 @@ func CreateTestDB(tb testing.TB, ctx context.Context, adminConn *pgxpool.Pool, a
 
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_, err := adminConn.Exec(cleanupCtx, fmt.Sprintf(`
+		_, err := adminConn.Exec(cleanupCtx, `
 			SELECT pg_terminate_backend(pid)
 			FROM pg_stat_activity
-			WHERE datname = %s AND pid <> pg_backend_pid()
-		`, testDBName))
+			WHERE datname = $1 AND pid <> pg_backend_pid()
+		`, testDBName)
 		if err != nil {
-			tb.Logf("cleanup: failed to drop database: %s, error: %v", testDBName, err)
+			tb.Logf("cleanup: failed to terminate backends for %s: %v", testDBName, err)
+		}
+		_, err = adminConn.Exec(cleanupCtx, fmt.Sprintf(`DROP DATABASE IF EXISTS "%s"`, testDBName))
+		if err != nil {
+			tb.Logf("cleanup: failed to drop database %s: %v", testDBName, err)
 		}
 	}
 
