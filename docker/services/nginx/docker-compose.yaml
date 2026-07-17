@@ -7,12 +7,13 @@ services:
       - "443:443/udp"
       - "80:80/tcp"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro,
       - ./certs/nginx-selfsigned.crt:/etc/nginx/tls/localhost.crt:ro
       - ./certs/nginx-selfsigned.key:/etc/nginx/tls/localhost.key:ro
       - ../../../data/maps:/data/maps:ro
       - ../../../data/static:/data/static:ro
-      - ../../../frontend/apps/user_app/dist/client/:/webapps/user_app/:ro
+      - ../../../frontend/apps/user_app/dist/:/webapps/user_app/:ro
+      - ../../../frontend/apps/driver_app/dist/:/webapps/driver_app/:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
     extra_hosts:
