@@ -14,13 +14,6 @@ services:
       - ./certs/server.crt:/certs/server.crt:ro
       - ./certs/server.key:/certs/server.key:ro
     command: -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
-    networks:
-      tow-network:
 
 volumes:
   tow-postgis-data:
-
-networks:
-  tow-network:
-    driver: bridge
-    name: tow-network
