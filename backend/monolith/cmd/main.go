@@ -29,6 +29,7 @@ func main() {
 		server.WithDriverDomain(),
 		server.WithGeolocationDomain(),
 		server.WithAuth(),
+		server.WithNotification(),
 	)
 	if err != nil {
 		log.Printf("Failed to setup server: %v", err)

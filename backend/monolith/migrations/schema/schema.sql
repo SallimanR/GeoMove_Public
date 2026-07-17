@@ -1,4 +1,4 @@
-\restrict dZ882t0xCG2xGijeFniuK5Rml0oZiK9RgUbN8UjPfFrMM4QeDiRWut3veA0aHif
+\restrict gfCLk1K15RtjRO8pl0HxGQAey4jUpncErPQdByHaHoIg9n8opniZq3nOiNSCJfX
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -125,6 +125,40 @@ CREATE TABLE public.moving_driver (
 
 
 --
+-- Name: push_subscriptions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.push_subscriptions (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    endpoint text NOT NULL,
+    device_public_key text NOT NULL,
+    auth_secret text NOT NULL,
+    device_type text DEFAULT 'web'::text NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: push_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.push_subscriptions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: push_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.push_subscriptions_id_seq OWNED BY public.push_subscriptions.id;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -235,6 +269,13 @@ CREATE TABLE public.user_oauth_links (
 
 
 --
+-- Name: push_subscriptions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions ALTER COLUMN id SET DEFAULT nextval('public.push_subscriptions_id_seq'::regclass);
+
+
+--
 -- Name: tow_driver_freely_available_to_location_list id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -247,6 +288,22 @@ ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list ALTER COLUM
 
 ALTER TABLE ONLY public.moving_driver
     ADD CONSTRAINT moving_driver_pkey PRIMARY KEY (driver_id);
+
+
+--
+-- Name: push_subscriptions push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions
+    ADD CONSTRAINT push_subscriptions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: push_subscriptions push_subscriptions_user_id_endpoint_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions
+    ADD CONSTRAINT push_subscriptions_user_id_endpoint_key UNIQUE (user_id, endpoint);
 
 
 --
@@ -364,6 +421,13 @@ CREATE INDEX idx_moving_driver_location ON public.moving_driver USING gist (real
 
 
 --
+-- Name: idx_push_subscriptions_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_push_subscriptions_user_id ON public.push_subscriptions USING btree (user_id);
+
+
+--
 -- Name: idx_session_expires_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -429,6 +493,14 @@ ALTER TABLE ONLY public.moving_driver
 
 
 --
+-- Name: push_subscriptions push_subscriptions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions
+    ADD CONSTRAINT push_subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
 -- Name: session session_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -464,7 +536,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dZ882t0xCG2xGijeFniuK5Rml0oZiK9RgUbN8UjPfFrMM4QeDiRWut3veA0aHif
+\unrestrict gfCLk1K15RtjRO8pl0HxGQAey4jUpncErPQdByHaHoIg9n8opniZq3nOiNSCJfX
 
 
 --
@@ -480,4 +552,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260706094702'),
     ('20260710043141'),
     ('20260713162812'),
-    ('20260713193617');
+    ('20260713193617'),
+    ('20260716');

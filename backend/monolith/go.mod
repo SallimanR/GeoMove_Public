@@ -3,6 +3,7 @@ module monolith
 go 1.26.0
 
 require (
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/amacneil/dbmate/v2 v2.31.0
 	github.com/gin-gonic/gin v1.10.1
 	github.com/google/uuid v1.6.0

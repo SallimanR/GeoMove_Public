@@ -35,6 +35,16 @@ type MovingDriver struct {
 	DestinationTime     *time.Time
 }
 
+type PushSubscription struct {
+	ID              int64
+	UserID          int64
+	Endpoint        string
+	DevicePublicKey string
+	AuthSecret      string
+	DeviceType      string
+	CreatedAt       time.Time
+}
+
 type Session struct {
 	TokenHash string
 	SessionID pgtype.UUID

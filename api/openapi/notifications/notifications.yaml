@@ -1,0 +1,71 @@
+openapi: "3.2.0"
+info:
+  title: Notification API
+  version: "1.0"
+
+paths:
+  /notifications/vapid-public-key:
+    get:
+      operationId: getVapidPublicKey
+      responses:
+        "200":
+          description: VAPID public key for push subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VapidPublicKeyResponse"
+
+  /notifications/subscribe:
+    post:
+      operationId: subscribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionRequest"
+      responses:
+        "200":
+          description: Subscribed successfully
+
+  /notifications/unsubscribe:
+    post:
+      operationId: unsubscribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnsubscribeRequest"
+      responses:
+        "200":
+          description: Unsubscribed successfully
+
+components:
+  schemas:
+    VapidPublicKeyResponse:
+      type: object
+      required: [publicKey]
+      properties:
+        publicKey:
+          type: string
+
+    SubscriptionRequest:
+      type: object
+      required: [endpoint, devicePublicKey, authSecret]
+      properties:
+        endpoint:
+          type: string
+        devicePublicKey:
+          type: string
+        authSecret:
+          type: string
+        deviceType:
+          type: string
+
+    UnsubscribeRequest:
+      type: object
+      required: [endpoint]
+      properties:
+        endpoint:
+          type: string

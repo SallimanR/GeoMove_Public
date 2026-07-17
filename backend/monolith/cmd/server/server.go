@@ -18,6 +18,7 @@ import (
 	"monolith/internal/database"
 	"monolith/internal/domains/driver"
 	"monolith/internal/domains/geolocation"
+	"monolith/internal/notification"
 	"monolith/internal/websockethub"
 )
 
@@ -52,6 +53,10 @@ type Server struct {
 	withAuth       bool
 	authService    *auth.Service
 	authMiddleware gin.HandlerFunc
+
+	withNotification         bool
+	notificationService      *notification.Service
+	notificationContactEmail string
 
 	logger zerolog.Logger
 }
@@ -206,6 +211,13 @@ func (s *Server) Start() error {
 
 	s.registerWSRoutes()
 
+	if s.withNotification {
+		err := s.setupNotification()
+		if err != nil {
+			return err
+		}
+	}
+
 	if s.withGeolocationDomain {
 		err := s.setupGeolocationDomain()
 		if err != nil {
@@ -227,6 +239,15 @@ func (s *Server) Start() error {
 // TODO: graceful shutdown and properly exit from program
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down HTTP server...")
+	if s.geolocationDomain != nil {
+		s.geolocationDomain.Stop()
+	}
+	if s.notificationService != nil {
+		err := s.notificationService.Close()
+		if err != nil {
+			return err
+		}
+	}
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		log.Printf("HTTP shutdown error: %v", err)
 		return err
@@ -306,6 +327,44 @@ func WithAuth() Option {
 		s.withAuth = true
 		return nil
 	}
+}
+
+func WithNotification() Option {
+	return func(s *Server) error {
+		s.withNotification = true
+		return nil
+	}
+}
+
+func WithNotificationContactEmail(email string) Option {
+	return func(s *Server) error {
+		s.notificationContactEmail = email
+		return nil
+	}
+}
+
+func (s *Server) setupNotification() error {
+	contactEmail := s.notificationContactEmail
+	if contactEmail == "" {
+		contactEmail = os.Getenv("VAPID_CONTACT_EMAIL")
+	}
+
+	svc, err := notification.NewService(notification.Config{
+		DB:           s.db,
+		ContactEmail: contactEmail,
+		Logger:       s.logger,
+	})
+	if err != nil {
+		return fmt.Errorf("setup notification service: %w", err)
+	}
+
+	notification.RegisterNotificationRoutes(s.httpAPI, svc.Handler, s.authMiddleware)
+	s.notificationService = svc
+	return nil
+}
+
+func (s *Server) GetNotificationService() *notification.Service {
+	return s.notificationService
 }
 
 func (s *Server) startListening() {

@@ -1,0 +1,6 @@
+package: notification
+generate:
+  models: true
+  strict-server: true
+  gin-server: true
+output: backend/monolith/internal/notification/notifications.gen.go
