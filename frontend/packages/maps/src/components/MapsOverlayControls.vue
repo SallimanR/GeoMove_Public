@@ -86,7 +86,7 @@ onUnmounted(() => {
 
 <template>
   <div class="absolute inset-0 flex flex-col pointer-events-none">
-    <div class="flex gap-2 mt-4 mr-4 ml-4">
+    <div class="flex items-start gap-2 mt-4 mr-4 ml-4">
       <MapsSearchInput class="flex-1 pointer-events-auto" />
       <MapsGPSLocation class="pointer-events-auto" />
     </div>
