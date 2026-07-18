@@ -11,9 +11,6 @@
 <script setup lang="ts">
 const styleApi = import.meta.env.VITE_STYLE_API; // your API style
 
-const provider = MovingDriverProviders.http();
-
-useMovingDriverLayer(undefined, 55.751, 37.618, MovingDriverPopups);
 </script>
 
 <template>
