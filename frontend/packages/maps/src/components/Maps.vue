@@ -6,7 +6,7 @@ import { useMaps } from "../composables/useMaps.ts";
 
 import MapsCentralMarker from "./MapsCentralMarker.vue";
 
-const props = defineProps(["styleApi"]);
+const props = defineProps<{ styleApi: string }>();
 
 const { initMap } = useMaps();
 
