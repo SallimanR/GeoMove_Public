@@ -14,7 +14,7 @@ docker/**/certs/
 docker/**/ssl/
 
 *.env
-*.env.dev
-*.env.prod
+*.env.development
+*.env.production
 *.env.local
 *.env.*.local
