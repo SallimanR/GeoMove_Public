@@ -215,7 +215,7 @@ function handleContinue() {
   <div v-if="needsConfirm && !isMapMoving" class="">
     <button
       @click="handleConfirm()"
-      class="absolute bottom-4 left-4 right-4 rounded-xl bg-green-400 mb-2 p-2 whitespace-nowrap text-center"
+      class="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-40 rounded-xl bg-green-400 mb-2 p-2 whitespace-nowrap text-center"
     >
       Выбрать
     </button>
@@ -223,7 +223,7 @@ function handleContinue() {
 
   <div
     v-if="showPanel == PanelState.Inactive"
-    class="absolute bottom-4 left-4 right-4"
+    class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-100"
   >
     <div
       @click="openPanel"
@@ -246,7 +246,7 @@ function handleContinue() {
 
     <!-- Panel -->
     <div
-      class="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-white overflow-y-auto p-4"
+      class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-300 rounded-t-2xl bg-white overflow-y-auto p-4"
     >
       <div class="flex flex-col space-y-2 mt-4">
         <div class="flex items-center gap-2">
