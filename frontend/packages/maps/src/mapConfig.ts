@@ -1,12 +1,13 @@
-import type { AddLayerObject, LngLatLike, MapOptions } from "maplibre-gl"
+import type { AddLayerObject, MapOptions } from "maplibre-gl"
 
-const MAP_CENTER_COORDINATES: LngLatLike = [37.618037, 55.743293]
+export const MAP_CENTER_LAT = 55.743293
+export const MAP_CENTER_LON = 37.618037
 
 export const getMapConfig = (
 	styleApi: string
 ): Partial<MapOptions> => ({
 	style: styleApi,
-	center: MAP_CENTER_COORDINATES,
+	center: { lat: MAP_CENTER_LAT, lon: MAP_CENTER_LON },
 	zoom: 15,
 	pitch: 0,
 	// cooperativeGestures: true,
