@@ -19,6 +19,7 @@ import (
 	"monolith/internal/database"
 	"monolith/internal/domains/driver"
 	"monolith/internal/domains/geolocation"
+	"monolith/internal/domains/order"
 	"monolith/internal/notification"
 	"monolith/internal/websockethub"
 )
@@ -50,6 +51,8 @@ type Server struct {
 	driverDomain          *driver.DriverDomain
 	withGeolocationDomain bool
 	geolocationDomain     *geolocation.GeolocationDomain
+	withOrderDomain       bool
+	orderDomain           *order.OrderDomain
 
 	withAuth       bool
 	authService    *auth.Service
@@ -186,6 +189,27 @@ func (s *Server) GetGeolocationDomain() *geolocation.GeolocationDomain {
 	return s.geolocationDomain
 }
 
+func WithOrderDomain() Option {
+	return func(s *Server) error {
+		s.withOrderDomain = true
+		return nil
+	}
+}
+
+func (s *Server) setupOrderDomain() error {
+	if s.orderDomain != nil {
+		return nil
+	}
+	domain := order.NewOrderDomain(s.db, s.notificationService)
+	domain.RegisterHTTPRoutes(s.httpAPI, s.authMiddleware)
+	s.orderDomain = domain
+	return nil
+}
+
+func (s *Server) GetOrderDomain() *order.OrderDomain {
+	return s.orderDomain
+}
+
 func WithLogger(logger zerolog.Logger) Option {
 	return func(s *Server) error {
 		s.logger = logger
@@ -222,6 +246,12 @@ func (s *Server) Start() error {
 	}
 	if s.withDriverDomain {
 		err := s.setupDriverDomain()
+		if err != nil {
+			return err
+		}
+	}
+	if s.withOrderDomain {
+		err := s.setupOrderDomain()
 		if err != nil {
 			return err
 		}

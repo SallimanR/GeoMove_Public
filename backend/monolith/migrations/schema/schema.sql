@@ -1,4 +1,4 @@
-\restrict gfCLk1K15RtjRO8pl0HxGQAey4jUpncErPQdByHaHoIg9n8opniZq3nOiNSCJfX
+\restrict MfGfHquWUA9btXPRF7U12Fhaz6dRov6NW8Q9cwKQ16eobFyKxKTc1chTD4vgCtQ
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -85,6 +85,34 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
 
 
+--
+-- Name: order_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.order_status AS ENUM (
+    'forming',
+    'pending',
+    'accepted',
+    'in_progress',
+    'completed',
+    'cancelled'
+);
+
+
+--
+-- Name: update_order_updated_at(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_order_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -121,6 +149,46 @@ CREATE TABLE public.moving_driver (
     coarse_h3 public.h3index GENERATED ALWAYS AS (public.h3_latlng_to_cell(realtime_location, 2)) STORED,
     destination_location public.geography(Point,4326),
     destination_time timestamp without time zone
+);
+
+
+--
+-- Name: order; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."order" (
+    id bigint NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    customer_id bigint NOT NULL,
+    driver_id bigint,
+    from_location public.geography(Point,4326) NOT NULL,
+    to_location public.geography(Point,4326) NOT NULL,
+    total_distance_meters integer,
+    how_many_wheels_blocked smallint NOT NULL,
+    price_rubles integer,
+    status public.order_status DEFAULT 'forming'::public.order_status NOT NULL,
+    accepted_at timestamp without time zone,
+    picked_up_at timestamp without time zone,
+    completed_at timestamp without time zone,
+    cancelled_at timestamp without time zone,
+    cancellation_reason text,
+    from_address text DEFAULT ''::text NOT NULL,
+    to_address text DEFAULT ''::text NOT NULL
+);
+
+
+--
+-- Name: order_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."order" ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.order_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
 );
 
 
@@ -291,6 +359,14 @@ ALTER TABLE ONLY public.moving_driver
 
 
 --
+-- Name: order order_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."order"
+    ADD CONSTRAINT order_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: push_subscriptions push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -421,6 +497,41 @@ CREATE INDEX idx_moving_driver_location ON public.moving_driver USING gist (real
 
 
 --
+-- Name: idx_order_active_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_order_active_status ON public."order" USING btree (status) WHERE (status = ANY (ARRAY['pending'::public.order_status, 'accepted'::public.order_status, 'in_progress'::public.order_status]));
+
+
+--
+-- Name: idx_order_customer_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_order_customer_status ON public."order" USING btree (customer_id, status);
+
+
+--
+-- Name: idx_order_driver_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_order_driver_status ON public."order" USING btree (driver_id, status);
+
+
+--
+-- Name: idx_order_from_location; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_order_from_location ON public."order" USING gist (from_location);
+
+
+--
+-- Name: idx_order_to_location; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_order_to_location ON public."order" USING gist (to_location);
+
+
+--
 -- Name: idx_push_subscriptions_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -477,6 +588,13 @@ CREATE INDEX idx_user_oauth_links_provider ON public.user_oauth_links USING btre
 
 
 --
+-- Name: order trg_order_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_order_updated_at BEFORE UPDATE ON public."order" FOR EACH ROW EXECUTE FUNCTION public.update_order_updated_at();
+
+
+--
 -- Name: driver driver_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -490,6 +608,22 @@ ALTER TABLE ONLY public.driver
 
 ALTER TABLE ONLY public.moving_driver
     ADD CONSTRAINT moving_driver_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: order order_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."order"
+    ADD CONSTRAINT order_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public."user"(id) ON DELETE CASCADE;
+
+
+--
+-- Name: order order_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."order"
+    ADD CONSTRAINT order_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(user_id) ON DELETE SET NULL;
 
 
 --
@@ -536,7 +670,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gfCLk1K15RtjRO8pl0HxGQAey4jUpncErPQdByHaHoIg9n8opniZq3nOiNSCJfX
+\unrestrict MfGfHquWUA9btXPRF7U12Fhaz6dRov6NW8Q9cwKQ16eobFyKxKTc1chTD4vgCtQ
 
 
 --
@@ -553,4 +687,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260710043141'),
     ('20260713162812'),
     ('20260713193617'),
-    ('20260716');
+    ('20260716153114'),
+    ('20260717231700');

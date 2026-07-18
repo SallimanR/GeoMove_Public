@@ -30,6 +30,7 @@ func main() {
 	srv, err := server.NewServer(
 		server.WithLogger(logger),
 		server.WithDB(),
+		server.WithOrderDomain(),
 		server.WithDriverDomain(),
 		server.WithGeolocationDomain(),
 		server.WithAuth(),
