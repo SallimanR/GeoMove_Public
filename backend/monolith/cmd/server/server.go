@@ -70,7 +70,7 @@ type Option func(*Server) error
 
 func NewServer(options ...Option) (*Server, error) {
 	s := &Server{
-		httpAddrs: fmt.Sprintf("127.0.0.1:%d", defaultHTTPPort),
+		httpAddrs: fmt.Sprintf("0.0.0.0:%d", defaultHTTPPort),
 	}
 
 	if s.httpRouter == nil {
@@ -176,7 +176,7 @@ func (s *Server) setupGeolocationDomain() error {
 		return nil
 	}
 
-	domain, err := geolocation.NewGeolocationDomain(s.db, s.wsServer, s.logger)
+	domain, err := geolocation.NewGeolocationDomain(s.db, s.wsServer, s.logger, s.notificationService)
 	if err != nil {
 		return err
 	}
