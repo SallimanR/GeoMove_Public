@@ -86,9 +86,9 @@ onUnmounted(() => {
 
 <template>
   <div class="absolute inset-0 flex flex-col pointer-events-none">
-    <div class="flex items-start gap-2 mt-4 mr-4 ml-4">
-      <MapsSearchInput class="flex-1 pointer-events-auto" />
-      <MapsGPSLocation class="pointer-events-auto" />
+    <div class="flex items-start justify-between gap-2 mt-4 mr-4 ml-4">
+      <MapsSearchInput class="w-full max-w-200 pointer-events-auto" />
+      <MapsGPSLocation class="flex-shrink-0 pointer-events-auto" />
     </div>
     <MapsCurrentLocationBox />
     <template v-if="isPicking">
