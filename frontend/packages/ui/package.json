@@ -1,0 +1,22 @@
+{
+  "name": "ui",
+  "type": "module",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "files": [
+    "src"
+  ],
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "primevue": "^4.5.4",
+    "vue": "^3.5.39"
+  }
+}
