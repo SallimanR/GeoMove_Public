@@ -94,7 +94,7 @@ function clearInput() {
     <div
       v-if="results && isTypingRequest && modelValue"
       v-show="isFocused"
-      class="bg-white rounded-xl max-h-[41vh] w-full z-10 overflow-y-auto"
+      class="bg-white rounded-xl max-h-[40vh] w-full z-10 overflow-y-auto"
     >
       <div
         v-for="result in results.features"
