@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
@@ -72,13 +73,8 @@ func NewServer(options ...Option) (*Server, error) {
 	if s.httpRouter == nil {
 		s.httpRouter = gin.New()
 		s.httpRouter.Use(gin.Logger())
-		// if s.debugMode {
-		// 	s.httpRouter.Use(gin.Logger())
-		// }
+		s.httpRouter.Use(cors.New(newCORSConfig()))
 	}
-
-	// TODO:
-	// s.logger =
 
 	if s.httpAPI == nil {
 		s.httpAPI = s.httpRouter.Group("/api/v1")
@@ -258,6 +254,42 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 func (s *Server) startWSServer() {
 	s.wsServer.Run()
+}
+
+func loadCORSOrigins() []string {
+	raw := os.Getenv("ALLOWED_CORS_ORIGINS")
+	if raw == "" {
+		return nil
+	}
+	parts := make([]string, 0)
+	for _, p := range strings.Split(raw, ",") {
+		if t := strings.TrimSpace(p); t != "" {
+			parts = append(parts, t)
+		}
+	}
+	return parts
+}
+
+func newCORSConfig() cors.Config {
+	origins := loadCORSOrigins()
+	if len(origins) == 0 {
+		return cors.Config{
+			AllowOriginFunc:  func(origin string) bool { return true },
+			AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Cookie"},
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: true,
+			MaxAge:           12 * time.Hour,
+		}
+	}
+	return cors.Config{
+		AllowOrigins:     origins,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Cookie"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
 }
 
 func loadAllowedOrigins() []string {
