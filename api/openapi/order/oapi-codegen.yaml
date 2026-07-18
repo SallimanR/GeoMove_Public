@@ -1,0 +1,6 @@
+package: http
+generate:
+  models: true
+  strict-server: true
+  gin-server: true
+output: backend/monolith/internal/domains/order/interface/http/order.gen.go
