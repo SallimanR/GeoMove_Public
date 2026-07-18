@@ -13,16 +13,6 @@ const MapLayer_Route = <AddLayerObject>{
 		'line-join': 'round',
 		'line-cap': 'round'
 	},
-	// paint: {
-	// 	'line-color': '#3887be',
-	// 	'line-width': 5,
-	// 	'line-opacity': 0.75
-	// }
-	// paint: {
-	// 	"line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 5, 2, 18, 3],
-	// 	"line-color": "#4D93E3",
-	// 	// "line-gap-width": ["interpolate", ["exponential", 1.5], ["zoom"], 5, 3, 18, 8],
-	// },
 	paint: {
 		'line-color': [ // => using feature-state expression, that checks feature.properties.road_class value
 			'match',
