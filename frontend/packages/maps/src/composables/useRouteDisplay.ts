@@ -1,4 +1,4 @@
-import { type AddLayerObject, type Map as MaplibreMap } from "maplibre-gl";
+import { type AddLayerObject, type MapLibreMap } from "maplibre-gl";
 import { $endPoint, $isRouteLoading, $routePath, $startPoint } from "../stores/routeStore";
 import { fetchRoute } from "geo";
 import { GeoPoint } from "../types/geoPoint";

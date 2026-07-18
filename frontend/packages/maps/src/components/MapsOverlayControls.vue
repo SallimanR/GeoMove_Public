@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
 import { useStore } from "@nanostores/vue";
-import { Map as MaplibreMap, Marker } from "maplibre-gl";
+import { MapLibreMap, Marker } from "maplibre-gl";
 import { getReverseGeocoding, addressToText } from "geo";
 import {
   $mapInstance,
@@ -41,7 +41,7 @@ function confirmPick() {
   const map = $mapInstance.get();
   if (!map) return;
 
-  const center = (map as unknown as MaplibreMap).getCenter();
+  const center = (map as MapLibreMap).getCenter();
   const point: GeoPoint = { lat: center.lat, lon: center.lng };
 
   invokePickCallback(point, address.value || `${point.lat}, ${point.lon}`);
@@ -64,9 +64,9 @@ const unsubPicking = $locationPicking.subscribe((active) => {
 
   marker = new Marker({ color: "#3b82f6", draggable: false })
     .setLngLat(map.getCenter())
-    .addTo(map as unknown as MaplibreMap);
+    .addTo(map as MapLibreMap);
 
-  const center = (map as unknown as MaplibreMap).getCenter();
+  const center = (map as MapLibreMap).getCenter();
   updateAddress(center.lat, center.lng);
 });
 

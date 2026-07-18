@@ -13,7 +13,7 @@ const mapCenterAddressText = useStore($mapCenterAddressText);
 
 $mapInstance.subscribe((map) => {
   if (map) {
-    setupMapListeners(map);
+    setupMapListeners(map as MapLibreMap);
   } else {
   }
 });

@@ -1,5 +1,5 @@
 import { provide, inject, onUnmounted } from 'vue'
-import { Map as MaplibreMap, type MapOptions, addProtocol } from "maplibre-gl"
+import { MapLibreMap, type MapOptions, addProtocol } from "maplibre-gl"
 import { Protocol } from "pmtiles";
 import { MapboxOverlay } from '@deck.gl/mapbox';
 
@@ -7,7 +7,7 @@ import { $coords, $deckOverlay, $mapInstance } from '../stores/mapsStore';
 import { getMapConfig, MapLayer_3dLayer } from '../mapConfig';
 
 export type MapContext = {
-	map: MaplibreMap
+	map: MapLibreMap
 	deckOverlay: MapboxOverlay,
 }
 
@@ -22,7 +22,7 @@ export function useMaps() {
 		if (map.value) return
 
 		const mapConfig = getMapConfig(styleApi)
-		const mapInstance = new MaplibreMap(
+		const mapInstance = new MapLibreMap(
 			{
 				...mapConfig,
 				...options,

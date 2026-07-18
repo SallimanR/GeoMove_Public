@@ -7,7 +7,7 @@ import {
   $startAddress,
   $startPoint,
 } from "../stores/routeStore";
-import { Map as MaplibreMap } from "maplibre-gl";
+import { MapLibreMap } from "maplibre-gl";
 
 import { displayDistance, getReverseGeocoding, addressToText } from "geo";
 import {
@@ -63,7 +63,7 @@ const endMarker = new Marker({ draggable: true, color: "#fc5b55" });
 const startAddressText = ref("");
 const endAddressText = ref("");
 
-async function changeStartPoint(point: LngLat, map: MaplibreMap) {
+async function changeStartPoint(point: LngLat, map: MapLibreMap) {
   startMarker.setLngLat(point).addTo(map);
   $startPoint.set({ lat: point.lat, lon: point.lng });
 
@@ -71,7 +71,7 @@ async function changeStartPoint(point: LngLat, map: MaplibreMap) {
   startAddressText.value = $mapCenterAddressText.get();
 }
 
-async function changeEndPoint(point: LngLat, map: MaplibreMap) {
+async function changeEndPoint(point: LngLat, map: MapLibreMap) {
   endMarker.setLngLat(point).addTo(map);
   $endPoint.set({ lat: point.lat, lon: point.lng });
 
@@ -111,17 +111,17 @@ function onEndSearchResultClick(lat: number, lon: number) {
   changeInputeState(RouteInputMode.SelectEndPoint);
 }
 
-const mapInstance = ref<MaplibreMap>();
+const mapInstance = ref<MapLibreMap>();
 const isMapMoving = ref(false);
 
 $mapInstance.subscribe((map) => {
   if (!map) return;
-  mapInstance.value = map as unknown as MaplibreMap;
+  mapInstance.value = map as MapLibreMap;
   setupMapListeners(mapInstance.value);
-  useRouteDisplay(map as MaplibreMap);
+  useRouteDisplay(map as MapLibreMap);
 });
 
-function setupMapListeners(map: MaplibreMap) {
+function setupMapListeners(map: MapLibreMap) {
   map.on("movestart", () => {
     isMapMoving.value = true;
   });

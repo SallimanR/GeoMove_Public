@@ -1,6 +1,6 @@
 import { atom, map } from "nanostores";
 
-import { Map as MaplibreMap } from "maplibre-gl";
+import { type MapLibreMap } from "maplibre-gl";
 import { type MapboxOverlay } from "@deck.gl/mapbox";
 import type { GeoPoint } from "../types/geoPoint";
 import { type SearchResult } from "geo";
@@ -9,7 +9,7 @@ export const $coords = map<{ center: { lat: number, lon: number } }>()
 export const $mapCenterAddress = atom<SearchResult | null>(null);
 export const $mapCenterAddressText = atom<string>("");
 
-export const $mapInstance = atom<MaplibreMap | null>(null);
+export const $mapInstance = atom<MapLibreMap | null>(null);
 
 export const $deckOverlay = atom<MapboxOverlay | null>(null)
 
