@@ -1,21 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import {
   $endAddress,
   $endPoint,
-  $isRouteLoading,
   $routePath,
   $startAddress,
   $startPoint,
 } from "../stores/routeStore";
 import { Map as MaplibreMap } from "maplibre-gl";
 
-import {
-  fetchRoute,
-  displayDistance,
-  getReverseGeocoding,
-  addressToText,
-} from "geo";
+import { displayDistance, getReverseGeocoding, addressToText } from "geo";
 import {
   $mapCenterAddress,
   $mapCenterAddressText,
@@ -24,6 +18,7 @@ import {
 import { LngLat, Marker } from "maplibre-gl";
 import MapsSearchField from "./MapsSearchField.vue";
 import { useStore } from "@nanostores/vue";
+import { useRouteDisplay } from "../composables/useRouteDisplay";
 
 enum RouteInputMode {
   SelectStartPoint,
@@ -60,30 +55,7 @@ function closePanel() {
   showPanel.value = PanelState.Inactive;
 }
 
-const startPoint = useStore($startPoint);
-const endPoint = useStore($endPoint);
 const routePath = useStore($routePath);
-
-watch(
-  [startPoint, endPoint],
-  async ([newStart, newEnd]) => {
-    if (!newStart || !newEnd) {
-      $routePath.set(null);
-      return;
-    }
-    $isRouteLoading.set(true);
-    try {
-      const route = await fetchRoute(newStart, newEnd);
-      $routePath.set(route);
-    } catch (err) {
-      $routePath.set(null);
-      console.error("route watcher error: ", err);
-    } finally {
-      $isRouteLoading.set(false);
-    }
-  },
-  { deep: true },
-);
 
 const startMarker = new Marker({ draggable: true, color: "#40fc0c" });
 const endMarker = new Marker({ draggable: true, color: "#fc5b55" });
@@ -143,11 +115,10 @@ const mapInstance = ref<MaplibreMap>();
 const isMapMoving = ref(false);
 
 $mapInstance.subscribe((map) => {
-  if (map) {
-    mapInstance.value = map as unknown as MaplibreMap;
-    setupMapListeners(mapInstance.value);
-  } else {
-  }
+  if (!map) return;
+  mapInstance.value = map as unknown as MaplibreMap;
+  setupMapListeners(mapInstance.value);
+  useRouteDisplay(map as MaplibreMap);
 });
 
 function setupMapListeners(map: MaplibreMap) {

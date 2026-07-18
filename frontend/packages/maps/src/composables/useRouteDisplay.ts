@@ -1,33 +1,7 @@
 import { type AddLayerObject, type Map as MaplibreMap } from "maplibre-gl";
-import { $endPoint, $routePath, $startPoint } from "../stores/routeStore";
-
-const MapSourceID_StartPoint = "source-start-point"
-const MapLayerID_StartPoint = "layer-start-point"
-const MapLayer_StartPoint = <AddLayerObject>{
-	id: MapLayerID_StartPoint,
-	source: MapSourceID_StartPoint,
-	type: 'circle',
-	paint: {
-		'circle-radius': 8,
-		'circle-color': '#4CAF50',
-		'circle-stroke-width': 2,
-		'circle-stroke-color': '#ffffff'
-	}
-}
-
-const MapSourceID_EndPoint = "end-start-point"
-const MapLayerID_EndPoint = "layer-end-point"
-const MapLayer_EndPoint = <AddLayerObject>{
-	id: MapLayerID_EndPoint,
-	source: MapSourceID_EndPoint,
-	type: 'circle',
-	paint: {
-		'circle-radius': 8,
-		'circle-color': '#F44336',
-		'circle-stroke-width': 2,
-		'circle-stroke-color': '#ffffff'
-	}
-}
+import { $endPoint, $isRouteLoading, $routePath, $startPoint } from "../stores/routeStore";
+import { fetchRoute } from "geo";
+import { GeoPoint } from "../types/geoPoint";
 
 const MapSourceID_Route = "source-route"
 const MapLayerID_Route = "layer-route"
@@ -78,38 +52,8 @@ const MapLayer_Route = <AddLayerObject>{
 
 
 export function useRouteDisplay(map: MaplibreMap) {
-	const updateRouteLayer = (start: { lat: number, lon: number }, end: { lat: number, lon: number }, route: [number, number][]) => {
+	const updateRouteLayer = (route: [number, number][]) => {
 		removeRouteLayer()
-
-		map.addSource(MapSourceID_StartPoint, {
-			type: 'geojson',
-			data: {
-				type: 'Feature',
-				geometry: {
-					type: 'Point',
-					coordinates: [start.lat, start.lon]
-				},
-				properties: {
-					title: 'Start'
-				}
-			}
-		});
-		map.addLayer(MapLayer_StartPoint);
-
-		map.addSource(MapSourceID_EndPoint, {
-			type: 'geojson',
-			data: {
-				type: 'Feature',
-				geometry: {
-					type: 'Point',
-					coordinates: [end.lat, end.lon]
-				},
-				properties: {
-					title: 'End'
-				}
-			}
-		});
-		map.addLayer(MapLayer_EndPoint);
 
 		map.addSource(MapSourceID_Route, {
 			type: "geojson",
@@ -132,27 +76,47 @@ export function useRouteDisplay(map: MaplibreMap) {
 
 	const removeRouteLayer = () => {
 		if (map.getLayer(MapLayerID_Route)) {
-			map.removeLayer(MapLayerID_StartPoint)
-			map.removeLayer(MapLayerID_EndPoint)
 			map.removeLayer(MapLayerID_Route);
 		}
 		if (map.getSource(MapSourceID_Route)) {
-			map.removeSource(MapSourceID_StartPoint)
-			map.removeSource(MapSourceID_EndPoint)
 			map.removeSource(MapSourceID_Route)
 		}
 
 	}
+	async function refetchRoute(startPoint: GeoPoint, endPoint: GeoPoint) {
+		if (!startPoint || !endPoint) {
+			$routePath.set(null);
+			return;
+		}
+		$isRouteLoading.set(true);
+		try {
+			const route = await fetchRoute(startPoint, endPoint);
+			$routePath.set(route);
+		} catch (err) {
+			$routePath.set(null);
+			console.error("route watcher error: ", err);
+		} finally {
+			$isRouteLoading.set(false);
+		}
+	}
+
+	$startPoint.subscribe(async (startPoint) => {
+		const endPoint = $endPoint.get()
+		refetchRoute(startPoint as GeoPoint, endPoint as GeoPoint)
+	})
+
+	$endPoint.subscribe(async (endPoint) => {
+		const startPoint = $startPoint.get()
+		refetchRoute(startPoint as GeoPoint, endPoint as GeoPoint)
+	})
 
 	$routePath.subscribe(routePath => {
 		if (!routePath) {
 			removeRouteLayer()
 			return
 		}
-		const start = $startPoint.get()
-		const end = $endPoint.get()
-		if (start && end && routePath && routePath.paths.length > 0) {
-			updateRouteLayer({ lat: start.lat, lon: start.lon }, { lat: end.lat, lon: end.lon }, routePath.paths[0].points.coordinates)
+		if (routePath.paths.length > 0) {
+			updateRouteLayer(routePath.paths[0].points.coordinates)
 		}
 	})
 
