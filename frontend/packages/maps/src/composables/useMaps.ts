@@ -1,5 +1,5 @@
 import { provide, inject, onUnmounted } from 'vue'
-import { Map as MaplibreMap, type MapOptions, GeolocateControl, addProtocol } from "maplibre-gl"
+import { Map as MaplibreMap, type MapOptions, addProtocol } from "maplibre-gl"
 import { Protocol } from "pmtiles";
 import { MapboxOverlay } from '@deck.gl/mapbox';
 
@@ -30,7 +30,7 @@ export function useMaps() {
 			}
 		)
 
-		let protocol = new Protocol();
+		const protocol = new Protocol();
 		addProtocol("pmtiles", protocol.tile);
 
 		const center = mapInstance.getCenter();
