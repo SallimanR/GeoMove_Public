@@ -35,7 +35,6 @@ func NewDBManager() (*DBManager, error) {
 	if dbURL == "" {
 		return nil, fmt.Errorf("DATABASE_URL is not set")
 	}
-	log.Printf("DATABASE_URL: %s", dbURL)
 
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
