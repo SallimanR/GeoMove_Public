@@ -1,6 +1,6 @@
 import { updateMovingDrivers } from "../stores/movingDriversStore.ts"
 import type { MovingDriver } from "../types/geolocationTypes.ts"
-import type { MovingPath } from "maps/composables/useMovingIconLayer.ts"
+import type { MovingPath } from "maps/types/movingIconLayerShared.ts"
 import { geolocationClient } from "../api/client.ts"
 
 const POLL_INTERVAL = 5000
