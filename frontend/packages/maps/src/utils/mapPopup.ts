@@ -1,5 +1,5 @@
+import { Popup, PopupOptions } from "maplibre-gl";
 import { $mapInstance } from "../stores/mapsStore";
-import { Marker, Popup, type LngLat, type Map as MaplibreMap, type MarkerOptions, type PopupOptions } from "maplibre-gl";
 import { createApp, type Component, type App, type ComponentPublicInstance } from "vue";
 
 export interface PopupEntry {
