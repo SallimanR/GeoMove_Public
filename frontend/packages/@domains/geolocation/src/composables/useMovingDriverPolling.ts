@@ -1,4 +1,4 @@
-import { $movingDrivers, $lastFetchTime } from "../stores/movingDriversStore.ts"
+import { updateMovingDrivers } from "../stores/movingDriversStore.ts"
 import type { MovingDriver } from "../types/geolocationTypes.ts"
 import type { MovingPath } from "maps/composables/useMovingIconLayer.ts"
 import { geolocationClient } from "../api/client.ts"
@@ -7,12 +7,12 @@ const POLL_INTERVAL = 5000
 const MOCK_ADVANCE_INTERVAL = 5000
 
 export interface MovingDriverProvider {
-	getClosestMovingDrivers(lat: number, lon: number): Promise<MovingDriver[]>
+	getClosestWithinRadiusMovingDrivers(lat: number, lon: number): Promise<MovingDriver[]>
 	getMovingDriversByIDs(ids: number[]): Promise<MovingDriver[]>
 }
 
 class HttpMovingDriverProvider implements MovingDriverProvider {
-	async getClosestMovingDrivers(lat: number, lon: number): Promise<MovingDriver[]> {
+	async getClosestWithinRadiusMovingDrivers(lat: number, lon: number): Promise<MovingDriver[]> {
 		const { data, error } = await geolocationClient.GET("/driver/moving/closest", {
 			params: { query: { lat, lon, radius_meters: 30_000 } },
 		})
@@ -48,7 +48,7 @@ class MockMovingDriverProvider implements MovingDriverProvider {
 		}
 	}
 
-	async getClosestMovingDrivers(_lat: number, _lon: number): Promise<MovingDriver[]> {
+	async getClosestWithinRadiusMovingDrivers(_lat: number, _lon: number): Promise<MovingDriver[]> {
 		this.maybeAdvance()
 		return this.ringBuffer[this.ringBufferIdx]
 	}
@@ -83,37 +83,31 @@ export function useMovingDriverPolling(
 	initialLat: number,
 	initialLon: number,
 ) {
-	let currentIds: number[] = []
 	let pollTimer: ReturnType<typeof setInterval> | null = null
 
 	async function poll() {
 		try {
-			let resp: MovingDriver[]
-			if (currentIds.length === 0) {
-				resp = await provider.getClosestMovingDrivers(initialLat, initialLon)
-				currentIds = resp.map((d) => d.driver_id)
-			} else {
-				resp = await provider.getMovingDriversByIDs(currentIds)
-			}
+			const resp = await provider.getClosestWithinRadiusMovingDrivers(initialLat, initialLon)
 
-			$movingDrivers.set(buildMovingDrivers(resp))
-			$lastFetchTime.set(Date.now())
+			updateMovingDrivers(buildMovingDrivers(resp))
 		} catch (err) {
 			console.error("[moving-drivers] poll error:", err)
 		}
 	}
 
-	function start() {
+	function startPolling(lat?: number, lon?: number) {
+		initialLat = lat || initialLat
+		initialLon = lon || initialLon
 		poll()
 		pollTimer = setInterval(poll, POLL_INTERVAL)
 	}
 
-	function stop() {
+	function stopPolling() {
 		if (pollTimer !== null) {
 			clearInterval(pollTimer)
 			pollTimer = null
 		}
 	}
 
-	return { start, stop }
+	return { startPolling, stopPolling }
 }
