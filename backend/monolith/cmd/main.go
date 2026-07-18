@@ -2,18 +2,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
 	"monolith/cmd/server"
 )
 
 func main() {
+	loadEnv()
+
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
 	output := zerolog.ConsoleWriter{Out: os.Stdout}
@@ -51,4 +55,18 @@ func main() {
 		log.Println("failed to shutdown server")
 	}
 	log.Println("Shutting down server...")
+}
+
+func loadEnv() {
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
+	}
+
+	_ = godotenv.Load(".env")
+
+	envFile := fmt.Sprintf(".env.%s", env)
+	if err := godotenv.Overload(envFile); err != nil {
+		log.Printf("Warning: no %s file found, using .env defaults", envFile)
+	}
 }
