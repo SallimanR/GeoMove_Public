@@ -1,0 +1,20 @@
+{
+  "name": "notifications",
+  "type": "module",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./notification-worker": "./public/notification-worker.js"
+  },
+  "files": [
+    "src",
+    "public"
+  ],
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0",
+    "vue": "^3.5.39"
+  }
+}
