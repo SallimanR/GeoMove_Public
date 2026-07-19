@@ -1,8 +1,6 @@
-version: "3"
-
 services:
   server:
-    image: docker.gitea.com/gitea:1.25.3
+    image: docker.gitea.com/gitea:latest
     container_name: gitea
     environment:
       - USER_UID=1000
@@ -16,36 +14,39 @@ services:
     networks:
       - gitea
     volumes:
-      - ./data/gitea:/data
+      - gitea_data:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "3030:3000"
-      - "222:22"
+      - "2221:22"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
-    image: docker.io/library/postgres:18.1
+    image: docker.io/library/postgres:18
     container_name: gitea-pg
     restart: always
     environment:
       - POSTGRES_USER=gitea_user
       - POSTGRES_PASSWORD=gitea_password
       - POSTGRES_DB=gitea_db
-      # - PGDATA=/var/lib/postgresql/18/docker
     networks:
       - gitea
     volumes:
-      - ./data/postgres:/var/lib/postgresql
+      - gitea_db_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U gitea_user -d gitea_db" ]
+      test: ["CMD-SHELL", "pg_isready -U gitea_user -d gitea_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
+  gitea_data:
+    driver: local
   gitea_db_data:
+    driver: local
 
 networks:
   gitea:
