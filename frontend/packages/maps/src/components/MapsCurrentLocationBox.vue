@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { addressToText, getReverseGeocoding } from "geo";
+import { addressToText, getReverseGeocoding } from "@geomove/geo";
 import type { MapLibreMap } from "maplibre-gl";
-import { ref } from "vue";
 import {
   $mapCenterAddress,
   $mapCenterAddressText,

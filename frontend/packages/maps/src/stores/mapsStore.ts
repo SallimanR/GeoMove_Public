@@ -3,7 +3,7 @@ import { atom, map } from "nanostores";
 import { type MapLibreMap } from "maplibre-gl";
 import { type MapboxOverlay } from "@deck.gl/mapbox";
 import type { GeoPoint } from "../types/geoPoint";
-import { type SearchResult } from "geo";
+import { type SearchResult } from "@geomove/geo";
 
 export const $coords = map<{ center: { lat: number, lon: number } }>()
 export const $mapCenterAddress = atom<SearchResult | null>(null);

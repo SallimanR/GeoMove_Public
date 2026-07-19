@@ -9,7 +9,11 @@ import {
 } from "../stores/routeStore";
 import { MapLibreMap } from "maplibre-gl";
 
-import { displayDistance, getReverseGeocoding, addressToText } from "geo";
+import {
+  displayDistance,
+  getReverseGeocoding,
+  addressToText,
+} from "@geomove/geo";
 import {
   $mapCenterAddress,
   $mapCenterAddressText,

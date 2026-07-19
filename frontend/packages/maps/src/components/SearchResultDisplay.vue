@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { displayDistance, haversineDistance } from "geo";
+import { displayDistance, haversineDistance } from "@geomove/geo";
 import type { SearchResult } from "../../../geo/src/api/geocoding.ts";
 import { computed } from "vue";
 import { useStore } from "@nanostores/vue";

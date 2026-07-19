@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import type { GeoPoint } from "../types/geoPoint";
-import type { RouteResponse, SearchResult } from "geo";
+import type { RouteResponse, SearchResult } from "@geomove/geo";
 
 export const $startPoint = atom<GeoPoint | null>(null);
 export const $endPoint = atom<GeoPoint | null>(null);

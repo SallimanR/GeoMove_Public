@@ -1,9 +1,10 @@
 import { $deckOverlay, $mapInstance } from "../stores/mapsStore"
-import { type Layer, type LayersList } from "deck.gl"
-import { ref } from "vue"
+import type { Layer } from "@deck.gl/core"
+import type { LayersList } from "@deck.gl/core"
+import { ref, type Ref } from "vue"
 
 export function useMapsActions() {
-	const deckLayers = ref<Layer[]>([])
+	const deckLayers: Ref<Layer[]> = ref([])
 	const updateDeckOverlayLayers = (): void => {
 		const deck = $deckOverlay.get()
 		if (deck) {
@@ -12,12 +13,14 @@ export function useMapsActions() {
 	}
 
 	const addDeckLayer = (layer: Layer): void => {
-		deckLayers.value = [...deckLayers.value, layer]
+		const current = deckLayers.value
+		deckLayers.value = current.concat(layer)
 		updateDeckOverlayLayers()
 	}
 
 	const removeDeckLayer = (layerId: string): void => {
-		deckLayers.value = deckLayers.value.filter(l => l.id !== layerId)
+		const current = deckLayers.value
+		deckLayers.value = current.filter((l: any) => l.id !== layerId)
 		updateDeckOverlayLayers()
 	}
 

@@ -1,7 +1,6 @@
 import { $mapInstance, $deckOverlay } from "../stores/mapsStore";
 import { createAnimatedIconLayer } from "../layers/animatedIconLayer";
-import { Popup } from "maplibre-gl";
-import type { MapLibreMap } from "maplibre-gl";
+import { type MapLibreMap, Popup } from "maplibre-gl";
 import type { MapboxOverlay } from "@deck.gl/mapbox";
 import { createApp, onUnmounted, type App } from "vue";
 import { useMovingIconLayerCore } from "./useMovingIconLayerCore";

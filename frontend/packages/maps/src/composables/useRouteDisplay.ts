@@ -1,6 +1,6 @@
 import { type AddLayerObject, type MapLibreMap } from "maplibre-gl";
 import { $endPoint, $isRouteLoading, $routePath, $startPoint } from "../stores/routeStore";
-import { fetchRoute } from "geo";
+import { fetchRoute } from "@geomove/geo";
 import { GeoPoint } from "../types/geoPoint";
 
 const MapSourceID_Route = "source-route"
@@ -41,7 +41,7 @@ const MapLayer_Route = <AddLayerObject>{
 }
 
 
-export function useRouteDisplay(map: MaplibreMap) {
+export function useRouteDisplay(map: MapLibreMap) {
 	const updateRouteLayer = (route: [number, number][]) => {
 		removeRouteLayer()
 

@@ -1,5 +1,5 @@
 import { atom } from "nanostores";
-import type { MovingPath } from "maps/composables/useMovingIconLayer.ts";
+import type { MovingPath } from "@geomove/maps";
 
 export const $movingDrivers = atom<MovingPath[]>([])
 export const $lastFetchTime = atom<number>(Date.now())

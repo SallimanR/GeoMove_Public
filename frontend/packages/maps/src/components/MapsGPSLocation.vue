@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Capacitor } from '@capacitor/core'
 import { $coords } from '../stores/mapsStore'
 import { useMapsActions } from '../composables/useMapsActions'
 
@@ -10,10 +9,28 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 async function getPositionCapacitor(): Promise<{ lat: number; lng: number }> {
-  let Geolocation: typeof import('@capacitor/geolocation').Geolocation
   try {
-    const mod = await import('@capacitor/geolocation')
-    Geolocation = mod.Geolocation
+    const mod = await new Function('specifier', 'return import(specifier)')('@capacitor/geolocation')
+    const geo: any = mod.Geolocation
+
+    const perm = await geo.checkPermissions()
+    if (perm.location !== 'granted') {
+      const req = await geo.requestPermissions()
+      if (req.location !== 'granted') {
+        throw new Error('Доступ к геолокации отклонён')
+      }
+    }
+
+    const pos = await geo.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 10000,
+    })
+
+    if (!pos?.coords) {
+      throw new Error('Не удалось определить местоположение')
+    }
+
+    return { lat: pos.coords.latitude, lng: pos.coords.longitude }
   } catch {
     const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -24,25 +41,6 @@ async function getPositionCapacitor(): Promise<{ lat: number; lng: number }> {
     })
     return { lat: pos.coords.latitude, lng: pos.coords.longitude }
   }
-
-  const perm = await Geolocation.checkPermissions()
-  if (perm.location !== 'granted') {
-    const req = await Geolocation.requestPermissions()
-    if (req.location !== 'granted') {
-      throw new Error('Доступ к геолокации отклонён')
-    }
-  }
-
-  const pos = await Geolocation.getCurrentPosition({
-    enableHighAccuracy: true,
-    timeout: 10000,
-  })
-
-  if (!pos?.coords) {
-    throw new Error('Не удалось определить местоположение')
-  }
-
-  return { lat: pos.coords.latitude, lng: pos.coords.longitude }
 }
 
 async function handleFindMe() {
@@ -52,7 +50,13 @@ async function handleFindMe() {
   try {
     let lat: number, lng: number
 
-    if (Capacitor.isNativePlatform()) {
+    let isNative = false
+    try {
+      const mod = await new Function('specifier', 'return import(specifier)')('@capacitor/core')
+      isNative = mod.Capacitor.isNativePlatform()
+    } catch {}
+
+    if (isNative) {
       const coords = await getPositionCapacitor()
       lat = coords.lat
       lng = coords.lng

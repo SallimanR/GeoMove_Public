@@ -2,7 +2,7 @@
 import { ref, onUnmounted } from "vue";
 import { useStore } from "@nanostores/vue";
 import { MapLibreMap, Marker } from "maplibre-gl";
-import { getReverseGeocoding, addressToText } from "geo";
+import { getReverseGeocoding, addressToText } from "@geomove/geo";
 import {
   $mapInstance,
   $coords,
@@ -88,7 +88,7 @@ onUnmounted(() => {
   <div class="absolute inset-0 flex flex-col pointer-events-none">
     <div class="flex items-start justify-between gap-2 mt-4 mr-4 ml-4">
       <MapsSearchInput class="w-full max-w-200 pointer-events-auto" />
-      <MapsGPSLocation class="flex-shrink-0 pointer-events-auto" />
+      <MapsGPSLocation class="shrink-0 pointer-events-auto" />
     </div>
     <MapsCurrentLocationBox />
     <template v-if="isPicking">

@@ -1,5 +1,5 @@
 import { onUnmounted } from "vue";
-import { haversineDistance } from "geo";
+import { haversineDistance } from "@geomove/geo";
 import type { CacheEntry, MovingPath, MovingPosition } from "../types/movingIconLayerShared";
 import type { ReadableAtom } from "nanostores";
 

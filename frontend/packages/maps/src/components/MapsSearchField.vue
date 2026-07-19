@@ -5,7 +5,7 @@ import {
   type SearchResultList,
   addressToText,
   getMapSearch,
-} from "geo";
+} from "@geomove/geo";
 import { $coords } from "../stores/mapsStore.ts";
 import SearchResultDisplay from "./SearchResultDisplay.vue";
 
@@ -84,7 +84,7 @@ function clearInput() {
       />
       <button
         @click="clearInput"
-        class="flex-shrink1 w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400 flex items-center justify-center text-gray-700 font-bold"
+        class="shrink w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400 flex items-center justify-center text-gray-700 font-bold"
       >
         ✕
       </button>
@@ -100,7 +100,7 @@ function clearInput() {
         v-for="result in results.features"
         @mousedown.prevent
         @click="handleSearchResultClick(result)"
-        class="m1 p-2 rounded-xl bg-gray-200 hover:bg-gray-300 cursor-pointer"
+        class="m-1 p-2 rounded-xl bg-gray-200 hover:bg-gray-300 cursor-pointer"
       >
         <SearchResultDisplay :result="result" />
       </div>

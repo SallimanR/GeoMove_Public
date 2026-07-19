@@ -1,6 +1,5 @@
 import axios from "axios"
-
-const API_BASE = import.meta.env.VITE_ROUTING_API
+import { getGeoConfig } from "../config.ts"
 
 export interface RouteResponse {
 	paths: Array<{
@@ -10,7 +9,7 @@ export interface RouteResponse {
 }
 
 export async function fetchRoute(start: { lat: number, lon: number }, end: { lat: number, lon: number }): Promise<RouteResponse> {
-	const result = (await axios.get<RouteResponse>(`${API_BASE}/route?point=${[start.lat, start.lon]}&point=${[end.lat, end.lon]}&profile=car&points_encoded=false`)).data
+	const apiBase = getGeoConfig().routingApi
+	const result = (await axios.get<RouteResponse>(`${apiBase}/route?point=${[start.lat, start.lon]}&point=${[end.lat, end.lon]}&profile=car&points_encoded=false`)).data
 	return result
 }
-
