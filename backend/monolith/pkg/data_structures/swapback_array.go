@@ -2,12 +2,6 @@ package datastructures
 
 type SwapbackArray[T any] []T
 
-// func New[T any]() *SwapbackArray[T] {
-// 	return &SwapbackArray[T]{
-// 		sa: make([]T, 100),
-// 	}
-// }
-
 func New[T any](capacity int) *SwapbackArray[T] {
 	sa := make(SwapbackArray[T], 0, capacity)
 	return &sa
