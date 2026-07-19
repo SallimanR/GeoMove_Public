@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@source "../../../../packages/maps/src/**/*.{vue,ts}";
+@source "../../../../packages/auth/src/**/*.{vue,ts}";
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}

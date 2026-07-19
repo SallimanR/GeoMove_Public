@@ -1,0 +1,10 @@
+{
+  "appId": "com.geomove.app",
+  "appName": "geomove",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}
