@@ -11,7 +11,7 @@
       "import": "./src/index.ts",
       "default": "./dist/index.js"
     },
-    "./dist/maps.css": "./dist/maps.css"
+    "./dist/geomove-maps.css": "./dist/geomove-maps.css"
   },
   "files": [
     "dist"
