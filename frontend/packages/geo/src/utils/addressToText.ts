@@ -3,7 +3,7 @@ import { SearchResult } from "../api/geocoding";
 export function addressToText(
 	address: SearchResult,
 ): string {
-	if (!address) return
+	if (!address) return ""
 	return [
 		address.properties.name,
 		address.properties.street,
