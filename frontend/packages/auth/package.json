@@ -1,0 +1,25 @@
+{
+  "name": "auth",
+  "type": "module",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "files": [
+    "src"
+  ],
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "typescript": "^5.0.0",
+    "vite": "^8.1.0"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "nanostores": "^1.1.0",
+    "openapi-fetch": "^0.17.0",
+    "tailwindcss": "^4.3.1",
+    "vue": "^3.5.39",
+    "vue3-google-signin": "^2.1.1"
+  }
+}
