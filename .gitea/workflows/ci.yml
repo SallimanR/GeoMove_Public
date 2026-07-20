@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: Run unit tests
+        run: |
+          cd backend/monolith
+          go test ./internal/websockethub/... ./internal/domains/driver/domain/entity/... ./internal/notification/...
+          go test ./pkg/geo/ -run '^TestDistance$'
+
+  backend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: Build backend
+        run: |
+          cd backend/monolith
+          go build -o /dev/null ./cmd/main.go
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Setup pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: |
+          cd frontend
+          pnpm install
+      - name: Build user_app
+        run: |
+          cd frontend/apps/user_app
+          pnpm build
+      - name: Build driver_app
+        run: |
+          cd frontend/apps/driver_app
+          pnpm build
