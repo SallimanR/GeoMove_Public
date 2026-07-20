@@ -9,11 +9,12 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "pb";
 
-export interface DriverRealtime {
+export interface MovingDriver {
   driverId: number;
-  distance: number;
-  time: number;
-  /** repeated float points = 4; */
+  pathMeters: number;
+  travelTime: number;
+  lat: number;
+  lon: number;
   points: Coordinates[];
 }
 
@@ -25,20 +26,26 @@ export interface Coordinates {
   coordinates: number[];
 }
 
-function createBaseDriverRealtime(): DriverRealtime {
-  return { driverId: 0, distance: 0, time: 0, points: [] };
+function createBaseMovingDriver(): MovingDriver {
+  return { driverId: 0, pathMeters: 0, travelTime: 0, lat: 0, lon: 0, points: [] };
 }
 
-export const DriverRealtime: MessageFns<DriverRealtime> = {
-  encode(message: DriverRealtime, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const MovingDriver: MessageFns<MovingDriver> = {
+  encode(message: MovingDriver, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.driverId !== 0) {
-      writer.uint32(8).uint32(message.driverId);
+      writer.uint32(8).int64(message.driverId);
     }
-    if (message.distance !== 0) {
-      writer.uint32(21).float(message.distance);
+    if (message.pathMeters !== 0) {
+      writer.uint32(16).uint32(message.pathMeters);
     }
-    if (message.time !== 0) {
-      writer.uint32(24).uint32(message.time);
+    if (message.travelTime !== 0) {
+      writer.uint32(24).uint32(message.travelTime);
+    }
+    if (message.lat !== 0) {
+      writer.uint32(45).float(message.lat);
+    }
+    if (message.lon !== 0) {
+      writer.uint32(53).float(message.lon);
     }
     for (const v of message.points) {
       Coordinates.encode(v!, writer.uint32(34).fork()).join();
@@ -46,10 +53,10 @@ export const DriverRealtime: MessageFns<DriverRealtime> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): DriverRealtime {
+  decode(input: BinaryReader | Uint8Array, length?: number): MovingDriver {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDriverRealtime();
+    const message = createBaseMovingDriver();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -58,15 +65,15 @@ export const DriverRealtime: MessageFns<DriverRealtime> = {
             break;
           }
 
-          message.driverId = reader.uint32();
+          message.driverId = longToNumber(reader.int64());
           continue;
         }
         case 2: {
-          if (tag !== 21) {
+          if (tag !== 16) {
             break;
           }
 
-          message.distance = reader.float();
+          message.pathMeters = reader.uint32();
           continue;
         }
         case 3: {
@@ -74,7 +81,23 @@ export const DriverRealtime: MessageFns<DriverRealtime> = {
             break;
           }
 
-          message.time = reader.uint32();
+          message.travelTime = reader.uint32();
+          continue;
+        }
+        case 5: {
+          if (tag !== 45) {
+            break;
+          }
+
+          message.lat = reader.float();
+          continue;
+        }
+        case 6: {
+          if (tag !== 53) {
+            break;
+          }
+
+          message.lon = reader.float();
           continue;
         }
         case 4: {
@@ -94,29 +117,45 @@ export const DriverRealtime: MessageFns<DriverRealtime> = {
     return message;
   },
 
-  fromJSON(object: any): DriverRealtime {
+  fromJSON(object: any): MovingDriver {
     return {
       driverId: isSet(object.driverId)
         ? globalThis.Number(object.driverId)
         : isSet(object.driver_id)
         ? globalThis.Number(object.driver_id)
         : 0,
-      distance: isSet(object.distance) ? globalThis.Number(object.distance) : 0,
-      time: isSet(object.time) ? globalThis.Number(object.time) : 0,
+      pathMeters: isSet(object.pathMeters)
+        ? globalThis.Number(object.pathMeters)
+        : isSet(object.path_meters)
+        ? globalThis.Number(object.path_meters)
+        : 0,
+      travelTime: isSet(object.travelTime)
+        ? globalThis.Number(object.travelTime)
+        : isSet(object.travel_time)
+        ? globalThis.Number(object.travel_time)
+        : 0,
+      lat: isSet(object.lat) ? globalThis.Number(object.lat) : 0,
+      lon: isSet(object.lon) ? globalThis.Number(object.lon) : 0,
       points: globalThis.Array.isArray(object?.points) ? object.points.map((e: any) => Coordinates.fromJSON(e)) : [],
     };
   },
 
-  toJSON(message: DriverRealtime): unknown {
+  toJSON(message: MovingDriver): unknown {
     const obj: any = {};
     if (message.driverId !== 0) {
       obj.driverId = Math.round(message.driverId);
     }
-    if (message.distance !== 0) {
-      obj.distance = message.distance;
+    if (message.pathMeters !== 0) {
+      obj.pathMeters = Math.round(message.pathMeters);
     }
-    if (message.time !== 0) {
-      obj.time = Math.round(message.time);
+    if (message.travelTime !== 0) {
+      obj.travelTime = Math.round(message.travelTime);
+    }
+    if (message.lat !== 0) {
+      obj.lat = message.lat;
+    }
+    if (message.lon !== 0) {
+      obj.lon = message.lon;
     }
     if (message.points?.length) {
       obj.points = message.points.map((e) => Coordinates.toJSON(e));
@@ -124,14 +163,16 @@ export const DriverRealtime: MessageFns<DriverRealtime> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<DriverRealtime>, I>>(base?: I): DriverRealtime {
-    return DriverRealtime.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<MovingDriver>, I>>(base?: I): MovingDriver {
+    return MovingDriver.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<DriverRealtime>, I>>(object: I): DriverRealtime {
-    const message = createBaseDriverRealtime();
+  fromPartial<I extends Exact<DeepPartial<MovingDriver>, I>>(object: I): MovingDriver {
+    const message = createBaseMovingDriver();
     message.driverId = object.driverId ?? 0;
-    message.distance = object.distance ?? 0;
-    message.time = object.time ?? 0;
+    message.pathMeters = object.pathMeters ?? 0;
+    message.travelTime = object.travelTime ?? 0;
+    message.lat = object.lat ?? 0;
+    message.lon = object.lon ?? 0;
     message.points = object.points?.map((e) => Coordinates.fromPartial(e)) || [];
     return message;
   },
@@ -222,6 +263,17 @@ export type DeepPartial<T> = T extends Builtin ? T
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 export type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+
+function longToNumber(int64: { toString(): string }): number {
+  const num = globalThis.Number(int64.toString());
+  if (num > globalThis.Number.MAX_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  if (num < globalThis.Number.MIN_SAFE_INTEGER) {
+    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+  }
+  return num;
+}
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

@@ -4,12 +4,13 @@ package pb;
 
 option go_package = "./;pb";
 
-message DriverRealtime {
-    uint32 driver_id = 1;
-	float distance = 2;
-	uint32 time = 3;
-	// repeated float points = 4;
-	repeated Coordinates  points = 4;
+message MovingDriver {
+    int64 driver_id = 1;
+    uint32 path_meters = 2;
+    uint32 travel_time = 3;
+    float lat = 5;
+    float lon = 6;
+    repeated Coordinates points = 4;
 }
 
 message Coordinates {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{ id: number }>();
 
-function openDriverRealtimePopup() {
+function openMovingDriverPopup() {
   console.log("realtime id", props.id);
 }
 </script>
@@ -9,7 +9,7 @@ function openDriverRealtimePopup() {
 <template>
   <div
     class="flex flex-col items-center realtime-driver-popup"
-    @click="openDriverRealtimePopup"
+    @click="openMovingDriverPopup"
   >
     <img
       :src="'tow_image.jpg'"

@@ -21,31 +21,32 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type DriverRealtime struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	DriverId int64                  `protobuf:"varint,1,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
-	Distance float32                `protobuf:"fixed32,2,opt,name=distance,proto3" json:"distance,omitempty"`
-	Time     uint32                 `protobuf:"varint,3,opt,name=time,proto3" json:"time,omitempty"`
-	// repeated float points = 4;
-	Points        []*Coordinates `protobuf:"bytes,4,rep,name=points,proto3" json:"points,omitempty"`
+type MovingDriver struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DriverId      int64                  `protobuf:"varint,1,opt,name=driver_id,json=driverId,proto3" json:"driver_id,omitempty"`
+	PathMeters    uint32                 `protobuf:"varint,2,opt,name=path_meters,json=pathMeters,proto3" json:"path_meters,omitempty"`
+	TravelTime    uint32                 `protobuf:"varint,3,opt,name=travel_time,json=travelTime,proto3" json:"travel_time,omitempty"`
+	Lat           float32                `protobuf:"fixed32,5,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lon           float32                `protobuf:"fixed32,6,opt,name=lon,proto3" json:"lon,omitempty"`
+	Points        []*Coordinates         `protobuf:"bytes,4,rep,name=points,proto3" json:"points,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DriverRealtime) Reset() {
-	*x = DriverRealtime{}
+func (x *MovingDriver) Reset() {
+	*x = MovingDriver{}
 	mi := &file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DriverRealtime) String() string {
+func (x *MovingDriver) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DriverRealtime) ProtoMessage() {}
+func (*MovingDriver) ProtoMessage() {}
 
-func (x *DriverRealtime) ProtoReflect() protoreflect.Message {
+func (x *MovingDriver) ProtoReflect() protoreflect.Message {
 	mi := &file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -57,33 +58,47 @@ func (x *DriverRealtime) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DriverRealtime.ProtoReflect.Descriptor instead.
-func (*DriverRealtime) Descriptor() ([]byte, []int) {
+// Deprecated: Use MovingDriver.ProtoReflect.Descriptor instead.
+func (*MovingDriver) Descriptor() ([]byte, []int) {
 	return file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *DriverRealtime) GetDriverId() int64 {
+func (x *MovingDriver) GetDriverId() int64 {
 	if x != nil {
 		return x.DriverId
 	}
 	return 0
 }
 
-func (x *DriverRealtime) GetDistance() float32 {
+func (x *MovingDriver) GetPathMeters() uint32 {
 	if x != nil {
-		return x.Distance
+		return x.PathMeters
 	}
 	return 0
 }
 
-func (x *DriverRealtime) GetTime() uint32 {
+func (x *MovingDriver) GetTravelTime() uint32 {
 	if x != nil {
-		return x.Time
+		return x.TravelTime
 	}
 	return 0
 }
 
-func (x *DriverRealtime) GetPoints() []*Coordinates {
+func (x *MovingDriver) GetLat() float32 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *MovingDriver) GetLon() float32 {
+	if x != nil {
+		return x.Lon
+	}
+	return 0
+}
+
+func (x *MovingDriver) GetPoints() []*Coordinates {
 	if x != nil {
 		return x.Points
 	}
@@ -138,11 +153,15 @@ var File_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto protoreflec
 
 const file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_rawDesc = "" +
 	"\n" +
-	";api/protobuf/geolocation/gps_realtime_channel/gps_get.proto\x12\x02pb\"\x86\x01\n" +
-	"\x0eDriverRealtime\x12\x1b\n" +
-	"\tdriver_id\x18\x01 \x01(\rR\bdriverId\x12\x1a\n" +
-	"\bdistance\x18\x02 \x01(\x02R\bdistance\x12\x12\n" +
-	"\x04time\x18\x03 \x01(\rR\x04time\x12'\n" +
+	";api/protobuf/geolocation/gps_realtime_channel/gps_get.proto\x12\x02pb\"\xba\x01\n" +
+	"\fMovingDriver\x12\x1b\n" +
+	"\tdriver_id\x18\x01 \x01(\x03R\bdriverId\x12\x1f\n" +
+	"\vpath_meters\x18\x02 \x01(\rR\n" +
+	"pathMeters\x12\x1f\n" +
+	"\vtravel_time\x18\x03 \x01(\rR\n" +
+	"travelTime\x12\x10\n" +
+	"\x03lat\x18\x05 \x01(\x02R\x03lat\x12\x10\n" +
+	"\x03lon\x18\x06 \x01(\x02R\x03lon\x12'\n" +
 	"\x06points\x18\x04 \x03(\v2\x0f.pb.CoordinatesR\x06points\"/\n" +
 	"\vCoordinates\x12 \n" +
 	"\vcoordinates\x18\x01 \x03(\x02R\vcoordinatesB\aZ\x05./;pbb\x06proto3"
@@ -161,11 +180,11 @@ func file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_rawDescGZI
 
 var file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_goTypes = []any{
-	(*DriverRealtime)(nil), // 0: pb.DriverRealtime
-	(*Coordinates)(nil),    // 1: pb.Coordinates
+	(*MovingDriver)(nil), // 0: pb.MovingDriver
+	(*Coordinates)(nil),  // 1: pb.Coordinates
 }
 var file_api_protobuf_geolocation_gps_realtime_channel_gps_get_proto_depIdxs = []int32{
-	1, // 0: pb.DriverRealtime.points:type_name -> pb.Coordinates
+	1, // 0: pb.MovingDriver.points:type_name -> pb.Coordinates
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
