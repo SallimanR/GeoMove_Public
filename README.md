@@ -1,5 +1,9 @@
 # GeoMove public repository
 
+### For developing, contributing and learning:
+- [DEVELOPING.md](./DEVELOPING.md)
+- [documentation](./docs/)
+
 ### For maps see https://www.npmjs.com/package/@geomove/maps and [docs](./frontend/packages/maps/README.md)
 ### For geo utilities see https://www.npmjs.com/package/@geomove/go and [docs](./frontend/packages/geo/README.md)
 
