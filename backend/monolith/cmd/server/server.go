@@ -176,7 +176,7 @@ func (s *Server) setupGeolocationDomain() error {
 		return nil
 	}
 
-	domain, err := geolocation.NewGeolocationDomain(s.db, s.wsServer, s.logger, s.notificationService)
+	domain, err := geolocation.NewGeolocationDomain(s.db, s.wsServer, s.logger)
 	if err != nil {
 		return err
 	}
