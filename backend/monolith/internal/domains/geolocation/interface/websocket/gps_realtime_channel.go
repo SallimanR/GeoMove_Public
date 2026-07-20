@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"monolith/internal/domains/geolocation/application/command"
 	"monolith/internal/domains/geolocation/domain/entity"
 	"monolith/internal/domains/geolocation/infrastructure/graphopper"
-	geoHTTP "monolith/internal/domains/geolocation/interface/http"
 	"monolith/internal/domains/geolocation/interface/websocket/pb"
 	"monolith/internal/websockethub"
 	wsPB "monolith/internal/websockethub/proto"
@@ -108,30 +106,29 @@ func (c *GPSRealtimeChannel) GetMessages(publisherIDs []int64) ([]byte, error) {
 
 	messages := make([][]byte, 0, len(items))
 	for _, item := range items {
-		md := geoHTTP.MovingDriver{
-			DriverId:   int(item.DriverID),
+		points := make([]*pb.Coordinates, len(item.Points))
+		for i, p := range item.Points {
+			points[i] = &pb.Coordinates{
+				Coordinates: []float32{p[0], p[1]},
+			}
+		}
+
+		md := &pb.MovingDriver{
+			DriverId:   item.DriverID,
 			Lat:        item.Latitude,
 			Lon:        item.Longitude,
-			TravelTime: float32(item.TravelTime.Sub(time.Time{}).Seconds()),
-			PathMeters: int(item.PathMeters),
-			Points:     convertPointsToSlice(item.Points),
+			TravelTime: uint32(item.TravelTime.Sub(time.Time{}).Seconds()),
+			PathMeters: uint32(item.PathMeters),
+			Points:     points,
 		}
-		msgJSON, err := json.Marshal(md)
+		msgProto, err := proto.Marshal(md)
 		if err != nil {
 			continue
 		}
-		messages = append(messages, msgJSON)
+		messages = append(messages, msgProto)
 	}
 
 	var messagesProtobuf wsPB.MessageBatch
 	messagesProtobuf.Data = messages
 	return proto.Marshal(&messagesProtobuf)
-}
-
-func convertPointsToSlice(points [][2]float32) [][]float32 {
-	result := make([][]float32, len(points))
-	for i, p := range points {
-		result[i] = []float32{p[0], p[1]}
-	}
-	return result
 }
