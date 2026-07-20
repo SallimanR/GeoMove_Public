@@ -1,0 +1,46 @@
+#!/bin/bash
+# Prepends tags to commit message suffix.
+# Select one or more tags (comma-separated): backend,frontend,api
+
+case "$2,$3" in
+merge, | squash, | template, | , | commit, | message,) ;;
+*) exit 0 ;;
+esac
+
+TAGS=("backend" "frontend" "api" "docker" "db" "docs" "scripts" "config" "env" "test" "bench" "dev" "git")
+
+echo ""
+echo "Available tags:"
+for tag in "${TAGS[@]}"; do
+	echo "  $tag"
+done
+echo ""
+read -r -p "Tag(s) [comma-separated, or empty to skip]: " input </dev/tty
+
+if [ -z "$input" ]; then
+	exit 0
+fi
+
+IFS=',' read -ra selected <<<"$input"
+suffix=""
+for tag in "${selected[@]}"; do
+	tag=$(echo "$tag" | xargs)
+	valid=0
+	for v in "${TAGS[@]}"; do
+		if [ "$tag" = "$v" ]; then
+			valid=1
+			break
+		fi
+	done
+	if [ "$valid" -eq 1 ]; then
+		suffix="$suffix[$tag]"
+	else
+		echo "  [warn] ignoring unknown tag: $tag"
+	fi
+done
+
+if [ -n "$suffix" ]; then
+	# Append tags to the end of the first line
+	sed -i "1s/\$/ $suffix/" "$1"
+	echo "  [ok] added:$suffix"
+fi
