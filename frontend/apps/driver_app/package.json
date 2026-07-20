@@ -7,7 +7,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "setup:android": "cap add android",
-    "build:android": "vite build && cap sync android"
+    "build:android": "vite build && cap sync android",
+    "setup:ios": "cap add ios",
+    "build:ios": "vite build && cap sync ios"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

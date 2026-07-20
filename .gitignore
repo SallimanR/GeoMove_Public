@@ -1,3 +1,5 @@
+frontend/apps/**/android
+frontend/apps/**/ios
 **/.astro
 **/node_modules/
 **/dist/**
