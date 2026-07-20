@@ -1,15 +1,18 @@
 package testutils
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
+
+	"monolith/internal/domains/geolocation/infrastructure/graphopper"
 )
 
 func PingGraphhopper(t testing.TB) {
 	t.Helper()
 
-	const graphhopperURL = "http://localhost:8989/health"
+	graphhopperURL := fmt.Sprintf("%s/health", graphopper.APIBase)
 	resp, err := http.Get(graphhopperURL)
 	if err != nil {
 		t.Fatalf("failed to ping graphhopper: %s", err)
