@@ -195,6 +195,115 @@ func (q *Queries) GetOrderByID(ctx context.Context, id int64) (GetOrderByIDRow, 
 	return i, err
 }
 
+const listAvailableOrders = `-- name: ListAvailableOrders :many
+SELECT
+	id,
+	created_at,
+	updated_at,
+	customer_id,
+	driver_id,
+	ST_X(from_location::geometry)::REAL AS from_lon,
+	ST_Y(from_location::geometry)::REAL AS from_lat,
+	from_address,
+	ST_X(to_location::geometry)::REAL AS to_lon,
+	ST_Y(to_location::geometry)::REAL AS to_lat,
+	to_address,
+	total_distance_meters,
+	how_many_wheels_blocked,
+	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
+	status,
+	accepted_at,
+	picked_up_at,
+	completed_at,
+	cancelled_at,
+	cancellation_reason
+FROM "order"
+WHERE status IN ('forming', 'pending')
+ORDER BY created_at DESC
+`
+
+type ListAvailableOrdersRow struct {
+	ID                   int64
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	CustomerID           int64
+	DriverID             *int64
+	FromLon              float32
+	FromLat              float32
+	FromAddress          string
+	ToLon                float32
+	ToLat                float32
+	ToAddress            string
+	TotalDistanceMeters  *int32
+	HowManyWheelsBlocked int16
+	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
+	Status               OrderStatus
+	AcceptedAt           *time.Time
+	PickedUpAt           *time.Time
+	CompletedAt          *time.Time
+	CancelledAt          *time.Time
+	CancellationReason   *string
+}
+
+func (q *Queries) ListAvailableOrders(ctx context.Context) ([]ListAvailableOrdersRow, error) {
+	rows, err := q.db.Query(ctx, listAvailableOrders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAvailableOrdersRow
+	for rows.Next() {
+		var i ListAvailableOrdersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CustomerID,
+			&i.DriverID,
+			&i.FromLon,
+			&i.FromLat,
+			&i.FromAddress,
+			&i.ToLon,
+			&i.ToLat,
+			&i.ToAddress,
+			&i.TotalDistanceMeters,
+			&i.HowManyWheelsBlocked,
+			&i.PriceRubles,
+			&i.CarWeightKg,
+			&i.CarLengthMeters,
+			&i.CarType,
+			&i.CarName,
+			&i.CarPhotoUrl,
+			&i.CustomerMessage,
+			&i.Status,
+			&i.AcceptedAt,
+			&i.PickedUpAt,
+			&i.CompletedAt,
+			&i.CancelledAt,
+			&i.CancellationReason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOrdersByCustomer = `-- name: ListOrdersByCustomer :many
 SELECT
 	id,
@@ -413,10 +522,10 @@ func (q *Queries) ListOrdersByDriver(ctx context.Context, driverID *int64) ([]Li
 	return items, nil
 }
 
-const setOrderDriver = `-- name: SetOrderDriver :exec
+const setOrderDriver = `-- name: SetOrderDriver :execrows
 UPDATE "order"
 SET driver_id = $2, status = 'accepted'
-WHERE id = $1 AND status = 'pending'
+WHERE id = $1 AND status IN ('forming', 'pending')
 `
 
 type SetOrderDriverParams struct {
@@ -424,9 +533,12 @@ type SetOrderDriverParams struct {
 	DriverID *int64
 }
 
-func (q *Queries) SetOrderDriver(ctx context.Context, arg SetOrderDriverParams) error {
-	_, err := q.db.Exec(ctx, setOrderDriver, arg.ID, arg.DriverID)
-	return err
+func (q *Queries) SetOrderDriver(ctx context.Context, arg SetOrderDriverParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setOrderDriver, arg.ID, arg.DriverID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const updateOrderDetails = `-- name: UpdateOrderDetails :one

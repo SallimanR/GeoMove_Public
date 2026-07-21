@@ -13,6 +13,7 @@ import (
 type UpdateOrderStatusCommand struct {
 	OrderID            int64
 	Status             entity.OrderStatus
+	DriverID           *int64
 	CancellationReason *string
 }
 
@@ -35,6 +36,18 @@ func (h *UpdateOrderStatusHandler) Handle(ctx context.Context, cmd UpdateOrderSt
 
 	if err := order.TransitionStatus(cmd.Status); err != nil {
 		return nil, err
+	}
+
+	if cmd.Status == entity.OrderStatusAccepted {
+		if cmd.DriverID == nil {
+			return nil, fmt.Errorf("driver_id обязателен при принятии заказа")
+		}
+		order.DriverID = cmd.DriverID
+		if err := h.repo.SetOrderDriver(ctx, cmd.OrderID, *cmd.DriverID); err != nil {
+			return nil, fmt.Errorf("ошибка назначения водителя: %w", err)
+		}
+		h.sendNotifications(order, previousStatus)
+		return order, nil
 	}
 
 	if cmd.Status == entity.OrderStatusCancelled {

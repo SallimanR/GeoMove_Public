@@ -222,6 +222,9 @@ type ServerInterface interface {
 	// Create a new tow order
 	// (POST /order)
 	CreateOrder(c *gin.Context)
+	// List available orders (forming/pending) for drivers
+	// (GET /order/available)
+	ListAvailableOrders(c *gin.Context)
 	// List orders for the authenticated user
 	// (GET /order/my)
 	ListMyOrders(c *gin.Context, params ListMyOrdersParams)
@@ -261,6 +264,21 @@ func (siw *ServerInterfaceWrapper) CreateOrder(c *gin.Context) {
 	}
 
 	siw.Handler.CreateOrder(c)
+}
+
+// ListAvailableOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListAvailableOrders(c *gin.Context) {
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListAvailableOrders(c)
 }
 
 // ListMyOrders operation middleware
@@ -419,6 +437,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.POST(options.BaseURL+"/order", wrapper.CreateOrder)
+	router.GET(options.BaseURL+"/order/available", wrapper.ListAvailableOrders)
 	router.GET(options.BaseURL+"/order/my", wrapper.ListMyOrders)
 	router.DELETE(options.BaseURL+"/order/my/active", wrapper.DeleteMyActiveOrder)
 	router.GET(options.BaseURL+"/order/:order_id", wrapper.GetOrder)
@@ -456,6 +475,32 @@ type CreateOrder401Response struct {
 }
 
 func (response CreateOrder401Response) VisitCreateOrderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ListAvailableOrdersRequestObject struct {
+}
+
+type ListAvailableOrdersResponseObject interface {
+	VisitListAvailableOrdersResponse(w http.ResponseWriter) error
+}
+
+type ListAvailableOrders200JSONResponse struct {
+	Orders *[]Order `json:"orders,omitempty"`
+}
+
+func (response ListAvailableOrders200JSONResponse) VisitListAvailableOrdersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListAvailableOrders401Response struct {
+}
+
+func (response ListAvailableOrders401Response) VisitListAvailableOrdersResponse(w http.ResponseWriter) error {
 	w.WriteHeader(401)
 	return nil
 }
@@ -643,6 +688,9 @@ type StrictServerInterface interface {
 	// Create a new tow order
 	// (POST /order)
 	CreateOrder(ctx context.Context, request CreateOrderRequestObject) (CreateOrderResponseObject, error)
+	// List available orders (forming/pending) for drivers
+	// (GET /order/available)
+	ListAvailableOrders(ctx context.Context, request ListAvailableOrdersRequestObject) (ListAvailableOrdersResponseObject, error)
 	// List orders for the authenticated user
 	// (GET /order/my)
 	ListMyOrders(ctx context.Context, request ListMyOrdersRequestObject) (ListMyOrdersResponseObject, error)
@@ -698,6 +746,31 @@ func (sh *strictHandler) CreateOrder(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(CreateOrderResponseObject); ok {
 		if err := validResponse.VisitCreateOrderResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAvailableOrders operation middleware
+func (sh *strictHandler) ListAvailableOrders(ctx *gin.Context) {
+	var request ListAvailableOrdersRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAvailableOrders(ctx, request.(ListAvailableOrdersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAvailableOrders")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(ListAvailableOrdersResponseObject); ok {
+		if err := validResponse.VisitListAvailableOrdersResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

@@ -25,8 +25,9 @@ type OrderCommands struct {
 }
 
 type OrderQueries struct {
-	GetOrderByID     *query.GetOrderByIDHandler
-	ListOrdersByUser *query.ListOrdersByUserHandler
+	GetOrderByID        *query.GetOrderByIDHandler
+	ListOrdersByUser    *query.ListOrdersByUserHandler
+	ListAvailableOrders *query.ListAvailableOrdersHandler
 }
 
 func NewOrderDomain(db *pgxpool.Pool, notifSvc *notification.Service) *OrderDomain {
@@ -38,6 +39,7 @@ func NewOrderDomain(db *pgxpool.Pool, notifSvc *notification.Service) *OrderDoma
 	deleteActiveHandler := command.NewDeleteActiveOrderHandler(orderRepo)
 	getOrderHandler := query.NewGetOrderByIDHandler(orderRepo)
 	listOrdersHandler := query.NewListOrdersByUserHandler(orderRepo)
+	listAvailableHandler := query.NewListAvailableOrdersHandler(orderRepo)
 
 	return &OrderDomain{
 		Commands: OrderCommands{
@@ -47,8 +49,9 @@ func NewOrderDomain(db *pgxpool.Pool, notifSvc *notification.Service) *OrderDoma
 			DeleteActiveOrder: deleteActiveHandler,
 		},
 		Queries: OrderQueries{
-			GetOrderByID:     getOrderHandler,
-			ListOrdersByUser: listOrdersHandler,
+			GetOrderByID:        getOrderHandler,
+			ListOrdersByUser:    listOrdersHandler,
+			ListAvailableOrders: listAvailableHandler,
 		},
 	}
 }
@@ -61,6 +64,7 @@ func (d *OrderDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddleware
 		d.Commands.DeleteActiveOrder,
 		d.Queries.GetOrderByID,
 		d.Queries.ListOrdersByUser,
+		d.Queries.ListAvailableOrders,
 	)
 	orderHTTP.RegisterOrderRoutes(router, handler, authMiddleware)
 }

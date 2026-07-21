@@ -15,4 +15,6 @@ type OrderRepository interface {
 	UpdateOrderStatus(ctx context.Context, id int64, status entity.OrderStatus, acceptedAt, pickedUpAt, completedAt, cancelledAt *time.Time, cancellationReason *string) error
 	UpdateOrder(ctx context.Context, order *entity.Order) (*entity.Order, error)
 	DeleteActiveOrder(ctx context.Context, customerID int64) error
+	ListAvailableOrders(ctx context.Context) ([]entity.Order, error)
+	SetOrderDriver(ctx context.Context, orderID, driverID int64) error
 }

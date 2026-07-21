@@ -103,7 +103,7 @@ func NewOrder(opts NewOrderOptions) (*Order, error) {
 }
 
 var validTransitions = map[OrderStatus][]OrderStatus{
-	OrderStatusForming:    {OrderStatusPending, OrderStatusCancelled},
+	OrderStatusForming:    {OrderStatusPending, OrderStatusAccepted, OrderStatusCancelled},
 	OrderStatusPending:    {OrderStatusAccepted, OrderStatusCancelled},
 	OrderStatusAccepted:   {OrderStatusInProgress},
 	OrderStatusInProgress: {OrderStatusCompleted},
@@ -114,7 +114,7 @@ var validTransitions = map[OrderStatus][]OrderStatus{
 func (o *Order) TransitionStatus(newStatus OrderStatus) error {
 	allowed, ok := validTransitions[o.Status]
 	if !ok {
-		return fmt.Errorf("unknown current status: %s", o.Status)
+		return fmt.Errorf("неизвестный статус: %s", o.Status)
 	}
 
 	for _, s := range allowed {
@@ -137,5 +137,5 @@ func (o *Order) TransitionStatus(newStatus OrderStatus) error {
 		}
 	}
 
-	return fmt.Errorf("cannot transition from %s to %s", o.Status, newStatus)
+	return fmt.Errorf("переход из статуса %s в %s невозможен", o.Status, newStatus)
 }

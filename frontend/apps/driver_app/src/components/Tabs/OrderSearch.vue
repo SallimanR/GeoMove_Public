@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, inject, watch } from "vue";
 import { useStore } from "@nanostores/vue";
-import { MapsLocationPicker, $locationPicking, setPickCallback } from "@geomove/maps";
+import {
+  MapsLocationPicker,
+  $locationPicking,
+  setPickCallback,
+} from "@geomove/maps";
 import type { GeoPoint } from "@geomove/maps";
 import SingIn from "auth/components/SignIn.vue";
-import {
-  $user,
-  $isAuthenticated,
-  $loading,
-  checkAuth,
-  setUser,
-} from "auth";
+import { $user, $isAuthenticated, $loading, checkAuth, setUser } from "auth";
 import { useDriverProfile } from "../../stores/driverStore";
 import { ACTIVE_TAB_KEY } from "../../injectionKeys";
 
@@ -141,7 +139,6 @@ function addToLocation() {
     onLocationPicked(point, address),
   );
   $locationPicking.set(true);
-  activeTab.value = "mapsTab";
 }
 
 function removeToLocation(index: number) {

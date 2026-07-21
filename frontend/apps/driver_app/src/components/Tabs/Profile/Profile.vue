@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, watch } from "vue";
 import { useStore } from "@nanostores/vue";
+import { usePushNotifications } from "notifications";
 
 import {
   $user,
@@ -28,16 +29,24 @@ const {
   fetchProfile,
 } = useDriverProfile();
 
+const { isSupported, isSubscribed, init: initPush } = usePushNotifications();
+
 onMounted(async () => {
   await checkAuth();
   if (isAuthenticated.value) {
     await fetchProfile();
+    if (isSupported.value) initPush();
   }
+});
+
+watch(isAuthenticated, (auth) => {
+  if (auth && isSupported.value) initPush();
 });
 
 function onLoginSuccess(u: { id: number; email: string | null }) {
   setUser({ id: u.id, email: u.email, phone: null, profile_image: null });
   fetchProfile();
+  if (isSupported.value) initPush();
 }
 
 async function onLogout() {
@@ -105,6 +114,13 @@ async function onLogout() {
         >★ {{ driver.rating.toFixed(1) }}</span
       >
     </div>
+
+    <p
+      v-if="isSupported && isSubscribed"
+      class="text-sm text-green-600"
+    >
+      Уведомления включены
+    </p>
 
     <button
       @click="onLogout"

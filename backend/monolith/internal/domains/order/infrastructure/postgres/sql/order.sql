@@ -140,10 +140,10 @@ SET
 	cancellation_reason = COALESCE(sqlc.narg('cancellation_reason'), cancellation_reason)
 WHERE id = $1;
 
--- name: SetOrderDriver :exec
+-- name: SetOrderDriver :execrows
 UPDATE "order"
 SET driver_id = $2, status = 'accepted'
-WHERE id = $1 AND status = 'pending';
+WHERE id = $1 AND status IN ('forming', 'pending');
 
 -- name: UpdateOrderDetails :one
 UPDATE "order"
@@ -194,3 +194,35 @@ RETURNING
 -- name: DeleteActiveOrder :exec
 DELETE FROM "order"
 WHERE customer_id = $1 AND status IN ('forming', 'pending');
+
+-- name: ListAvailableOrders :many
+SELECT
+	id,
+	created_at,
+	updated_at,
+	customer_id,
+	driver_id,
+	ST_X(from_location::geometry)::REAL AS from_lon,
+	ST_Y(from_location::geometry)::REAL AS from_lat,
+	from_address,
+	ST_X(to_location::geometry)::REAL AS to_lon,
+	ST_Y(to_location::geometry)::REAL AS to_lat,
+	to_address,
+	total_distance_meters,
+	how_many_wheels_blocked,
+	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
+	status,
+	accepted_at,
+	picked_up_at,
+	completed_at,
+	cancelled_at,
+	cancellation_reason
+FROM "order"
+WHERE status IN ('forming', 'pending')
+ORDER BY created_at DESC;

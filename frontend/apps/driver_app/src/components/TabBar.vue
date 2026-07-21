@@ -9,6 +9,7 @@ import TabPanel from "primevue/tabpanel";
 
 import Profile from "./Tabs/Profile/Profile.vue";
 import OrderSearch from "./Tabs/OrderSearch.vue";
+import AvailableOrders from "./Tabs/AvailableOrders.vue";
 import StreamGps from "./Tabs/StreamGps.vue";
 import { ACTIVE_TAB_KEY } from "../injectionKeys";
 
@@ -24,6 +25,7 @@ provide(ACTIVE_TAB_KEY, activeTab);
   <Tabs v-model:value="activeTab" class="h-full w-full flex flex-col">
     <TabList class="flex w-full">
       <Tab value="mapsTab" class="flex-1 text-center">Карты</Tab>
+      <Tab value="ordersTab" class="flex-1 text-center">Заказы</Tab>
       <Tab value="orderSearchTab" class="flex-1 text-center">Ищу заказ</Tab>
       <Tab value="statusTab" class="flex-1 text-center">Статус</Tab>
       <Tab value="profileTab" class="flex-1 text-center">Профиль</Tab>
@@ -34,6 +36,9 @@ provide(ACTIVE_TAB_KEY, activeTab);
           <Maps :styleApi="styleApi" />
           <MapsOverlayControls :hideRouteInput="true" />
         </div>
+      </TabPanel>
+      <TabPanel value="ordersTab" class="flex-1 p-0 m-0">
+        <AvailableOrders />
       </TabPanel>
       <TabPanel value="orderSearchTab" class="flex-1 p-0 m-0">
         <OrderSearch />

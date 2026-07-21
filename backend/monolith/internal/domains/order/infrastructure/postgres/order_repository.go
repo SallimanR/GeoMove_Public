@@ -282,3 +282,47 @@ func (r *OrderRepository) UpdateOrder(ctx context.Context, order *entity.Order) 
 func (r *OrderRepository) DeleteActiveOrder(ctx context.Context, customerID int64) error {
 	return r.queries.DeleteActiveOrder(ctx, customerID)
 }
+
+func (r *OrderRepository) ListAvailableOrders(ctx context.Context) ([]entity.Order, error) {
+	rows, err := r.queries.ListAvailableOrders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	orders := make([]entity.Order, len(rows))
+	for i, row := range rows {
+		orders[i] = toOrderEntity(orderRow{
+			ID:                   row.ID,
+			CreatedAt:            row.CreatedAt,
+			UpdatedAt:            row.UpdatedAt,
+			CustomerID:           row.CustomerID,
+			DriverID:             row.DriverID,
+			FromLat:              row.FromLat,
+			FromLon:              row.FromLon,
+			FromAddress:          row.FromAddress,
+			ToLat:                row.ToLat,
+			ToLon:                row.ToLon,
+			ToAddress:            row.ToAddress,
+			TotalDistanceMeters:  row.TotalDistanceMeters,
+			HowManyWheelsBlocked: row.HowManyWheelsBlocked,
+			PriceRubles:          row.PriceRubles,
+			CarWeightKg:          row.CarWeightKg,
+			CarLengthMeters:      row.CarLengthMeters,
+			CarType:              row.CarType,
+			CarName:              row.CarName,
+			CarPhotoUrl:          row.CarPhotoUrl,
+			CustomerMessage:      row.CustomerMessage,
+			Status:               row.Status,
+			AcceptedAt:           row.AcceptedAt,
+			PickedUpAt:           row.PickedUpAt,
+			CompletedAt:          row.CompletedAt,
+			CancelledAt:          row.CancelledAt,
+			CancellationReason:   row.CancellationReason,
+		})
+	}
+	return orders, nil
+}
+
+func (r *OrderRepository) SetOrderDriver(ctx context.Context, orderID, driverID int64) error {
+	_, err := r.queries.SetOrderDriver(ctx, sqlc.SetOrderDriverParams{ID: orderID, DriverID: &driverID})
+	return err
+}

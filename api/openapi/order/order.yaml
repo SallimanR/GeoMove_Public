@@ -280,6 +280,27 @@ paths:
         '401':
           description: Unauthorized
 
+  /order/available:
+    get:
+      operationId: listAvailableOrders
+      summary: List available orders (forming/pending) for drivers
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of available orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+
   /order/{order_id}:
     get:
       operationId: getOrder

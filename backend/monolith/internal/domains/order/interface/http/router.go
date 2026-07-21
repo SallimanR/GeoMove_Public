@@ -12,6 +12,7 @@ func RegisterOrderRoutes(router *gin.RouterGroup, h *OrderHandler, authMiddlewar
 		order.POST("", wrapper.CreateOrder)
 		order.GET("/my", wrapper.ListMyOrders)
 		order.DELETE("/my/active", wrapper.DeleteMyActiveOrder)
+		order.GET("/available", wrapper.ListAvailableOrders)
 		order.GET("/:order_id", wrapper.GetOrder)
 		order.PUT("/:order_id", wrapper.UpdateOrder)
 		order.PATCH("/:order_id/status", wrapper.UpdateOrderStatus)

@@ -24,12 +24,13 @@ func err400Update(msg string) UpdateOrder400JSONResponse {
 }
 
 type OrderHandler struct {
-	createOrder       *command.CreateOrderHandler
-	updateOrder       *command.UpdateOrderHandler
-	updateOrderStatus *command.UpdateOrderStatusHandler
-	deleteActiveOrder *command.DeleteActiveOrderHandler
-	getOrderByID      *query.GetOrderByIDHandler
-	listOrdersByUser  *query.ListOrdersByUserHandler
+	createOrder         *command.CreateOrderHandler
+	updateOrder         *command.UpdateOrderHandler
+	updateOrderStatus   *command.UpdateOrderStatusHandler
+	deleteActiveOrder   *command.DeleteActiveOrderHandler
+	getOrderByID        *query.GetOrderByIDHandler
+	listOrdersByUser    *query.ListOrdersByUserHandler
+	listAvailableOrders *query.ListAvailableOrdersHandler
 }
 
 func NewOrderHandler(
@@ -39,14 +40,16 @@ func NewOrderHandler(
 	deleteActiveOrder *command.DeleteActiveOrderHandler,
 	getOrderByID *query.GetOrderByIDHandler,
 	listOrdersByUser *query.ListOrdersByUserHandler,
+	listAvailableOrders *query.ListAvailableOrdersHandler,
 ) *OrderHandler {
 	return &OrderHandler{
-		createOrder:       createOrder,
-		updateOrder:       updateOrder,
-		updateOrderStatus: updateOrderStatus,
-		deleteActiveOrder: deleteActiveOrder,
-		getOrderByID:      getOrderByID,
-		listOrdersByUser:  listOrdersByUser,
+		createOrder:         createOrder,
+		updateOrder:         updateOrder,
+		updateOrderStatus:   updateOrderStatus,
+		deleteActiveOrder:   deleteActiveOrder,
+		getOrderByID:        getOrderByID,
+		listOrdersByUser:    listOrdersByUser,
+		listAvailableOrders: listAvailableOrders,
 	}
 }
 
@@ -116,6 +119,24 @@ func (h *OrderHandler) ListMyOrders(ctx context.Context, request ListMyOrdersReq
 	}
 
 	return ListMyOrders200JSONResponse{Orders: &apiOrders}, nil
+}
+
+func (h *OrderHandler) ListAvailableOrders(ctx context.Context, request ListAvailableOrdersRequestObject) (ListAvailableOrdersResponseObject, error) {
+	session := getSession(ctx)
+	if session == nil {
+		return ListAvailableOrders401Response{}, nil
+	}
+
+	orders, err := h.listAvailableOrders.Handle(ctx)
+	if err != nil {
+		return ListAvailableOrders200JSONResponse{}, nil
+	}
+
+	apiOrders := make([]Order, len(orders))
+	for i := range orders {
+		apiOrders[i] = toAPIOrder(&orders[i])
+	}
+	return ListAvailableOrders200JSONResponse{Orders: &apiOrders}, nil
 }
 
 func (h *OrderHandler) GetOrder(ctx context.Context, request GetOrderRequestObject) (GetOrderResponseObject, error) {
@@ -199,6 +220,7 @@ func (h *OrderHandler) UpdateOrderStatus(ctx context.Context, request UpdateOrde
 	cmd := command.UpdateOrderStatusCommand{
 		OrderID:            request.OrderId,
 		Status:             entity.OrderStatus(body.Status),
+		DriverID:           &session.UserID,
 		CancellationReason: body.CancellationReason,
 	}
 
