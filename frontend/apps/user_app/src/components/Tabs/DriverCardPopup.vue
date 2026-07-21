@@ -4,7 +4,6 @@ import { useStore } from "@nanostores/vue";
 import { $selectedDriver } from "src/stores/driverStore.ts";
 import { $mapInstance } from "@geomove/maps";
 import { ACTIVE_TAB_KEY } from "src/injectionKeys.ts";
-import BottomPanel from "ui/components/BottomPanel.vue";
 
 const driver = useStore($selectedDriver);
 const activeTab = inject(ACTIVE_TAB_KEY)!;
