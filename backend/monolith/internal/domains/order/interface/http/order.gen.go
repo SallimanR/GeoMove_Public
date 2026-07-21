@@ -19,6 +19,42 @@ const (
 	CookieAuthScopes = "CookieAuth.Scopes"
 )
 
+// Defines values for CarInfoCarType.
+const (
+	CarInfoCarTypeВнедорожник   CarInfoCarType = "Внедорожник"
+	CarInfoCarTypeГрузовик      CarInfoCarType = "Грузовик"
+	CarInfoCarTypeДругое        CarInfoCarType = "Другое"
+	CarInfoCarTypeЛегковой      CarInfoCarType = "Легковой"
+	CarInfoCarTypeМикроавтобус  CarInfoCarType = "Микроавтобус"
+	CarInfoCarTypeМотоцикл      CarInfoCarType = "Мотоцикл"
+	CarInfoCarTypeСпецтехника   CarInfoCarType = "Спецтехника"
+	CarInfoCarTypeЭлектромобиль CarInfoCarType = "Электромобиль"
+)
+
+// Defines values for CreateOrderRequestCarType.
+const (
+	CreateOrderRequestCarTypeВнедорожник   CreateOrderRequestCarType = "Внедорожник"
+	CreateOrderRequestCarTypeГрузовик      CreateOrderRequestCarType = "Грузовик"
+	CreateOrderRequestCarTypeДругое        CreateOrderRequestCarType = "Другое"
+	CreateOrderRequestCarTypeЛегковой      CreateOrderRequestCarType = "Легковой"
+	CreateOrderRequestCarTypeМикроавтобус  CreateOrderRequestCarType = "Микроавтобус"
+	CreateOrderRequestCarTypeМотоцикл      CreateOrderRequestCarType = "Мотоцикл"
+	CreateOrderRequestCarTypeСпецтехника   CreateOrderRequestCarType = "Спецтехника"
+	CreateOrderRequestCarTypeЭлектромобиль CreateOrderRequestCarType = "Электромобиль"
+)
+
+// Defines values for OrderCarType.
+const (
+	OrderCarTypeВнедорожник   OrderCarType = "Внедорожник"
+	OrderCarTypeГрузовик      OrderCarType = "Грузовик"
+	OrderCarTypeДругое        OrderCarType = "Другое"
+	OrderCarTypeЛегковой      OrderCarType = "Легковой"
+	OrderCarTypeМикроавтобус  OrderCarType = "Микроавтобус"
+	OrderCarTypeМотоцикл      OrderCarType = "Мотоцикл"
+	OrderCarTypeСпецтехника   OrderCarType = "Спецтехника"
+	OrderCarTypeЭлектромобиль OrderCarType = "Электромобиль"
+)
+
 // Defines values for OrderStatus.
 const (
 	OrderStatusAccepted   OrderStatus = "accepted"
@@ -27,6 +63,18 @@ const (
 	OrderStatusForming    OrderStatus = "forming"
 	OrderStatusInProgress OrderStatus = "in_progress"
 	OrderStatusPending    OrderStatus = "pending"
+)
+
+// Defines values for UpdateOrderRequestCarType.
+const (
+	UpdateOrderRequestCarTypeВнедорожник   UpdateOrderRequestCarType = "Внедорожник"
+	UpdateOrderRequestCarTypeГрузовик      UpdateOrderRequestCarType = "Грузовик"
+	UpdateOrderRequestCarTypeДругое        UpdateOrderRequestCarType = "Другое"
+	UpdateOrderRequestCarTypeЛегковой      UpdateOrderRequestCarType = "Легковой"
+	UpdateOrderRequestCarTypeМикроавтобус  UpdateOrderRequestCarType = "Микроавтобус"
+	UpdateOrderRequestCarTypeМотоцикл      UpdateOrderRequestCarType = "Мотоцикл"
+	UpdateOrderRequestCarTypeСпецтехника   UpdateOrderRequestCarType = "Спецтехника"
+	UpdateOrderRequestCarTypeЭлектромобиль UpdateOrderRequestCarType = "Электромобиль"
 )
 
 // Defines values for UpdateOrderStatusRequestStatus.
@@ -45,18 +93,40 @@ const (
 	Driver   ListMyOrdersParamsRole = "driver"
 )
 
+// CarInfo defines model for CarInfo.
+type CarInfo struct {
+	CarLengthMeters float32        `json:"car_length_meters"`
+	CarName         string         `json:"car_name"`
+	CarPhotoUrl     *string        `json:"car_photo_url"`
+	CarType         CarInfoCarType `json:"car_type"`
+	CarWeightKg     int            `json:"car_weight_kg"`
+	CustomerMessage *string        `json:"customer_message"`
+}
+
+// CarInfoCarType defines model for CarInfo.CarType.
+type CarInfoCarType string
+
 // CreateOrderRequest defines model for CreateOrderRequest.
 type CreateOrderRequest struct {
-	FromAddress          *string `json:"from_address,omitempty"`
-	FromLat              float32 `json:"from_lat"`
-	FromLon              float32 `json:"from_lon"`
-	HowManyWheelsBlocked int     `json:"how_many_wheels_blocked"`
-	PriceRubles          *int    `json:"price_rubles"`
-	ToAddress            *string `json:"to_address,omitempty"`
-	ToLat                float32 `json:"to_lat"`
-	ToLon                float32 `json:"to_lon"`
-	TotalDistanceMeters  *int    `json:"total_distance_meters"`
+	CarLengthMeters      float32                   `json:"car_length_meters"`
+	CarName              string                    `json:"car_name"`
+	CarPhotoUrl          *string                   `json:"car_photo_url"`
+	CarType              CreateOrderRequestCarType `json:"car_type"`
+	CarWeightKg          int                       `json:"car_weight_kg"`
+	CustomerMessage      *string                   `json:"customer_message"`
+	FromAddress          *string                   `json:"from_address,omitempty"`
+	FromLat              float32                   `json:"from_lat"`
+	FromLon              float32                   `json:"from_lon"`
+	HowManyWheelsBlocked int                       `json:"how_many_wheels_blocked"`
+	PriceRubles          *int                      `json:"price_rubles"`
+	ToAddress            *string                   `json:"to_address,omitempty"`
+	ToLat                float32                   `json:"to_lat"`
+	ToLon                float32                   `json:"to_lon"`
+	TotalDistanceMeters  *int                      `json:"total_distance_meters"`
 }
+
+// CreateOrderRequestCarType defines model for CreateOrderRequest.CarType.
+type CreateOrderRequestCarType string
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
@@ -65,43 +135,61 @@ type ErrorResponse struct {
 
 // Order defines model for Order.
 type Order struct {
-	AcceptedAt           *time.Time  `json:"accepted_at"`
-	CancellationReason   *string     `json:"cancellation_reason"`
-	CancelledAt          *time.Time  `json:"cancelled_at"`
-	CompletedAt          *time.Time  `json:"completed_at"`
-	CreatedAt            time.Time   `json:"created_at"`
-	CustomerId           int64       `json:"customer_id"`
-	DriverId             *int64      `json:"driver_id"`
-	FromAddress          *string     `json:"from_address,omitempty"`
-	FromLat              float32     `json:"from_lat"`
-	FromLon              float32     `json:"from_lon"`
-	HowManyWheelsBlocked int         `json:"how_many_wheels_blocked"`
-	Id                   int64       `json:"id"`
-	PickedUpAt           *time.Time  `json:"picked_up_at"`
-	PriceRubles          *int        `json:"price_rubles"`
-	Status               OrderStatus `json:"status"`
-	ToAddress            *string     `json:"to_address,omitempty"`
-	ToLat                float32     `json:"to_lat"`
-	ToLon                float32     `json:"to_lon"`
-	TotalDistanceMeters  *int        `json:"total_distance_meters"`
-	UpdatedAt            time.Time   `json:"updated_at"`
+	AcceptedAt           *time.Time   `json:"accepted_at"`
+	CancellationReason   *string      `json:"cancellation_reason"`
+	CancelledAt          *time.Time   `json:"cancelled_at"`
+	CarLengthMeters      float32      `json:"car_length_meters"`
+	CarName              string       `json:"car_name"`
+	CarPhotoUrl          *string      `json:"car_photo_url"`
+	CarType              OrderCarType `json:"car_type"`
+	CarWeightKg          int          `json:"car_weight_kg"`
+	CompletedAt          *time.Time   `json:"completed_at"`
+	CreatedAt            time.Time    `json:"created_at"`
+	CustomerId           int64        `json:"customer_id"`
+	CustomerMessage      *string      `json:"customer_message"`
+	DriverId             *int64       `json:"driver_id"`
+	FromAddress          *string      `json:"from_address,omitempty"`
+	FromLat              float32      `json:"from_lat"`
+	FromLon              float32      `json:"from_lon"`
+	HowManyWheelsBlocked int          `json:"how_many_wheels_blocked"`
+	Id                   int64        `json:"id"`
+	PickedUpAt           *time.Time   `json:"picked_up_at"`
+	PriceRubles          *int         `json:"price_rubles"`
+	Status               OrderStatus  `json:"status"`
+	ToAddress            *string      `json:"to_address,omitempty"`
+	ToLat                float32      `json:"to_lat"`
+	ToLon                float32      `json:"to_lon"`
+	TotalDistanceMeters  *int         `json:"total_distance_meters"`
+	UpdatedAt            time.Time    `json:"updated_at"`
 }
+
+// OrderCarType defines model for Order.CarType.
+type OrderCarType string
 
 // OrderStatus defines model for Order.Status.
 type OrderStatus string
 
 // UpdateOrderRequest defines model for UpdateOrderRequest.
 type UpdateOrderRequest struct {
-	FromAddress          *string `json:"from_address,omitempty"`
-	FromLat              float32 `json:"from_lat"`
-	FromLon              float32 `json:"from_lon"`
-	HowManyWheelsBlocked int     `json:"how_many_wheels_blocked"`
-	PriceRubles          *int    `json:"price_rubles"`
-	ToAddress            *string `json:"to_address,omitempty"`
-	ToLat                float32 `json:"to_lat"`
-	ToLon                float32 `json:"to_lon"`
-	TotalDistanceMeters  *int    `json:"total_distance_meters"`
+	CarLengthMeters      float32                   `json:"car_length_meters"`
+	CarName              string                    `json:"car_name"`
+	CarPhotoUrl          *string                   `json:"car_photo_url"`
+	CarType              UpdateOrderRequestCarType `json:"car_type"`
+	CarWeightKg          int                       `json:"car_weight_kg"`
+	CustomerMessage      *string                   `json:"customer_message"`
+	FromAddress          *string                   `json:"from_address,omitempty"`
+	FromLat              float32                   `json:"from_lat"`
+	FromLon              float32                   `json:"from_lon"`
+	HowManyWheelsBlocked int                       `json:"how_many_wheels_blocked"`
+	PriceRubles          *int                      `json:"price_rubles"`
+	ToAddress            *string                   `json:"to_address,omitempty"`
+	ToLat                float32                   `json:"to_lat"`
+	ToLon                float32                   `json:"to_lon"`
+	TotalDistanceMeters  *int                      `json:"total_distance_meters"`
 }
+
+// UpdateOrderRequestCarType defines model for UpdateOrderRequest.CarType.
+type UpdateOrderRequestCarType string
 
 // UpdateOrderStatusRequest defines model for UpdateOrderStatusRequest.
 type UpdateOrderStatusRequest struct {
@@ -137,6 +225,9 @@ type ServerInterface interface {
 	// List orders for the authenticated user
 	// (GET /order/my)
 	ListMyOrders(c *gin.Context, params ListMyOrdersParams)
+	// Delete user's active (forming/pending) order
+	// (DELETE /order/my/active)
+	DeleteMyActiveOrder(c *gin.Context)
 	// Get order by ID
 	// (GET /order/{order_id})
 	GetOrder(c *gin.Context, orderId int64)
@@ -205,6 +296,21 @@ func (siw *ServerInterfaceWrapper) ListMyOrders(c *gin.Context) {
 	}
 
 	siw.Handler.ListMyOrders(c, params)
+}
+
+// DeleteMyActiveOrder operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMyActiveOrder(c *gin.Context) {
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteMyActiveOrder(c)
 }
 
 // GetOrder operation middleware
@@ -314,6 +420,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.POST(options.BaseURL+"/order", wrapper.CreateOrder)
 	router.GET(options.BaseURL+"/order/my", wrapper.ListMyOrders)
+	router.DELETE(options.BaseURL+"/order/my/active", wrapper.DeleteMyActiveOrder)
 	router.GET(options.BaseURL+"/order/:order_id", wrapper.GetOrder)
 	router.PUT(options.BaseURL+"/order/:order_id", wrapper.UpdateOrder)
 	router.PATCH(options.BaseURL+"/order/:order_id/status", wrapper.UpdateOrderStatus)
@@ -376,6 +483,38 @@ type ListMyOrders401Response struct {
 }
 
 func (response ListMyOrders401Response) VisitListMyOrdersResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type DeleteMyActiveOrderRequestObject struct {
+}
+
+type DeleteMyActiveOrderResponseObject interface {
+	VisitDeleteMyActiveOrderResponse(w http.ResponseWriter) error
+}
+
+type DeleteMyActiveOrder204Response struct {
+}
+
+func (response DeleteMyActiveOrder204Response) VisitDeleteMyActiveOrderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteMyActiveOrder400JSONResponse ErrorResponse
+
+func (response DeleteMyActiveOrder400JSONResponse) VisitDeleteMyActiveOrderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMyActiveOrder401Response struct {
+}
+
+func (response DeleteMyActiveOrder401Response) VisitDeleteMyActiveOrderResponse(w http.ResponseWriter) error {
 	w.WriteHeader(401)
 	return nil
 }
@@ -507,6 +646,9 @@ type StrictServerInterface interface {
 	// List orders for the authenticated user
 	// (GET /order/my)
 	ListMyOrders(ctx context.Context, request ListMyOrdersRequestObject) (ListMyOrdersResponseObject, error)
+	// Delete user's active (forming/pending) order
+	// (DELETE /order/my/active)
+	DeleteMyActiveOrder(ctx context.Context, request DeleteMyActiveOrderRequestObject) (DeleteMyActiveOrderResponseObject, error)
 	// Get order by ID
 	// (GET /order/{order_id})
 	GetOrder(ctx context.Context, request GetOrderRequestObject) (GetOrderResponseObject, error)
@@ -583,6 +725,31 @@ func (sh *strictHandler) ListMyOrders(ctx *gin.Context, params ListMyOrdersParam
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(ListMyOrdersResponseObject); ok {
 		if err := validResponse.VisitListMyOrdersResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMyActiveOrder operation middleware
+func (sh *strictHandler) DeleteMyActiveOrder(ctx *gin.Context) {
+	var request DeleteMyActiveOrderRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMyActiveOrder(ctx, request.(DeleteMyActiveOrderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMyActiveOrder")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteMyActiveOrderResponseObject); ok {
+		if err := validResponse.VisitDeleteMyActiveOrderResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

@@ -13,6 +13,66 @@ type OrderRepository struct {
 	queries sqlc.Queries
 }
 
+type orderRow struct {
+	ID                   int64
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	CustomerID           int64
+	DriverID             *int64
+	FromLon              float32
+	FromLat              float32
+	FromAddress          string
+	ToLon                float32
+	ToLat                float32
+	ToAddress            string
+	TotalDistanceMeters  *int32
+	HowManyWheelsBlocked int16
+	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              sqlc.CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
+	Status               sqlc.OrderStatus
+	AcceptedAt           *time.Time
+	PickedUpAt           *time.Time
+	CompletedAt          *time.Time
+	CancelledAt          *time.Time
+	CancellationReason   *string
+}
+
+func toOrderEntity(r orderRow) entity.Order {
+	return entity.Order{
+		ID:                   r.ID,
+		CreatedAt:            r.CreatedAt,
+		UpdatedAt:            r.UpdatedAt,
+		CustomerID:           r.CustomerID,
+		DriverID:             r.DriverID,
+		FromLat:              r.FromLat,
+		FromLon:              r.FromLon,
+		FromAddress:          r.FromAddress,
+		ToLat:                r.ToLat,
+		ToLon:                r.ToLon,
+		ToAddress:            r.ToAddress,
+		TotalDistanceMeters:  r.TotalDistanceMeters,
+		HowManyWheelsBlocked: r.HowManyWheelsBlocked,
+		PriceRubles:          r.PriceRubles,
+		CarWeightKg:          r.CarWeightKg,
+		CarLengthMeters:      r.CarLengthMeters,
+		CarType:              string(r.CarType),
+		CarName:              r.CarName,
+		CarPhotoUrl:          r.CarPhotoUrl,
+		CustomerMessage:      r.CustomerMessage,
+		Status:               entity.OrderStatus(r.Status),
+		AcceptedAt:           r.AcceptedAt,
+		PickedUpAt:           r.PickedUpAt,
+		CompletedAt:          r.CompletedAt,
+		CancelledAt:          r.CancelledAt,
+		CancellationReason:   r.CancellationReason,
+	}
+}
+
 func NewOrderRepository(queries *sqlc.Queries) repository.OrderRepository {
 	return &OrderRepository{queries: *queries}
 }
@@ -29,6 +89,12 @@ func (r *OrderRepository) CreateOrder(ctx context.Context, order *entity.Order) 
 		TotalDistanceMeters:  order.TotalDistanceMeters,
 		HowManyWheelsBlocked: order.HowManyWheelsBlocked,
 		PriceRubles:          order.PriceRubles,
+		CarWeightKg:          order.CarWeightKg,
+		CarLengthMeters:      order.CarLengthMeters,
+		CarType:              sqlc.CarType(order.CarType),
+		CarName:              order.CarName,
+		CarPhotoUrl:          order.CarPhotoUrl,
+		CustomerMessage:      order.CustomerMessage,
 	})
 	return id, err
 }
@@ -38,7 +104,7 @@ func (r *OrderRepository) GetOrderByID(ctx context.Context, id int64) (*entity.O
 	if err != nil {
 		return nil, err
 	}
-	return &entity.Order{
+	e := toOrderEntity(orderRow{
 		ID:                   row.ID,
 		CreatedAt:            row.CreatedAt,
 		UpdatedAt:            row.UpdatedAt,
@@ -53,13 +119,20 @@ func (r *OrderRepository) GetOrderByID(ctx context.Context, id int64) (*entity.O
 		TotalDistanceMeters:  row.TotalDistanceMeters,
 		HowManyWheelsBlocked: row.HowManyWheelsBlocked,
 		PriceRubles:          row.PriceRubles,
-		Status:               entity.OrderStatus(row.Status),
+		CarWeightKg:          row.CarWeightKg,
+		CarLengthMeters:      row.CarLengthMeters,
+		CarType:              row.CarType,
+		CarName:              row.CarName,
+		CarPhotoUrl:          row.CarPhotoUrl,
+		CustomerMessage:      row.CustomerMessage,
+		Status:               row.Status,
 		AcceptedAt:           row.AcceptedAt,
 		PickedUpAt:           row.PickedUpAt,
 		CompletedAt:          row.CompletedAt,
 		CancelledAt:          row.CancelledAt,
 		CancellationReason:   row.CancellationReason,
-	}, nil
+	})
+	return &e, nil
 }
 
 func (r *OrderRepository) ListOrdersByCustomer(ctx context.Context, customerID int64) ([]entity.Order, error) {
@@ -69,7 +142,7 @@ func (r *OrderRepository) ListOrdersByCustomer(ctx context.Context, customerID i
 	}
 	result := make([]entity.Order, 0, len(rows))
 	for _, row := range rows {
-		result = append(result, entity.Order{
+		result = append(result, toOrderEntity(orderRow{
 			ID:                   row.ID,
 			CreatedAt:            row.CreatedAt,
 			UpdatedAt:            row.UpdatedAt,
@@ -84,13 +157,19 @@ func (r *OrderRepository) ListOrdersByCustomer(ctx context.Context, customerID i
 			TotalDistanceMeters:  row.TotalDistanceMeters,
 			HowManyWheelsBlocked: row.HowManyWheelsBlocked,
 			PriceRubles:          row.PriceRubles,
-			Status:               entity.OrderStatus(row.Status),
+			CarWeightKg:          row.CarWeightKg,
+			CarLengthMeters:      row.CarLengthMeters,
+			CarType:              row.CarType,
+			CarName:              row.CarName,
+			CarPhotoUrl:          row.CarPhotoUrl,
+			CustomerMessage:      row.CustomerMessage,
+			Status:               row.Status,
 			AcceptedAt:           row.AcceptedAt,
 			PickedUpAt:           row.PickedUpAt,
 			CompletedAt:          row.CompletedAt,
 			CancelledAt:          row.CancelledAt,
 			CancellationReason:   row.CancellationReason,
-		})
+		}))
 	}
 	return result, nil
 }
@@ -102,7 +181,7 @@ func (r *OrderRepository) ListOrdersByDriver(ctx context.Context, driverID int64
 	}
 	result := make([]entity.Order, 0, len(rows))
 	for _, row := range rows {
-		result = append(result, entity.Order{
+		result = append(result, toOrderEntity(orderRow{
 			ID:                   row.ID,
 			CreatedAt:            row.CreatedAt,
 			UpdatedAt:            row.UpdatedAt,
@@ -117,13 +196,19 @@ func (r *OrderRepository) ListOrdersByDriver(ctx context.Context, driverID int64
 			TotalDistanceMeters:  row.TotalDistanceMeters,
 			HowManyWheelsBlocked: row.HowManyWheelsBlocked,
 			PriceRubles:          row.PriceRubles,
-			Status:               entity.OrderStatus(row.Status),
+			CarWeightKg:          row.CarWeightKg,
+			CarLengthMeters:      row.CarLengthMeters,
+			CarType:              row.CarType,
+			CarName:              row.CarName,
+			CarPhotoUrl:          row.CarPhotoUrl,
+			CustomerMessage:      row.CustomerMessage,
+			Status:               row.Status,
 			AcceptedAt:           row.AcceptedAt,
 			PickedUpAt:           row.PickedUpAt,
 			CompletedAt:          row.CompletedAt,
 			CancelledAt:          row.CancelledAt,
 			CancellationReason:   row.CancellationReason,
-		})
+		}))
 	}
 	return result, nil
 }
@@ -153,11 +238,17 @@ func (r *OrderRepository) UpdateOrder(ctx context.Context, order *entity.Order) 
 		TotalDistanceMeters:  order.TotalDistanceMeters,
 		HowManyWheelsBlocked: order.HowManyWheelsBlocked,
 		PriceRubles:          order.PriceRubles,
+		CarWeightKg:          order.CarWeightKg,
+		CarLengthMeters:      order.CarLengthMeters,
+		CarType:              sqlc.CarType(order.CarType),
+		CarName:              order.CarName,
+		CarPhotoUrl:          order.CarPhotoUrl,
+		CustomerMessage:      order.CustomerMessage,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &entity.Order{
+	e := toOrderEntity(orderRow{
 		ID:                   row.ID,
 		CreatedAt:            row.CreatedAt,
 		UpdatedAt:            row.UpdatedAt,
@@ -172,11 +263,22 @@ func (r *OrderRepository) UpdateOrder(ctx context.Context, order *entity.Order) 
 		TotalDistanceMeters:  row.TotalDistanceMeters,
 		HowManyWheelsBlocked: row.HowManyWheelsBlocked,
 		PriceRubles:          row.PriceRubles,
-		Status:               entity.OrderStatus(row.Status),
+		CarWeightKg:          row.CarWeightKg,
+		CarLengthMeters:      row.CarLengthMeters,
+		CarType:              row.CarType,
+		CarName:              row.CarName,
+		CarPhotoUrl:          row.CarPhotoUrl,
+		CustomerMessage:      row.CustomerMessage,
+		Status:               row.Status,
 		AcceptedAt:           row.AcceptedAt,
 		PickedUpAt:           row.PickedUpAt,
 		CompletedAt:          row.CompletedAt,
 		CancelledAt:          row.CancelledAt,
 		CancellationReason:   row.CancellationReason,
-	}, nil
+	})
+	return &e, nil
+}
+
+func (r *OrderRepository) DeleteActiveOrder(ctx context.Context, customerID int64) error {
+	return r.queries.DeleteActiveOrder(ctx, customerID)
 }

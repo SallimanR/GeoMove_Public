@@ -27,6 +27,7 @@ type OrderHandler struct {
 	createOrder       *command.CreateOrderHandler
 	updateOrder       *command.UpdateOrderHandler
 	updateOrderStatus *command.UpdateOrderStatusHandler
+	deleteActiveOrder *command.DeleteActiveOrderHandler
 	getOrderByID      *query.GetOrderByIDHandler
 	listOrdersByUser  *query.ListOrdersByUserHandler
 }
@@ -35,6 +36,7 @@ func NewOrderHandler(
 	createOrder *command.CreateOrderHandler,
 	updateOrder *command.UpdateOrderHandler,
 	updateOrderStatus *command.UpdateOrderStatusHandler,
+	deleteActiveOrder *command.DeleteActiveOrderHandler,
 	getOrderByID *query.GetOrderByIDHandler,
 	listOrdersByUser *query.ListOrdersByUserHandler,
 ) *OrderHandler {
@@ -42,6 +44,7 @@ func NewOrderHandler(
 		createOrder:       createOrder,
 		updateOrder:       updateOrder,
 		updateOrderStatus: updateOrderStatus,
+		deleteActiveOrder: deleteActiveOrder,
 		getOrderByID:      getOrderByID,
 		listOrdersByUser:  listOrdersByUser,
 	}
@@ -80,6 +83,12 @@ func (h *OrderHandler) CreateOrder(ctx context.Context, request CreateOrderReque
 		HowManyWheelsBlocked: int16(body.HowManyWheelsBlocked),
 		TotalDistanceMeters:  totalDistanceMeters,
 		PriceRubles:          priceRubles,
+		CarWeightKg:          int32(body.CarWeightKg),
+		CarLengthMeters:      body.CarLengthMeters,
+		CarType:              string(body.CarType),
+		CarName:              body.CarName,
+		CarPhotoUrl:          body.CarPhotoUrl,
+		CustomerMessage:      body.CustomerMessage,
 	}
 
 	order, err := h.createOrder.Handle(ctx, cmd)
@@ -160,6 +169,12 @@ func (h *OrderHandler) UpdateOrder(ctx context.Context, request UpdateOrderReque
 		HowManyWheelsBlocked: int16(body.HowManyWheelsBlocked),
 		TotalDistanceMeters:  totalDistanceMeters,
 		PriceRubles:          priceRubles,
+		CarWeightKg:          int32(body.CarWeightKg),
+		CarLengthMeters:      body.CarLengthMeters,
+		CarType:              string(body.CarType),
+		CarName:              body.CarName,
+		CarPhotoUrl:          body.CarPhotoUrl,
+		CustomerMessage:      body.CustomerMessage,
 	}
 
 	order, err := h.updateOrder.Handle(ctx, cmd)
@@ -193,6 +208,23 @@ func (h *OrderHandler) UpdateOrderStatus(ctx context.Context, request UpdateOrde
 	}
 
 	return UpdateOrderStatus200JSONResponse(toAPIOrder(order)), nil
+}
+
+func err400Delete(msg string) DeleteMyActiveOrder400JSONResponse {
+	return DeleteMyActiveOrder400JSONResponse{Error: &msg}
+}
+
+func (h *OrderHandler) DeleteMyActiveOrder(ctx context.Context, request DeleteMyActiveOrderRequestObject) (DeleteMyActiveOrderResponseObject, error) {
+	session := getSession(ctx)
+	if session == nil {
+		return DeleteMyActiveOrder401Response{}, nil
+	}
+
+	if err := h.deleteActiveOrder.Handle(ctx, session.UserID); err != nil {
+		return err400Delete(err.Error()), nil
+	}
+
+	return DeleteMyActiveOrder204Response{}, nil
 }
 
 func getSession(ctx context.Context) *auth.Session {
@@ -252,5 +284,11 @@ func toAPIOrder(o *entity.Order) Order {
 		CompletedAt:          o.CompletedAt,
 		CancelledAt:          o.CancelledAt,
 		CancellationReason:   o.CancellationReason,
+		CarWeightKg:          int(o.CarWeightKg),
+		CarLengthMeters:      o.CarLengthMeters,
+		CarType:              OrderCarType(o.CarType),
+		CarName:              o.CarName,
+		CarPhotoUrl:          o.CarPhotoUrl,
+		CustomerMessage:      o.CustomerMessage,
 	}
 }

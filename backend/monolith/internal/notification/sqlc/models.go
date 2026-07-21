@@ -12,6 +12,54 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CarType string
+
+const (
+	CarTypeValue0 CarType = "Легковой"
+	CarTypeValue1 CarType = "Внедорожник"
+	CarTypeValue2 CarType = "Микроавтобус"
+	CarTypeValue3 CarType = "Грузовик"
+	CarTypeValue4 CarType = "Мотоцикл"
+	CarTypeValue5 CarType = "Спецтехника"
+	CarTypeValue6 CarType = "Электромобиль"
+	CarTypeValue7 CarType = "Другое"
+)
+
+func (e *CarType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CarType(s)
+	case string:
+		*e = CarType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CarType: %T", src)
+	}
+	return nil
+}
+
+type NullCarType struct {
+	CarType CarType
+	Valid   bool // Valid is true if CarType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCarType) Scan(value interface{}) error {
+	if value == nil {
+		ns.CarType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CarType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCarType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CarType), nil
+}
+
 type OrderStatus string
 
 const (
@@ -91,6 +139,8 @@ type Order struct {
 	DriverID             *int64
 	FromLocation         interface{}
 	ToLocation           interface{}
+	FromAddress          string
+	ToAddress            string
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
@@ -100,8 +150,12 @@ type Order struct {
 	CompletedAt          *time.Time
 	CancelledAt          *time.Time
 	CancellationReason   *string
-	FromAddress          string
-	ToAddress            string
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 }
 
 type PushSubscription struct {

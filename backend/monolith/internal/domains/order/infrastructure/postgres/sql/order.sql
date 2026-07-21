@@ -8,6 +8,12 @@ INSERT INTO "order" (
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status
 ) VALUES (
 	$1,
@@ -18,6 +24,12 @@ INSERT INTO "order" (
 	$2,
 	$3,
 	$4,
+	$5,
+	$6,
+	@car_type::CAR_TYPE,
+	@car_name,
+	$7,
+	$8,
 	'forming'
 )
 RETURNING id;
@@ -38,6 +50,12 @@ SELECT
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -63,6 +81,12 @@ SELECT
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -89,6 +113,12 @@ SELECT
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -125,6 +155,12 @@ SET
 	total_distance_meters = $2,
 	how_many_wheels_blocked = $3,
 	price_rubles = $4,
+	car_weight_kg = $5,
+	car_length_meters = $6,
+	car_type = @car_type::CAR_TYPE,
+	car_name = @car_name,
+	car_photo_url = $7,
+	customer_message = $8,
 	updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING
@@ -142,9 +178,19 @@ RETURNING
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
 	completed_at,
 	cancelled_at,
 	cancellation_reason;
+
+-- name: DeleteActiveOrder :exec
+DELETE FROM "order"
+WHERE customer_id = $1 AND status IN ('forming', 'pending');

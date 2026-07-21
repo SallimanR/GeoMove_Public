@@ -21,6 +21,12 @@ type CreateOrderCommand struct {
 	HowManyWheelsBlocked int16
 	TotalDistanceMeters  *int32
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              string
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 }
 
 type CreateOrderHandler struct {
@@ -38,7 +44,7 @@ func (h *CreateOrderHandler) Handle(ctx context.Context, cmd CreateOrderCommand)
 		return nil, fmt.Errorf("ошибка получения заказов: %w", err)
 	}
 	for _, o := range existing {
-		if o.Status != entity.OrderStatusCompleted && o.Status != entity.OrderStatusCancelled {
+		if o.Status == entity.OrderStatusForming || o.Status == entity.OrderStatusPending {
 			return nil, fmt.Errorf("у вас уже есть активный заказ #%d", o.ID)
 		}
 	}
@@ -54,6 +60,12 @@ func (h *CreateOrderHandler) Handle(ctx context.Context, cmd CreateOrderCommand)
 		HowManyWheelsBlocked: cmd.HowManyWheelsBlocked,
 		TotalDistanceMeters:  cmd.TotalDistanceMeters,
 		PriceRubles:          cmd.PriceRubles,
+		CarWeightKg:          cmd.CarWeightKg,
+		CarLengthMeters:      cmd.CarLengthMeters,
+		CarType:              cmd.CarType,
+		CarName:              cmd.CarName,
+		CarPhotoUrl:          cmd.CarPhotoUrl,
+		CustomerMessage:      cmd.CustomerMessage,
 	})
 	if err != nil {
 		return nil, err

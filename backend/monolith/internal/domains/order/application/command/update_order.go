@@ -24,6 +24,12 @@ type UpdateOrderCommand struct {
 	HowManyWheelsBlocked int16
 	TotalDistanceMeters  *int32
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              string
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 }
 
 type UpdateOrderHandler struct {
@@ -53,6 +59,12 @@ func (h *UpdateOrderHandler) Handle(ctx context.Context, cmd UpdateOrderCommand)
 	order.HowManyWheelsBlocked = cmd.HowManyWheelsBlocked
 	order.TotalDistanceMeters = cmd.TotalDistanceMeters
 	order.PriceRubles = cmd.PriceRubles
+	order.CarWeightKg = cmd.CarWeightKg
+	order.CarLengthMeters = cmd.CarLengthMeters
+	order.CarType = cmd.CarType
+	order.CarName = cmd.CarName
+	order.CarPhotoUrl = cmd.CarPhotoUrl
+	order.CustomerMessage = cmd.CustomerMessage
 
 	return h.repo.UpdateOrder(ctx, order)
 }

@@ -20,16 +20,28 @@ INSERT INTO "order" (
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status
 ) VALUES (
 	$1,
-	ST_SetSRID(ST_MakePoint($5::REAL, $6::REAL), 4326),
-	ST_SetSRID(ST_MakePoint($7::REAL, $8::REAL), 4326),
-	$9,
-	$10,
+	ST_SetSRID(ST_MakePoint($9::REAL, $10::REAL), 4326),
+	ST_SetSRID(ST_MakePoint($11::REAL, $12::REAL), 4326),
+	$13,
+	$14,
 	$2,
 	$3,
 	$4,
+	$5,
+	$6,
+	$15::CAR_TYPE,
+	$16,
+	$7,
+	$8,
 	'forming'
 )
 RETURNING id
@@ -40,12 +52,18 @@ type CreateOrderParams struct {
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 	FromLon              float32
 	FromLat              float32
 	ToLon                float32
 	ToLat                float32
 	FromAddress          string
 	ToAddress            string
+	CarType              CarType
+	CarName              string
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error) {
@@ -54,16 +72,32 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (int64
 		arg.TotalDistanceMeters,
 		arg.HowManyWheelsBlocked,
 		arg.PriceRubles,
+		arg.CarWeightKg,
+		arg.CarLengthMeters,
+		arg.CarPhotoUrl,
+		arg.CustomerMessage,
 		arg.FromLon,
 		arg.FromLat,
 		arg.ToLon,
 		arg.ToLat,
 		arg.FromAddress,
 		arg.ToAddress,
+		arg.CarType,
+		arg.CarName,
 	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteActiveOrder = `-- name: DeleteActiveOrder :exec
+DELETE FROM "order"
+WHERE customer_id = $1 AND status IN ('forming', 'pending')
+`
+
+func (q *Queries) DeleteActiveOrder(ctx context.Context, customerID int64) error {
+	_, err := q.db.Exec(ctx, deleteActiveOrder, customerID)
+	return err
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
@@ -82,6 +116,12 @@ SELECT
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -107,6 +147,12 @@ type GetOrderByIDRow struct {
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 	Status               OrderStatus
 	AcceptedAt           *time.Time
 	PickedUpAt           *time.Time
@@ -133,6 +179,12 @@ func (q *Queries) GetOrderByID(ctx context.Context, id int64) (GetOrderByIDRow, 
 		&i.TotalDistanceMeters,
 		&i.HowManyWheelsBlocked,
 		&i.PriceRubles,
+		&i.CarWeightKg,
+		&i.CarLengthMeters,
+		&i.CarType,
+		&i.CarName,
+		&i.CarPhotoUrl,
+		&i.CustomerMessage,
 		&i.Status,
 		&i.AcceptedAt,
 		&i.PickedUpAt,
@@ -159,6 +211,12 @@ SELECT
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -185,6 +243,12 @@ type ListOrdersByCustomerRow struct {
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 	Status               OrderStatus
 	AcceptedAt           *time.Time
 	PickedUpAt           *time.Time
@@ -217,6 +281,12 @@ func (q *Queries) ListOrdersByCustomer(ctx context.Context, customerID int64) ([
 			&i.TotalDistanceMeters,
 			&i.HowManyWheelsBlocked,
 			&i.PriceRubles,
+			&i.CarWeightKg,
+			&i.CarLengthMeters,
+			&i.CarType,
+			&i.CarName,
+			&i.CarPhotoUrl,
+			&i.CustomerMessage,
 			&i.Status,
 			&i.AcceptedAt,
 			&i.PickedUpAt,
@@ -250,6 +320,12 @@ SELECT
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -276,6 +352,12 @@ type ListOrdersByDriverRow struct {
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 	Status               OrderStatus
 	AcceptedAt           *time.Time
 	PickedUpAt           *time.Time
@@ -308,6 +390,12 @@ func (q *Queries) ListOrdersByDriver(ctx context.Context, driverID *int64) ([]Li
 			&i.TotalDistanceMeters,
 			&i.HowManyWheelsBlocked,
 			&i.PriceRubles,
+			&i.CarWeightKg,
+			&i.CarLengthMeters,
+			&i.CarType,
+			&i.CarName,
+			&i.CarPhotoUrl,
+			&i.CustomerMessage,
 			&i.Status,
 			&i.AcceptedAt,
 			&i.PickedUpAt,
@@ -344,13 +432,19 @@ func (q *Queries) SetOrderDriver(ctx context.Context, arg SetOrderDriverParams) 
 const updateOrderDetails = `-- name: UpdateOrderDetails :one
 UPDATE "order"
 SET
-	from_location = ST_SetSRID(ST_MakePoint($5::REAL, $6::REAL), 4326),
-	to_location = ST_SetSRID(ST_MakePoint($7::REAL, $8::REAL), 4326),
-	from_address = $9,
-	to_address = $10,
+	from_location = ST_SetSRID(ST_MakePoint($9::REAL, $10::REAL), 4326),
+	to_location = ST_SetSRID(ST_MakePoint($11::REAL, $12::REAL), 4326),
+	from_address = $13,
+	to_address = $14,
 	total_distance_meters = $2,
 	how_many_wheels_blocked = $3,
 	price_rubles = $4,
+	car_weight_kg = $5,
+	car_length_meters = $6,
+	car_type = $15::CAR_TYPE,
+	car_name = $16,
+	car_photo_url = $7,
+	customer_message = $8,
 	updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING
@@ -368,6 +462,12 @@ RETURNING
 	total_distance_meters,
 	how_many_wheels_blocked,
 	price_rubles,
+	car_weight_kg,
+	car_length_meters,
+	car_type,
+	car_name,
+	car_photo_url,
+	customer_message,
 	status,
 	accepted_at,
 	picked_up_at,
@@ -381,12 +481,18 @@ type UpdateOrderDetailsParams struct {
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 	FromLon              float32
 	FromLat              float32
 	ToLon                float32
 	ToLat                float32
 	FromAddress          string
 	ToAddress            string
+	CarType              CarType
+	CarName              string
 }
 
 type UpdateOrderDetailsRow struct {
@@ -404,6 +510,12 @@ type UpdateOrderDetailsRow struct {
 	TotalDistanceMeters  *int32
 	HowManyWheelsBlocked int16
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 	Status               OrderStatus
 	AcceptedAt           *time.Time
 	PickedUpAt           *time.Time
@@ -418,12 +530,18 @@ func (q *Queries) UpdateOrderDetails(ctx context.Context, arg UpdateOrderDetails
 		arg.TotalDistanceMeters,
 		arg.HowManyWheelsBlocked,
 		arg.PriceRubles,
+		arg.CarWeightKg,
+		arg.CarLengthMeters,
+		arg.CarPhotoUrl,
+		arg.CustomerMessage,
 		arg.FromLon,
 		arg.FromLat,
 		arg.ToLon,
 		arg.ToLat,
 		arg.FromAddress,
 		arg.ToAddress,
+		arg.CarType,
+		arg.CarName,
 	)
 	var i UpdateOrderDetailsRow
 	err := row.Scan(
@@ -441,6 +559,12 @@ func (q *Queries) UpdateOrderDetails(ctx context.Context, arg UpdateOrderDetails
 		&i.TotalDistanceMeters,
 		&i.HowManyWheelsBlocked,
 		&i.PriceRubles,
+		&i.CarWeightKg,
+		&i.CarLengthMeters,
+		&i.CarType,
+		&i.CarName,
+		&i.CarPhotoUrl,
+		&i.CustomerMessage,
 		&i.Status,
 		&i.AcceptedAt,
 		&i.PickedUpAt,

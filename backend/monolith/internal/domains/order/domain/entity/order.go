@@ -37,6 +37,12 @@ type Order struct {
 	CompletedAt          *time.Time
 	CancelledAt          *time.Time
 	CancellationReason   *string
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              string
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 }
 
 type NewOrderOptions struct {
@@ -50,6 +56,12 @@ type NewOrderOptions struct {
 	HowManyWheelsBlocked int16
 	TotalDistanceMeters  *int32
 	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              string
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
 }
 
 func NewOrder(opts NewOrderOptions) (*Order, error) {
@@ -78,6 +90,12 @@ func NewOrder(opts NewOrderOptions) (*Order, error) {
 		HowManyWheelsBlocked: opts.HowManyWheelsBlocked,
 		TotalDistanceMeters:  opts.TotalDistanceMeters,
 		PriceRubles:          opts.PriceRubles,
+		CarWeightKg:          opts.CarWeightKg,
+		CarLengthMeters:      opts.CarLengthMeters,
+		CarType:              opts.CarType,
+		CarName:              opts.CarName,
+		CarPhotoUrl:          opts.CarPhotoUrl,
+		CustomerMessage:      opts.CustomerMessage,
 		Status:               OrderStatusForming,
 		CreatedAt:            now,
 		UpdatedAt:            now,
@@ -87,8 +105,8 @@ func NewOrder(opts NewOrderOptions) (*Order, error) {
 var validTransitions = map[OrderStatus][]OrderStatus{
 	OrderStatusForming:    {OrderStatusPending, OrderStatusCancelled},
 	OrderStatusPending:    {OrderStatusAccepted, OrderStatusCancelled},
-	OrderStatusAccepted:   {OrderStatusInProgress, OrderStatusCancelled},
-	OrderStatusInProgress: {OrderStatusCompleted, OrderStatusCancelled},
+	OrderStatusAccepted:   {OrderStatusInProgress},
+	OrderStatusInProgress: {OrderStatusCompleted},
 	OrderStatusCompleted:  {},
 	OrderStatusCancelled:  {},
 }

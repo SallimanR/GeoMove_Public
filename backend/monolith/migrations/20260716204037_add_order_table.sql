@@ -54,6 +54,6 @@ CREATE INDEX idx_order_from_location ON "order" USING GIST(from_location);
 CREATE INDEX idx_order_to_location ON "order" USING GIST(to_location);
 
 -- migrate:down
--- DROP TABLE "order" CASCADE;
--- DROP TYPE ORDER_STATUS;
--- DROP FUNCTION update_order_updated_at();
+DROP TABLE "order" CASCADE;
+DROP TYPE ORDER_STATUS;
+DROP FUNCTION update_order_updated_at();

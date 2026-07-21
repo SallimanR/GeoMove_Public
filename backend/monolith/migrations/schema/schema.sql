@@ -1,4 +1,4 @@
-\restrict MfGfHquWUA9btXPRF7U12Fhaz6dRov6NW8Q9cwKQ16eobFyKxKTc1chTD4vgCtQ
+\restrict gBL3GVDOcuyrDxQ3aHsAQLgHsMnxaS9B86I0rUpzEZG4PUfGb2viMYS4nyRt669
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -86,6 +86,22 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 
 
 --
+-- Name: car_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.car_type AS ENUM (
+    'Легковой',
+    'Внедорожник',
+    'Микроавтобус',
+    'Грузовик',
+    'Мотоцикл',
+    'Спецтехника',
+    'Электромобиль',
+    'Другое'
+);
+
+
+--
 -- Name: order_status; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -164,6 +180,8 @@ CREATE TABLE public."order" (
     driver_id bigint,
     from_location public.geography(Point,4326) NOT NULL,
     to_location public.geography(Point,4326) NOT NULL,
+    from_address text DEFAULT ''::text NOT NULL,
+    to_address text DEFAULT ''::text NOT NULL,
     total_distance_meters integer,
     how_many_wheels_blocked smallint NOT NULL,
     price_rubles integer,
@@ -173,8 +191,12 @@ CREATE TABLE public."order" (
     completed_at timestamp without time zone,
     cancelled_at timestamp without time zone,
     cancellation_reason text,
-    from_address text DEFAULT ''::text NOT NULL,
-    to_address text DEFAULT ''::text NOT NULL
+    car_weight_kg integer NOT NULL,
+    car_length_meters real NOT NULL,
+    car_type public.car_type NOT NULL,
+    car_name text NOT NULL,
+    car_photo_url text,
+    customer_message text
 );
 
 
@@ -670,7 +692,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict MfGfHquWUA9btXPRF7U12Fhaz6dRov6NW8Q9cwKQ16eobFyKxKTc1chTD4vgCtQ
+\unrestrict gBL3GVDOcuyrDxQ3aHsAQLgHsMnxaS9B86I0rUpzEZG4PUfGb2viMYS4nyRt669
 
 
 --
@@ -685,7 +707,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260705102447'),
     ('20260706094702'),
     ('20260710043141'),
-    ('20260713162812'),
-    ('20260713193617'),
     ('20260716153114'),
-    ('20260717231700');
+    ('20260716204037'),
+    ('20260718181840'),
+    ('20260718181855');
