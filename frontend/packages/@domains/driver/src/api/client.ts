@@ -11,4 +11,5 @@ export const driverClient = createClient<DriverPaths>({
 
 export const freelyAvailableDriverClient = createClient<FaPaths>({
 	baseUrl: `${API_BASE}`,
+	credentials: "include",
 });
