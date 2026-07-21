@@ -5,4 +5,5 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8100/api/v1"
 
 export const geolocationClient = createClient<paths>({
 	baseUrl: `${API_BASE}`,
+	credentials: "include",
 });
