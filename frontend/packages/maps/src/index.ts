@@ -32,3 +32,5 @@ export {
 } from './stores/routeStore'
 
 export { addPopupToMap, removeAllPopups, removePopupsByGroup } from './utils/mapPopup'
+
+export { useRouteDisplay } from './composables/useRouteDisplay'

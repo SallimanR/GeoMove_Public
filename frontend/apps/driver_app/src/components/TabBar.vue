@@ -32,7 +32,7 @@ provide(ACTIVE_TAB_KEY, activeTab);
       <TabPanel value="mapsTab" class="flex-1 p-0 m-0">
         <div class="relative flex flex-col h-full">
           <Maps :styleApi="styleApi" />
-          <MapsOverlayControls />
+          <MapsOverlayControls :hideRouteInput="true" />
         </div>
       </TabPanel>
       <TabPanel value="orderSearchTab" class="flex-1 p-0 m-0">
