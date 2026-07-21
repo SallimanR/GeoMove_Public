@@ -59,6 +59,12 @@ importers:
       nanostores:
         specifier: ^1.3.0
         version: 1.3.0
+      notifications:
+        specifier: workspace:*
+        version: link:../../packages/notifications
+      order:
+        specifier: workspace:*
+        version: link:../../packages/@domains/order
       primevue:
         specifier: ^4.5.5
         version: 4.5.5(vue@3.5.39(typescript@5.9.3))
