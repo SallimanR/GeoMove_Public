@@ -8,8 +8,6 @@ import TabPanels from "primevue/tabpanels";
 import TabPanel from "primevue/tabpanel";
 
 import MapsTabPanel from "./MapsTab/MapsTabPanel.vue";
-import DriverSearchTab from "./DriverSearchTab/DriverSearchTab.vue";
-import OrderTabPanel from "./OrderTab/OrderPanel.vue";
 import ProfileTabPanel from "./Profile.vue";
 import DriverCardPopup from "./DriverCardPopup.vue";
 import { ACTIVE_TAB_KEY } from "src/injectionKeys";
@@ -22,21 +20,11 @@ provide(ACTIVE_TAB_KEY, activeTab);
   <Tabs v-model:value="activeTab" class="h-full w-full flex flex-col">
     <TabList class="flex w-full">
       <Tab value="mapsTab" class="flex-1 text-center">Карты</Tab>
-      <Tab value="driverSearchTab" class="flex-1 text-center"
-        >Поиск эвакуатора</Tab
-      >
-      <Tab value="orderTab" class="flex-1 text-center">Заказ</Tab>
       <Tab value="profileTab" class="flex-1 text-center">Профиль</Tab>
     </TabList>
     <TabPanels class="flex-1 overflow-hidden flex flex-col">
       <TabPanel value="mapsTab" class="flex-1 p-0 m-0">
         <MapsTabPanel />
-      </TabPanel>
-      <TabPanel value="driverSearchTab" class="flex-1 p-0 m-0">
-        <DriverSearchTab />
-      </TabPanel>
-      <TabPanel value="orderTab" class="flex-1 p-0 m-0">
-        <OrderTabPanel />
       </TabPanel>
       <TabPanel value="profileTab" class="flex-1 p-0 m-0">
         <ProfileTabPanel />

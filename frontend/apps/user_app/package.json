@@ -18,6 +18,7 @@
     "@capacitor/ios": "^8.4.2",
     "@geomove/geo": "workspace:*",
     "@geomove/maps": "workspace:*",
+    "maplibre-gl": "^5.0.0",
     "@nanostores/vue": "github:nanostores/vue",
     "@primeuix/themes": "^2.0.3",
     "@primevue/forms": "^4.5.5",
