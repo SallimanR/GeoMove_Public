@@ -61,7 +61,7 @@ func main() {
 func loadEnv() {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
-		env = "dev"
+		env = "development"
 	}
 
 	_ = godotenv.Load(".env")
