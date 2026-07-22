@@ -31,17 +31,25 @@ for building web version:
 ```sh
 pnpm run build
 ```
-for Android version
+for Android version:
 ```sh
 pnpm run setup:android
 ```
 ```sh
 pnpm run build:android
 ```
-for IOS version
+
+1. open project in Android Studio with `<absolute-path-to-repository>/frontend/apps/<app-name>`
+2. sync project with "Gradle build" button
+3. run the app
+
+for IOS version:
 ```sh
 pnpm run setup:ios
 ```
 ```sh
 pnpm run build:ios
 ```
+
+1. Open project in XCode
+2. build and run
