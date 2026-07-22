@@ -394,12 +394,10 @@ function formatTariff(val: number | null): string {
     <h2 class="text-lg font-medium text-center">Свободный эвакуатор</h2>
 
     <div class="flex flex-col gap-2 bg-gray-50 rounded-lg p-3">
-      <div class="flex justify-between">
+      <div class="flex flex-col gap-1">
         <span class="text-gray-500">Период:</span>
-        <span
-          >{{ formatDateTime(freelyAvailable.from_date) }} —
-          {{ formatDateTime(freelyAvailable.to_date) }}</span
-        >
+        <span>С {{ formatDateTime(freelyAvailable.from_date) }}</span>
+        <span>До {{ formatDateTime(freelyAvailable.to_date) }}</span>
       </div>
       <div class="flex justify-between">
         <span class="text-gray-500">Тариф:</span>
