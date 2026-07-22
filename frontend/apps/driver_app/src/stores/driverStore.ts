@@ -53,7 +53,7 @@ export function useDriverProfile() {
 			body: { image: imageBase64 },
 		});
 		if (apiErr) throw new Error("Не удалось отправить картинку");
-		return resolveImageUrl(data?.image_url) ?? data?.image_url ?? "";
+		return resolveImageUrl(data?.image_url ?? null) ?? data?.image_url ?? "";
 	}
 
 	async function createProfile(
@@ -62,6 +62,9 @@ export function useDriverProfile() {
 		lon: number,
 		workStarts?: string,
 		workEnds?: string,
+		phone?: string,
+		maxCarWeightKg?: number,
+		maxCarLengthMeters?: number,
 	): Promise<void> {
 		const { error: apiErr } = await driverClient.POST("/driver/profile", {
 			body: {
@@ -70,10 +73,40 @@ export function useDriverProfile() {
 				lon,
 				work_starts: workStarts || undefined,
 				work_ends: workEnds || undefined,
+				phone: phone || undefined,
+				max_car_weight_kg: maxCarWeightKg ?? undefined,
+				max_car_length_meters: maxCarLengthMeters ?? undefined,
 			},
 		});
 		if (apiErr) {
 			throw new Error("Не удалось создать профиль водителя");
+		}
+	}
+
+	async function updateProfile(params: {
+		name: string;
+		lat: number;
+		lon: number;
+		phone?: string;
+		work_starts?: string;
+		work_ends?: string;
+		max_car_weight_kg?: number;
+		max_car_length_meters?: number;
+	}): Promise<void> {
+		const { error: apiErr } = await driverClient.PUT("/driver/profile", {
+			body: {
+				name: params.name,
+				lat: params.lat,
+				lon: params.lon,
+				phone: params.phone || undefined,
+				work_starts: params.work_starts || undefined,
+				work_ends: params.work_ends || undefined,
+				max_car_weight_kg: params.max_car_weight_kg ?? undefined,
+				max_car_length_meters: params.max_car_length_meters ?? undefined,
+			},
+		});
+		if (apiErr) {
+			throw new Error("Не удалось обновить профиль");
 		}
 	}
 
@@ -134,6 +167,7 @@ export function useDriverProfile() {
 		fetchProfile,
 		uploadProfileImage,
 		createProfile,
+		updateProfile,
 		freelyAvailable,
 		faExists,
 		faLoading,

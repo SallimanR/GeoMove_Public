@@ -2,6 +2,8 @@
 import { ref, nextTick, inject } from "vue";
 import Cropper from "cropperjs";
 import { TimePicker } from "ui";
+import InputMask from "primevue/inputmask";
+import InputNumber from "primevue/inputnumber";
 import { MapsLocationPicker } from "@geomove/maps";
 import type { GeoPoint } from "@geomove/maps";
 import { useDriverProfile } from "../../../stores/driverStore";
@@ -12,6 +14,9 @@ const emit = defineEmits<{ (e: "created"): void }>();
 const { createProfile, uploadProfileImage } = useDriverProfile();
 
 const name = ref("");
+const phone = ref("");
+const maxCarWeightKg = ref<number | null>(null);
+const maxCarLengthMeters = ref<number | null>(null);
 const workStarts = ref("");
 const workEnds = ref("");
 const loading = ref(false);
@@ -109,6 +114,9 @@ async function onSubmit() {
       pickedLocation.value.lon,
       workStarts.value || undefined,
       workEnds.value || undefined,
+      phone.value.trim() || undefined,
+      maxCarWeightKg.value ?? undefined,
+      maxCarLengthMeters.value ?? undefined,
     );
 
     if (profileImageBase64.value) {
@@ -186,6 +194,30 @@ function handleOnMapsPick() {
         placeholder="Введите имя"
         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
+
+      <InputMask
+        v-model="phone"
+        mask="+7 (999) 999-99-99"
+        placeholder="+7 (___) ___-__-__"
+        class="w-full"
+      />
+
+      <div class="flex gap-2">
+        <InputNumber
+          v-model="maxCarWeightKg"
+          placeholder="Макс. вес авто (кг)"
+          :min="1"
+          class="flex-1"
+        />
+        <InputNumber
+          v-model="maxCarLengthMeters"
+          placeholder="Макс. длина авто (м)"
+          :min="0.1"
+          :minFractionDigits="1"
+          :maxFractionDigits="2"
+          class="flex-1"
+        />
+      </div>
 
       <div class="flex gap-2">
         <TimePicker v-model="workStarts" placeholder="Начало работы" />
