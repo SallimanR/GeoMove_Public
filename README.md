@@ -1,6 +1,7 @@
 # GeoMove
 
 Открытая гео-платформа для поиска водителей эвакуаторов и грузоперевозок.
+
 [geomove.online](https://geomove.online) | [driver.geomove.online](https://driver.geomove.online)
 
 ## Создание и отслеживание заказа
@@ -54,6 +55,20 @@
 - https://geomove.online/tiles — PMTiles API (тайлы карт)
 - https://geomove.online/geocoding — геопоиск и обратная геокодировка
 - https://geomove.online/routing — построение маршрутов и map matching
+
+## Лицензия
+
+Проект использует двойное лицензирование:
+
+| Компонент | Лицензия |
+|---|---|
+| Backend, бизнес-логика, домены | [![AGPL-3.0](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE) |
+| [Карты (@geomove/maps)](./frontend/packages/maps) | [![MIT](https://img.shields.io/badge/License-MIT-green.svg)](./frontend/packages/maps/LICENSE) |
+| [Гео-утилиты (@geomove/geo)](./frontend/packages/geo) | [![MIT](https://img.shields.io/badge/License-MIT-green.svg)](./frontend/packages/geo/LICENSE) |
+
+Карты и гео-утилиты распространяются под MIT — используйте в любых проектах, включая коммерческие.
+
+---
 
 ### Для разработки и участия:
 - [DEVELOPING.md](./DEVELOPING.md)
