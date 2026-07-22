@@ -74,8 +74,8 @@ func NewOrder(opts NewOrderOptions) (*Order, error) {
 	if opts.ToLat < -90 || opts.ToLat > 90 || opts.ToLon < -180 || opts.ToLon > 180 {
 		return nil, fmt.Errorf("точка прибытия находится за пределами карты")
 	}
-	if opts.HowManyWheelsBlocked <= 0 {
-		return nil, fmt.Errorf("how_many_wheels_blocked must be positive")
+	if opts.HowManyWheelsBlocked < 0 || opts.HowManyWheelsBlocked > 4 {
+		return nil, fmt.Errorf("недопустимое количество заблокированных колёс")
 	}
 
 	now := time.Now()

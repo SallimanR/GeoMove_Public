@@ -60,7 +60,7 @@ function handleFileSelect(event: Event) {
     <InputNumber
       :modelValue="wheels"
       @update:modelValue="(v) => emit('update:wheels', v ?? 0)"
-      :min="1"
+      :min="0"
       :max="18"
     />
   </div>
