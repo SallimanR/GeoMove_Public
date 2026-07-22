@@ -6,28 +6,42 @@
 ## Создание и отслеживание заказа
 
 <p align="center">
-  <img src="./docs/screenshots/geomove_customer_order_create.png" alt="Пользователь создаёт заказ" width="500">
+  <img src="./docs/screenshots/geomove_customer_order_create.png" alt="Пользователь создаёт заказ" width="400">
   <br>
-  <em>Пользователь выбирает локацию отправки и прибытия, создаёт заказ</em>
+  Пользователь выбирает локацию отправки и прибытия, создаёт заказ
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/geomove_customer_order_driver_app.png" alt="Заказ виден в приложении водителя" width="500">
+  <img src="./docs/screenshots/geomove_customer_order_driver_app.png" alt="Заказ виден в приложении водителя" width="400">
   <br>
-  <em>Водитель видит поступивший заказ в своём приложении</em>
+  Водитель видит поступивший заказ в своём приложении
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/geomove_customer_order_accepter_driver_app.png" alt="Водитель принимает заказ" width="500">
+  <img src="./docs/screenshots/geomove_customer_order_accepter_driver_app.png" alt="Водитель принимает заказ" width="400">
   <br>
-  <em>Водитель принимает заказ — статус меняется в реальном времени</em>
+  Водитель принимает заказ — статус меняется в реальном времени
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/geomove_customer_order_accepterd.png" alt="Пользователь видит, что заказ принят" width="500">
+  <img src="./docs/screenshots/geomove_customer_order_accepterd.png" alt="Пользователь видит, что заказ принят" width="400">
   <br>
-  <em>Пользователь получает уведомление и видит обновлённый статус заказа</em>
+  Пользователь получает уведомление и видит обновлённый статус заказа
 </p>
+
+
+<p align="center">
+  <img src="./docs/screenshots/freely_available_driver_edit.png" alt="Пользователь создаёт заказ" width="400">
+  <br>
+  Водитель создаёт заявку на свободный эвакуатор
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/freely_available_driver.png" alt="Пользователь создаёт заказ" width="400">
+  <br>
+  Созданная заявка на свободный эвакуатор
+</p>
+
 
 ---
 
