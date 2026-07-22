@@ -7,7 +7,7 @@ merge, | squash, | template, | , | commit, | message,) ;;
 *) exit 0 ;;
 esac
 
-TAGS=("backend" "frontend" "api" "docker" "db" "docs" "scripts" "config" "env" "test" "bench" "dev" "git")
+TAGS=("backend" "frontend" "api" "docker" "db" "docs" "scripts" "config" "env" "test" "bench" "dev" "git" "ui")
 
 echo ""
 echo "Available tags:"
