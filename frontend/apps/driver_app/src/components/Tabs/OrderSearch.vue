@@ -7,6 +7,8 @@ import {
   setPickCallback,
 } from "@geomove/maps";
 import type { GeoPoint } from "@geomove/maps";
+import { TimePicker } from "ui";
+import DatePicker from "primevue/datepicker";
 import SingIn from "auth/components/SignIn.vue";
 import { $user, $isAuthenticated, $loading, checkAuth, setUser } from "auth";
 import { useDriverProfile } from "../../stores/driverStore";
@@ -35,8 +37,10 @@ const editMode = ref(false);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
-const fromDate = ref("");
-const toDate = ref("");
+const fromDate = ref<Date | null>(null);
+const fromTime = ref("");
+const toDate = ref<Date | null>(null);
+const toTime = ref("");
 const enRouteOrder = ref(false);
 const tariffPerKm = ref<number | undefined>(undefined);
 
@@ -73,8 +77,10 @@ function onLoginSuccess(u: { id: number; email: string | null }) {
 }
 
 function startCreate() {
-  fromDate.value = "";
-  toDate.value = "";
+  fromDate.value = null;
+  fromTime.value = "";
+  toDate.value = null;
+  toTime.value = "";
   enRouteOrder.value = false;
   tariffPerKm.value = undefined;
   fromLocation.value = null;
@@ -84,8 +90,10 @@ function startCreate() {
 
 function startEdit() {
   if (!freelyAvailable.value) return;
-  fromDate.value = toLocalDatetime(freelyAvailable.value.from_date);
-  toDate.value = toLocalDatetime(freelyAvailable.value.to_date);
+  fromDate.value = isoToDate(freelyAvailable.value.from_date);
+  fromTime.value = toTimeFromIso(freelyAvailable.value.from_date);
+  toDate.value = isoToDate(freelyAvailable.value.to_date);
+  toTime.value = toTimeFromIso(freelyAvailable.value.to_date);
   enRouteOrder.value = freelyAvailable.value.en_route_order ?? false;
   tariffPerKm.value = freelyAvailable.value.tariff_per_km ?? undefined;
   fromLocation.value = {
@@ -154,8 +162,8 @@ async function onSubmit() {
   loading.value = true;
   try {
     const body = {
-      from_date: new Date(fromDate.value).toISOString(),
-      to_date: new Date(toDate.value).toISOString(),
+      from_date: dateToIso(fromDate.value, fromTime.value),
+      to_date: dateToIso(toDate.value, toTime.value),
       from_location: {
         lat: fromLocation.value.lat,
         lon: fromLocation.value.lon,
@@ -195,14 +203,30 @@ async function onDelete() {
   }
 }
 
-function toLocalDatetime(isoString: string): string {
-  const d = new Date(isoString);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function isoToDate(iso: string): Date | null {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d;
 }
 
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleString("ru-RU");
+function dateToIso(d: Date | null, time: string): string {
+  if (!d) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const datePart = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return new Date(`${datePart}T${time || "00:00"}`).toISOString();
+}
+
+function toTimeFromIso(isoString: string): string {
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatDateTime(isoString: string): string {
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "—";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatTariff(val: number | null): string {
@@ -241,21 +265,19 @@ function formatTariff(val: number | null): string {
     <h2 class="text-lg font-medium text-center">Свободный эвакуатор</h2>
 
     <div class="flex flex-col gap-2">
-      <label class="text-gray-600">Дата начала</label>
-      <input
-        v-model="fromDate"
-        type="datetime-local"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
+      <label class="text-gray-600">Дата и время начала</label>
+      <div class="flex gap-2">
+        <DatePicker v-model="fromDate" showIcon fluid :showOnFocus="false" class="flex-1" />
+        <TimePicker v-model="fromTime" placeholder="Время" class="flex-1" />
+      </div>
     </div>
 
     <div class="flex flex-col gap-2">
-      <label class="text-gray-600">Дата окончания</label>
-      <input
-        v-model="toDate"
-        type="datetime-local"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
+      <label class="text-gray-600">Дата и время окончания</label>
+      <div class="flex gap-2">
+        <DatePicker v-model="toDate" showIcon fluid :showOnFocus="false" class="flex-1" />
+        <TimePicker v-model="toTime" placeholder="Время" class="flex-1" />
+      </div>
     </div>
 
     <div class="flex flex-col gap-2">
@@ -375,8 +397,8 @@ function formatTariff(val: number | null): string {
       <div class="flex justify-between">
         <span class="text-gray-500">Период:</span>
         <span
-          >{{ formatDate(freelyAvailable.from_date) }} —
-          {{ formatDate(freelyAvailable.to_date) }}</span
+          >{{ formatDateTime(freelyAvailable.from_date) }} —
+          {{ formatDateTime(freelyAvailable.to_date) }}</span
         >
       </div>
       <div class="flex justify-between">
