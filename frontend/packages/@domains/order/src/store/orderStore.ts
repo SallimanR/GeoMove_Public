@@ -61,7 +61,7 @@ onMount($createOrderForm, () => {
 	});
 });
 
-interface OrderRoute {
+export interface OrderRoute {
 	fromLat: number;
 	fromLon: number;
 	fromText: string;
