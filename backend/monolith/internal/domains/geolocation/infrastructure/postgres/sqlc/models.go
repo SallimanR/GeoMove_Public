@@ -118,6 +118,8 @@ type Driver struct {
 	LastSeen     pgtype.Timestamptz
 	Location     interface{}
 	Rating       *float32
+	Phone        *string
+	Address      *string
 }
 
 type MovingDriver struct {
@@ -175,6 +177,12 @@ type Session struct {
 	CreatedAt time.Time
 	ExpiresAt time.Time
 	Roles     []string
+}
+
+type TowDriver struct {
+	DriverID           int64
+	MaxCarWeightKg     int32
+	MaxCarLengthMeters float32
 }
 
 type TowDriverFreelyAvailable struct {

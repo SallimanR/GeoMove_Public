@@ -21,15 +21,24 @@ const (
 
 // Driver defines model for Driver.
 type Driver struct {
-	IsAvailable  *bool      `json:"is_available,omitempty"`
-	Lat          float32    `json:"lat"`
-	Lon          float32    `json:"lon"`
-	Name         string     `json:"name"`
-	ProfileImage *string    `json:"profile_image,omitempty"`
-	Rating       *float32   `json:"rating,omitempty"`
-	UserId       int64      `json:"user_id"`
-	WorkEnds     *time.Time `json:"work_ends,omitempty"`
-	WorkStarts   *time.Time `json:"work_starts,omitempty"`
+	// Address Reverse-geocoded address of the driver's location
+	Address     *string `json:"address,omitempty"`
+	IsAvailable *bool   `json:"is_available,omitempty"`
+	Lat         float32 `json:"lat"`
+	Lon         float32 `json:"lon"`
+
+	// MaxCarLengthMeters Maximum car length in meters for tow drivers
+	MaxCarLengthMeters *float32 `json:"max_car_length_meters,omitempty"`
+
+	// MaxCarWeightKg Maximum car weight in kg for tow drivers
+	MaxCarWeightKg *int       `json:"max_car_weight_kg,omitempty"`
+	Name           string     `json:"name"`
+	Phone          *string    `json:"phone,omitempty"`
+	ProfileImage   *string    `json:"profile_image,omitempty"`
+	Rating         *float32   `json:"rating,omitempty"`
+	UserId         int64      `json:"user_id"`
+	WorkEnds       *time.Time `json:"work_ends,omitempty"`
+	WorkStarts     *time.Time `json:"work_starts,omitempty"`
 }
 
 // DriverProfile defines model for DriverProfile.
@@ -40,8 +49,17 @@ type DriverProfile struct {
 	// Lon Longitude (WGS84)
 	Lon float32 `json:"lon"`
 
+	// MaxCarLengthMeters Maximum car length in meters for tow drivers
+	MaxCarLengthMeters *float32 `json:"max_car_length_meters,omitempty"`
+
+	// MaxCarWeightKg Maximum car weight in kg for tow drivers
+	MaxCarWeightKg *int `json:"max_car_weight_kg,omitempty"`
+
 	// Name Driver's display name
 	Name string `json:"name"`
+
+	// Phone Driver phone number
+	Phone *string `json:"phone,omitempty"`
 
 	// WorkEnds End of work time (HH:MM:SS)
 	WorkEnds *string `json:"work_ends,omitempty"`
@@ -69,6 +87,9 @@ type GetFilteredDriversJSONRequestBody GetFilteredDriversJSONBody
 // CreateDriverProfileJSONRequestBody defines body for CreateDriverProfile for application/json ContentType.
 type CreateDriverProfileJSONRequestBody = DriverProfile
 
+// UpdateDriverProfileJSONRequestBody defines body for UpdateDriverProfile for application/json ContentType.
+type UpdateDriverProfileJSONRequestBody = DriverProfile
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -80,6 +101,9 @@ type ServerInterface interface {
 	// Create driver profile
 	// (POST /driver/profile)
 	CreateDriverProfile(c *gin.Context)
+	// Update driver profile
+	// (PUT /driver/profile)
+	UpdateDriverProfile(c *gin.Context)
 
 	// (GET /driver/{user_id})
 	GetDriverByUserId(c *gin.Context, userId int64)
@@ -137,6 +161,21 @@ func (siw *ServerInterfaceWrapper) CreateDriverProfile(c *gin.Context) {
 	siw.Handler.CreateDriverProfile(c)
 }
 
+// UpdateDriverProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDriverProfile(c *gin.Context) {
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateDriverProfile(c)
+}
+
 // GetDriverByUserId operation middleware
 func (siw *ServerInterfaceWrapper) GetDriverByUserId(c *gin.Context) {
 
@@ -191,6 +230,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/driver/filter", wrapper.GetFilteredDrivers)
 	router.GET(options.BaseURL+"/driver/profile", wrapper.GetMyDriverProfile)
 	router.POST(options.BaseURL+"/driver/profile", wrapper.CreateDriverProfile)
+	router.PUT(options.BaseURL+"/driver/profile", wrapper.UpdateDriverProfile)
 	router.GET(options.BaseURL+"/driver/:user_id", wrapper.GetDriverByUserId)
 }
 
@@ -285,6 +325,46 @@ func (response CreateDriverProfile401Response) VisitCreateDriverProfileResponse(
 	return nil
 }
 
+type UpdateDriverProfileRequestObject struct {
+	Body *UpdateDriverProfileJSONRequestBody
+}
+
+type UpdateDriverProfileResponseObject interface {
+	VisitUpdateDriverProfileResponse(w http.ResponseWriter) error
+}
+
+type UpdateDriverProfile200Response struct {
+}
+
+func (response UpdateDriverProfile200Response) VisitUpdateDriverProfileResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type UpdateDriverProfile400Response struct {
+}
+
+func (response UpdateDriverProfile400Response) VisitUpdateDriverProfileResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UpdateDriverProfile401Response struct {
+}
+
+func (response UpdateDriverProfile401Response) VisitUpdateDriverProfileResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type UpdateDriverProfile404Response struct {
+}
+
+func (response UpdateDriverProfile404Response) VisitUpdateDriverProfileResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type GetDriverByUserIdRequestObject struct {
 	UserId int64 `json:"user_id"`
 }
@@ -321,6 +401,9 @@ type StrictServerInterface interface {
 	// Create driver profile
 	// (POST /driver/profile)
 	CreateDriverProfile(ctx context.Context, request CreateDriverProfileRequestObject) (CreateDriverProfileResponseObject, error)
+	// Update driver profile
+	// (PUT /driver/profile)
+	UpdateDriverProfile(ctx context.Context, request UpdateDriverProfileRequestObject) (UpdateDriverProfileResponseObject, error)
 
 	// (GET /driver/{user_id})
 	GetDriverByUserId(ctx context.Context, request GetDriverByUserIdRequestObject) (GetDriverByUserIdResponseObject, error)
@@ -422,6 +505,39 @@ func (sh *strictHandler) CreateDriverProfile(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(CreateDriverProfileResponseObject); ok {
 		if err := validResponse.VisitCreateDriverProfileResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateDriverProfile operation middleware
+func (sh *strictHandler) UpdateDriverProfile(ctx *gin.Context) {
+	var request UpdateDriverProfileRequestObject
+
+	var body UpdateDriverProfileJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateDriverProfile(ctx, request.(UpdateDriverProfileRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateDriverProfile")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UpdateDriverProfileResponseObject); ok {
+		if err := validResponse.VisitUpdateDriverProfileResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

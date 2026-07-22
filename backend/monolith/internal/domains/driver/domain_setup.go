@@ -21,6 +21,7 @@ type DriverDomain struct {
 type DriverCommands struct {
 	CreateDriver           *command.CreateDriverHandler
 	UpdateProfileImage     *command.UpdateProfileImageHandler
+	UpdateDriver           *command.UpdateDriverHandler
 	CreateFreelyAvailable  *command.CreateFreelyAvailableHandler
 	UpdateFreelyAvailable  *command.UpdateFreelyAvailableHandler
 	DeleteFreelyAvailable  *command.DeleteFreelyAvailableHandler
@@ -39,6 +40,7 @@ func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 
 	createHandler := command.NewCreateDriverHandler(driverRepo)
 	updateProfileImageHandler := command.NewUpdateProfileImageHandler(driverRepo)
+	updateDriverHandler := command.NewUpdateDriverHandler(driverRepo)
 	getDriverByUserIDHandler := query.NewGetDriverByUserIDHandler(driverRepo)
 	getFilteredDriversHandler := query.NewGetFilteredDriversHandler(driverRepo)
 
@@ -52,6 +54,7 @@ func NewDriverDomain(db *pgxpool.Pool) *DriverDomain {
 		Commands: DriverCommands{
 			CreateDriver:          createHandler,
 			UpdateProfileImage:    updateProfileImageHandler,
+			UpdateDriver:          updateDriverHandler,
 			CreateFreelyAvailable: createFAHandler,
 			UpdateFreelyAvailable: updateFAHandler,
 			DeleteFreelyAvailable: deleteFAHandler,
@@ -71,6 +74,7 @@ func (d *DriverDomain) RegisterHTTPRoutes(router *gin.RouterGroup, authMiddlewar
 
 	driverHandler := driverHTTP.NewDriverHandler(
 		d.Commands.CreateDriver,
+		d.Commands.UpdateDriver,
 		d.Queries.GetDriverByUserID,
 		d.Queries.GetFilteredDrivers,
 		d.Commands.UpdateProfileImage,

@@ -20,6 +20,7 @@ import (
 	"monolith/internal/domains/driver/application/command"
 	"monolith/internal/domains/driver/application/query"
 	"monolith/internal/domains/driver/domain/entity"
+	"monolith/pkg/geo"
 )
 
 type UserRoleManager interface {
@@ -28,6 +29,7 @@ type UserRoleManager interface {
 
 type DriverHandler struct {
 	createDriver              *command.CreateDriverHandler
+	updateDriver              *command.UpdateDriverHandler
 	getDriverByUserID         *query.GetDriverByUserIDHandler
 	getFilteredDrivers        *query.GetFilteredDriversHandler
 	updateProfileImage        *command.UpdateProfileImageHandler
@@ -42,6 +44,7 @@ type DriverHandler struct {
 
 func NewDriverHandler(
 	createDriver *command.CreateDriverHandler,
+	updateDriver *command.UpdateDriverHandler,
 	getDriverByUserID *query.GetDriverByUserIDHandler,
 	getFilteredDrivers *query.GetFilteredDriversHandler,
 	updateProfileImage *command.UpdateProfileImageHandler,
@@ -55,6 +58,7 @@ func NewDriverHandler(
 ) *DriverHandler {
 	return &DriverHandler{
 		createDriver:              createDriver,
+		updateDriver:              updateDriver,
 		getDriverByUserID:         getDriverByUserID,
 		getFilteredDrivers:        getFilteredDrivers,
 		updateProfileImage:        updateProfileImage,
@@ -80,8 +84,11 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 		Name       string  `json:"name"`
 		Lat        float32 `json:"lat"`
 		Lon        float32 `json:"lon"`
-		WorkStarts *string `json:"work_starts"`
-		WorkEnds   *string `json:"work_ends"`
+		Phone               *string  `json:"phone"`
+		WorkStarts          *string  `json:"work_starts"`
+		WorkEnds            *string  `json:"work_ends"`
+		MaxCarWeightKg      *int32   `json:"max_car_weight_kg"`
+		MaxCarLengthMeters  *float32 `json:"max_car_length_meters"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -106,15 +113,25 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 		workEnds = &t
 	}
 
-	cmd := command.CreateDriverCommand{
-		UserID:     session.UserID,
-		Name:       req.Name,
-		WorkStarts: workStarts,
-		WorkEnds:   workEnds,
-		Latitude:   req.Lat,
-		Longitude:  req.Lon,
+	address, err := geo.ReverseGeocode(ctx.Request.Context(), req.Lat, req.Lon)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to resolve address: " + err.Error()})
+		return
 	}
-	err := h.createDriver.Handle(ctx.Request.Context(), cmd)
+
+	cmd := command.CreateDriverCommand{
+		UserID:             session.UserID,
+		Name:               req.Name,
+		Phone:              req.Phone,
+		WorkStarts:         workStarts,
+		WorkEnds:           workEnds,
+		Latitude:           req.Lat,
+		Longitude:          req.Lon,
+		MaxCarWeightKg:     req.MaxCarWeightKg,
+		MaxCarLengthMeters: req.MaxCarLengthMeters,
+		Address:            address,
+	}
+	err = h.createDriver.Handle(ctx.Request.Context(), cmd)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -125,6 +142,46 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{})
+}
+
+func driverToResponse(driver *entity.Driver) Driver {
+	var maxCarWeightKg *int
+	if driver.MaxCarWeightKg > 0 {
+		v := int(driver.MaxCarWeightKg)
+		maxCarWeightKg = &v
+	}
+	var maxCarLengthMeters *float32
+	if driver.MaxCarLengthMeters > 0 {
+		maxCarLengthMeters = &driver.MaxCarLengthMeters
+	}
+	phone := &driver.Phone
+	if driver.Phone == "" {
+		phone = nil
+	}
+	rating := &driver.Rating
+	if driver.Rating == 0 {
+		rating = nil
+	}
+	address := &driver.Address
+	if driver.Address == "" {
+		address = nil
+	}
+	resp := Driver{
+		UserId:             driver.UserID,
+		Name:               driver.Name,
+		Lat:                driver.Location.Lat,
+		Lon:                driver.Location.Lon,
+		ProfileImage:       driver.ProfileImage,
+		IsAvailable:        &driver.IsAvailable,
+		WorkStarts:         driver.WorkStarts,
+		WorkEnds:           driver.WorkEnds,
+		Rating:             rating,
+		Phone:              phone,
+		MaxCarWeightKg:     maxCarWeightKg,
+		MaxCarLengthMeters: maxCarLengthMeters,
+		Address:            address,
+	}
+	return resp
 }
 
 func (h *DriverHandler) GetDriverByUserID(ctx *gin.Context) {
@@ -141,17 +198,7 @@ func (h *DriverHandler) GetDriverByUserID(ctx *gin.Context) {
 		return
 	}
 
-	resp := Driver{
-		UserId:       driver.UserID,
-		Name:         driver.Name,
-		Lat:          driver.Location.Lat,
-		Lon:          driver.Location.Lon,
-		ProfileImage: driver.ProfileImage,
-		IsAvailable:  &driver.IsAvailable,
-		WorkStarts:   driver.WorkStarts,
-		WorkEnds:     driver.WorkEnds,
-		Rating:       driver.Rating,
-	}
+	resp := driverToResponse(driver)
 	ctx.JSON(http.StatusOK, resp)
 }
 
@@ -169,18 +216,76 @@ func (h *DriverHandler) GetMyDriverProfile(ctx *gin.Context) {
 		return
 	}
 
-	resp := Driver{
-		UserId:       driver.UserID,
-		Name:         driver.Name,
-		Lat:          driver.Location.Lat,
-		Lon:          driver.Location.Lon,
-		ProfileImage: driver.ProfileImage,
-		IsAvailable:  &driver.IsAvailable,
-		WorkStarts:   driver.WorkStarts,
-		WorkEnds:     driver.WorkEnds,
-		Rating:       driver.Rating,
-	}
+	resp := driverToResponse(driver)
 	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
+	sessionVal, exists := ctx.Get("session")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	session := sessionVal.(*auth.Session)
+
+	var req struct {
+		Name       string  `json:"name"`
+		Lat        float32 `json:"lat"`
+		Lon        float32 `json:"lon"`
+		Phone               *string  `json:"phone"`
+		WorkStarts          *string  `json:"work_starts"`
+		WorkEnds            *string  `json:"work_ends"`
+		MaxCarWeightKg      *int32   `json:"max_car_weight_kg"`
+		MaxCarLengthMeters  *float32 `json:"max_car_length_meters"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var workStarts, workEnds *time.Time
+	if req.WorkStarts != nil {
+		t, err := time.Parse("15:04", *req.WorkStarts)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_starts format, expected HH:MM"})
+			return
+		}
+		workStarts = &t
+	}
+	if req.WorkEnds != nil {
+		t, err := time.Parse("15:04", *req.WorkEnds)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_ends format, expected HH:MM"})
+			return
+		}
+		workEnds = &t
+	}
+
+	address, err := geo.ReverseGeocode(ctx.Request.Context(), req.Lat, req.Lon)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to resolve address: " + err.Error()})
+		return
+	}
+
+	cmd := command.UpdateDriverCommand{
+		UserID:             session.UserID,
+		Name:               req.Name,
+		Phone:              req.Phone,
+		WorkStarts:         workStarts,
+		WorkEnds:           workEnds,
+		Latitude:           req.Lat,
+		Longitude:          req.Lon,
+		MaxCarWeightKg:     req.MaxCarWeightKg,
+		MaxCarLengthMeters: req.MaxCarLengthMeters,
+		Address:            address,
+	}
+	err = h.updateDriver.Handle(ctx.Request.Context(), cmd)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{})
 }
 
 func (h *DriverHandler) UploadProfileImage(ctx *gin.Context) {
@@ -283,17 +388,7 @@ func (h *DriverHandler) GetFilteredDrivers(ctx *gin.Context) {
 
 	driversRes := make([]Driver, 0, len(drivers))
 	for _, driver := range drivers {
-		driversRes = append(driversRes, Driver{
-			UserId:       driver.UserID,
-			Name:         driver.Name,
-			Lat:          driver.Location.Lat,
-			Lon:          driver.Location.Lon,
-			ProfileImage: driver.ProfileImage,
-			IsAvailable:  &driver.IsAvailable,
-			WorkStarts:   driver.WorkStarts,
-			WorkEnds:     driver.WorkEnds,
-			Rating:       driver.Rating,
-		})
+		driversRes = append(driversRes, driverToResponse(&driver))
 	}
 
 	resp := GetFilteredDrivers200JSONResponse{

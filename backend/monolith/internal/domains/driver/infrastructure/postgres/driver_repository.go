@@ -20,11 +20,23 @@ func NewDriverRepository(queries *sqlc.Queries) repository.DriverRepository {
 }
 
 func (r *DriverRepository) CreateDriver(ctx context.Context, driver *entity.Driver) error {
+	phone := &driver.Phone
+	if driver.Phone == "" {
+		phone = nil
+	}
+	rating := driver.Rating
+	address := &driver.Address
+	if driver.Address == "" {
+		address = nil
+	}
 	query := sqlc.CreateDriverParams{
 		UserID:     driver.UserID,
 		Name:       driver.Name,
+		Phone:      phone,
 		WorkStarts: driver.WorkStarts,
-		WorkEnds:   driver.WorkStarts,
+		WorkEnds:   driver.WorkEnds,
+		Rating:     &rating,
+		Address:    address,
 		Lat:        driver.Location.Lat,
 		Lon:        driver.Location.Lon,
 	}
@@ -46,16 +58,29 @@ func (r *DriverRepository) GetDriverByUserID(ctx context.Context, userID int64) 
 		return nil, err
 	}
 
+	phone := ""
+	if row.Phone != nil {
+		phone = *row.Phone
+	}
+	rating := float32(0)
+	if row.Rating != nil {
+		rating = *row.Rating
+	}
+
 	driver := &entity.Driver{
-		UserID:       row.UserID,
-		Name:         row.Name,
-		ProfileImage: row.ProfileImage,
-		WorkStarts:   row.WorkStarts,
-		WorkEnds:     row.WorkEnds,
-		IsAvailable:  row.IsAvailable,
-		LastSeen:     row.LastSeen.Time,
-		Rating:       row.Rating,
-		Location:     entity.Location{Lat: row.Lat, Lon: row.Lon},
+		UserID:             row.UserID,
+		Name:               row.Name,
+		Phone:              phone,
+		ProfileImage:       row.ProfileImage,
+		WorkStarts:         row.WorkStarts,
+		WorkEnds:           row.WorkEnds,
+		IsAvailable:        row.IsAvailable,
+		LastSeen:           row.LastSeen.Time,
+		Rating:             rating,
+		Location:           entity.Location{Lat: row.Lat, Lon: row.Lon},
+		MaxCarWeightKg:     row.MaxCarWeightKg,
+		MaxCarLengthMeters: row.MaxCarLengthMeters,
+		Address:            row.Address,
 	}
 
 	return driver, nil
@@ -82,18 +107,64 @@ func (r *DriverRepository) GetFilteredDrivers(ctx context.Context, filter reposi
 
 	resp := make([]entity.Driver, 0, len(rows))
 	for _, row := range rows {
+		phone := ""
+		if row.Phone != nil {
+			phone = *row.Phone
+		}
+		rating := float32(0)
+		if row.Rating != nil {
+			rating = *row.Rating
+		}
 		resp = append(resp, entity.Driver{
 			UserID:       row.UserID,
 			Name:         row.Name,
+			Phone:        phone,
 			ProfileImage: row.ProfileImage,
 			WorkStarts:   row.WorkStarts,
 			WorkEnds:     row.WorkEnds,
 			IsAvailable:  row.IsAvailable,
 			LastSeen:     row.LastSeen.Time,
-			Rating:       row.Rating,
+			Rating:       rating,
 			Location:     entity.Location{Lat: row.Lat, Lon: row.Lon},
 		})
 	}
 
 	return resp, nil
+}
+
+func (r *DriverRepository) CreateTowDriver(ctx context.Context, driverID int64, maxWeightKg int32, maxLengthM float32) error {
+	return r.queries.CreateTowDriver(ctx, sqlc.CreateTowDriverParams{
+		DriverID:           driverID,
+		MaxCarWeightKg:     maxWeightKg,
+		MaxCarLengthMeters: maxLengthM,
+	})
+}
+
+func (r *DriverRepository) UpdateDriver(ctx context.Context, driver *entity.Driver) error {
+	phone := &driver.Phone
+	if driver.Phone == "" {
+		phone = nil
+	}
+	address := &driver.Address
+	if driver.Address == "" {
+		address = nil
+	}
+	return r.queries.UpdateDriver(ctx, sqlc.UpdateDriverParams{
+		UserID:     driver.UserID,
+		Name:       driver.Name,
+		Phone:      phone,
+		WorkStarts: driver.WorkStarts,
+		WorkEnds:   driver.WorkEnds,
+		Column6:    driver.Location.Lon,
+		Column7:    driver.Location.Lat,
+		Address:    address,
+	})
+}
+
+func (r *DriverRepository) UpsertTowDriver(ctx context.Context, driverID int64, maxWeightKg int32, maxLengthM float32) error {
+	return r.queries.UpsertTowDriver(ctx, sqlc.UpsertTowDriverParams{
+		DriverID:           driverID,
+		MaxCarWeightKg:     maxWeightKg,
+		MaxCarLengthMeters: maxLengthM,
+	})
 }

@@ -44,6 +44,18 @@ components:
         work_ends:
           type: string
           format: date-time
+        phone:
+          type: string
+        address:
+          type: string
+          description: Reverse-geocoded address of the driver's location
+        max_car_weight_kg:
+          type: integer
+          description: Maximum car weight in kg for tow drivers
+        max_car_length_meters:
+          type: number
+          format: float
+          description: Maximum car length in meters for tow drivers
 
     DriverProfile:
       type: object
@@ -71,6 +83,16 @@ components:
           type: string
           format: time
           description: End of work time (HH:MM:SS)
+        phone:
+          type: string
+          description: Driver phone number
+        max_car_weight_kg:
+          type: integer
+          description: Maximum car weight in kg for tow drivers
+        max_car_length_meters:
+          type: number
+          format: float
+          description: Maximum car length in meters for tow drivers
 
 paths:
   /driver/profile:
@@ -104,6 +126,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Driver'
+        '401':
+          description: Unauthorized (no valid session)
+        '404':
+          description: Driver profile not found
+      security:
+        - CookieAuth: []
+    put:
+      summary: Update driver profile
+      description: Updates the driver profile for the authenticated user.
+      operationId: updateDriverProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverProfile'
+      responses:
+        '200':
+          description: Driver profile updated successfully
+        '400':
+          description: Invalid input
         '401':
           description: Unauthorized (no valid session)
         '404':

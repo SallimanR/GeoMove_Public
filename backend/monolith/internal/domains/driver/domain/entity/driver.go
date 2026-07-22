@@ -16,29 +16,39 @@ type Location struct {
 }
 
 type Driver struct {
-	UserID       int64
-	CreatedAt    time.Time
-	UpdatedAt    *time.Time
-	Name         string
-	ProfileImage *string
-	WorkStarts   *time.Time
-	WorkEnds     *time.Time
-	IsAvailable  bool
-	LastSeen     time.Time
-	Location     Location
-	Rating       *float32
+	UserID              int64
+	CreatedAt           time.Time
+	UpdatedAt           *time.Time
+	Name                string
+	ProfileImage        *string
+	WorkStarts          *time.Time
+	WorkEnds            *time.Time
+	IsAvailable         bool
+	LastSeen            time.Time
+	Location            Location
+	Rating             float32
+	Phone              string
+	MaxCarWeightKg     int32
+	MaxCarLengthMeters float32
+	Address            string
 }
 
 type DriverOptions struct {
 	UserID     int64
 	Name       string
+	Phone      *string
 	Location   Location
 	WorkStarts *time.Time
 	WorkEnds   *time.Time
+	Address    string
 }
 
 func NewDriver(options DriverOptions) (*Driver, error) {
 	now := time.Now()
+	phone := ""
+	if options.Phone != nil {
+		phone = *options.Phone
+	}
 	driver := &Driver{
 		UserID:      options.UserID,
 		Name:        options.Name,
@@ -48,7 +58,9 @@ func NewDriver(options DriverOptions) (*Driver, error) {
 		WorkStarts:  options.WorkStarts,
 		WorkEnds:    options.WorkEnds,
 		Location:    options.Location,
-		Rating:      nil,
+		Rating:      0,
+		Phone:       phone,
+		Address:     options.Address,
 	}
 
 	err := driver.Validate()

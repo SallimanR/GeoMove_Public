@@ -17,19 +17,23 @@ INSERT INTO
 	driver (
 		user_id,
 		name,
+		phone,
 		work_starts,
 		work_ends,
 		location,
-		rating
-	) VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($6::REAL, $7::REAL), 4326), $5)
+		rating,
+		address
+	) VALUES ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($8::REAL, $9::REAL), 4326), $6, $7)
 `
 
 type CreateDriverParams struct {
 	UserID     int64
 	Name       string
+	Phone      *string
 	WorkStarts *time.Time
 	WorkEnds   *time.Time
 	Rating     *float32
+	Address    *string
 	Lon        float32
 	Lat        float32
 }
@@ -38,42 +42,69 @@ func (q *Queries) CreateDriver(ctx context.Context, arg CreateDriverParams) erro
 	_, err := q.db.Exec(ctx, createDriver,
 		arg.UserID,
 		arg.Name,
+		arg.Phone,
 		arg.WorkStarts,
 		arg.WorkEnds,
 		arg.Rating,
+		arg.Address,
 		arg.Lon,
 		arg.Lat,
 	)
 	return err
 }
 
+const createTowDriver = `-- name: CreateTowDriver :exec
+INSERT INTO tow_driver (driver_id, max_car_weight_kg, max_car_length_meters)
+VALUES ($1, $2, $3)
+`
+
+type CreateTowDriverParams struct {
+	DriverID           int64
+	MaxCarWeightKg     int32
+	MaxCarLengthMeters float32
+}
+
+func (q *Queries) CreateTowDriver(ctx context.Context, arg CreateTowDriverParams) error {
+	_, err := q.db.Exec(ctx, createTowDriver, arg.DriverID, arg.MaxCarWeightKg, arg.MaxCarLengthMeters)
+	return err
+}
+
 const getDriverByUserID = `-- name: GetDriverByUserID :one
 SELECT
-	user_id,
-	name,
-	profile_image,
-	work_starts,
-	work_ends,
-	is_available,
-	last_seen,
-	rating,
-	ST_X(location::geometry)::REAL as lon,
-	ST_Y(location::geometry)::REAL as lat
-FROM driver
-WHERE user_id = $1
+	d.user_id,
+	d.name,
+	d.phone,
+	d.profile_image,
+	d.work_starts,
+	d.work_ends,
+	d.is_available,
+	d.last_seen,
+	d.rating,
+	ST_X(d.location::geometry)::REAL as lon,
+	ST_Y(d.location::geometry)::REAL as lat,
+	COALESCE(t.max_car_weight_kg, 0) as max_car_weight_kg,
+	COALESCE(t.max_car_length_meters, 0) as max_car_length_meters,
+	COALESCE(d.address, '') as address
+FROM driver d
+LEFT JOIN tow_driver t ON t.driver_id = d.user_id
+WHERE d.user_id = $1
 `
 
 type GetDriverByUserIDRow struct {
-	UserID       int64
-	Name         string
-	ProfileImage *string
-	WorkStarts   *time.Time
-	WorkEnds     *time.Time
-	IsAvailable  bool
-	LastSeen     pgtype.Timestamptz
-	Rating       *float32
-	Lon          float32
-	Lat          float32
+	UserID             int64
+	Name               string
+	Phone              *string
+	ProfileImage       *string
+	WorkStarts         *time.Time
+	WorkEnds           *time.Time
+	IsAvailable        bool
+	LastSeen           pgtype.Timestamptz
+	Rating             *float32
+	Lon                float32
+	Lat                float32
+	MaxCarWeightKg     int32
+	MaxCarLengthMeters float32
+	Address            string
 }
 
 func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDriverByUserIDRow, error) {
@@ -82,6 +113,7 @@ func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDrive
 	err := row.Scan(
 		&i.UserID,
 		&i.Name,
+		&i.Phone,
 		&i.ProfileImage,
 		&i.WorkStarts,
 		&i.WorkEnds,
@@ -90,6 +122,9 @@ func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDrive
 		&i.Rating,
 		&i.Lon,
 		&i.Lat,
+		&i.MaxCarWeightKg,
+		&i.MaxCarLengthMeters,
+		&i.Address,
 	)
 	return i, err
 }
@@ -98,6 +133,7 @@ const getFilteredDrivers = `-- name: GetFilteredDrivers :many
 SELECT 
     user_id,
 	name,
+	phone,
 	profile_image,
     work_starts, 
     work_ends, 
@@ -132,6 +168,7 @@ type GetFilteredDriversParams struct {
 type GetFilteredDriversRow struct {
 	UserID       int64
 	Name         string
+	Phone        *string
 	ProfileImage *string
 	WorkStarts   *time.Time
 	WorkEnds     *time.Time
@@ -161,6 +198,7 @@ func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDrivers
 		if err := rows.Scan(
 			&i.UserID,
 			&i.Name,
+			&i.Phone,
 			&i.ProfileImage,
 			&i.WorkStarts,
 			&i.WorkEnds,
@@ -181,6 +219,40 @@ func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDrivers
 	return items, nil
 }
 
+const updateDriver = `-- name: UpdateDriver :exec
+UPDATE driver
+SET name = $2, phone = $3, work_starts = $4, work_ends = $5,
+    location = ST_SetSRID(ST_MakePoint($6::REAL, $7::REAL), 4326),
+    address = $8,
+    updated_at = NOW()
+WHERE user_id = $1
+`
+
+type UpdateDriverParams struct {
+	UserID     int64
+	Name       string
+	Phone      *string
+	WorkStarts *time.Time
+	WorkEnds   *time.Time
+	Column6    float32
+	Column7    float32
+	Address    *string
+}
+
+func (q *Queries) UpdateDriver(ctx context.Context, arg UpdateDriverParams) error {
+	_, err := q.db.Exec(ctx, updateDriver,
+		arg.UserID,
+		arg.Name,
+		arg.Phone,
+		arg.WorkStarts,
+		arg.WorkEnds,
+		arg.Column6,
+		arg.Column7,
+		arg.Address,
+	)
+	return err
+}
+
 const updateDriverProfileImage = `-- name: UpdateDriverProfileImage :exec
 UPDATE driver
 SET profile_image = $2, updated_at = NOW()
@@ -194,5 +266,24 @@ type UpdateDriverProfileImageParams struct {
 
 func (q *Queries) UpdateDriverProfileImage(ctx context.Context, arg UpdateDriverProfileImageParams) error {
 	_, err := q.db.Exec(ctx, updateDriverProfileImage, arg.UserID, arg.ProfileImage)
+	return err
+}
+
+const upsertTowDriver = `-- name: UpsertTowDriver :exec
+INSERT INTO tow_driver (driver_id, max_car_weight_kg, max_car_length_meters)
+VALUES ($1, $2, $3)
+ON CONFLICT (driver_id) DO UPDATE SET
+	max_car_weight_kg = EXCLUDED.max_car_weight_kg,
+	max_car_length_meters = EXCLUDED.max_car_length_meters
+`
+
+type UpsertTowDriverParams struct {
+	DriverID           int64
+	MaxCarWeightKg     int32
+	MaxCarLengthMeters float32
+}
+
+func (q *Queries) UpsertTowDriver(ctx context.Context, arg UpsertTowDriverParams) error {
+	_, err := q.db.Exec(ctx, upsertTowDriver, arg.DriverID, arg.MaxCarWeightKg, arg.MaxCarLengthMeters)
 	return err
 }

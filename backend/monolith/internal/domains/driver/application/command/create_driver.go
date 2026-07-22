@@ -9,12 +9,16 @@ import (
 )
 
 type CreateDriverCommand struct {
-	UserID     int64
-	Name       string
-	WorkStarts *time.Time
-	WorkEnds   *time.Time
-	Latitude   float32
-	Longitude  float32
+	UserID              int64
+	Name                string
+	Phone               *string
+	WorkStarts          *time.Time
+	WorkEnds            *time.Time
+	Latitude            float32
+	Longitude           float32
+	MaxCarWeightKg      *int32
+	MaxCarLengthMeters  *float32
+	Address             string
 }
 
 type CreateDriverHandler struct {
@@ -31,14 +35,26 @@ func (h *CreateDriverHandler) Handle(ctx context.Context, cmd CreateDriverComman
 	driverOpts := entity.DriverOptions{
 		UserID:     cmd.UserID,
 		Name:       cmd.Name,
+		Phone:      cmd.Phone,
 		WorkStarts: cmd.WorkStarts,
 		WorkEnds:   cmd.WorkEnds,
 		Location:   entity.Location{Lat: cmd.Latitude, Lon: cmd.Longitude},
+		Address:    cmd.Address,
 	}
 	driver, err := entity.NewDriver(driverOpts)
 	if err != nil {
 		return err
 	}
 	err = h.repo.CreateDriver(ctx, driver)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if cmd.MaxCarWeightKg != nil && cmd.MaxCarLengthMeters != nil {
+		if err := h.repo.CreateTowDriver(ctx, driver.UserID, *cmd.MaxCarWeightKg, *cmd.MaxCarLengthMeters); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -1,4 +1,4 @@
-\restrict gBL3GVDOcuyrDxQ3aHsAQLgHsMnxaS9B86I0rUpzEZG4PUfGb2viMYS4nyRt669
+\restrict DPSpCwWv86C5L8ZZ4gL34JiJ00eudaX9hPqUAjei0fHPH7SDGhrqtTVQUI4UaRo
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -148,7 +148,9 @@ CREATE TABLE public.driver (
     is_available boolean DEFAULT true NOT NULL,
     last_seen timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     location public.geography(Point,4326) NOT NULL,
-    rating real
+    rating real,
+    phone text,
+    address text
 );
 
 
@@ -268,6 +270,17 @@ CREATE TABLE public.session (
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     expires_at timestamp without time zone NOT NULL,
     roles text[] DEFAULT '{}'::text[] NOT NULL
+);
+
+
+--
+-- Name: tow_driver; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tow_driver (
+    driver_id bigint NOT NULL,
+    max_car_weight_kg integer NOT NULL,
+    max_car_length_meters real NOT NULL
 );
 
 
@@ -434,6 +447,14 @@ ALTER TABLE ONLY public.tow_driver_freely_available
 
 ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list
     ADD CONSTRAINT tow_driver_freely_available_to_location_list_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tow_driver tow_driver_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver
+    ADD CONSTRAINT tow_driver_pkey PRIMARY KEY (driver_id);
 
 
 --
@@ -665,6 +686,14 @@ ALTER TABLE ONLY public.session
 
 
 --
+-- Name: tow_driver tow_driver_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tow_driver
+    ADD CONSTRAINT tow_driver_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
+
+
+--
 -- Name: tow_driver_freely_available_to_location_list tow_driver_freely_available_to_location_list_tow_driver_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -692,7 +721,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gBL3GVDOcuyrDxQ3aHsAQLgHsMnxaS9B86I0rUpzEZG4PUfGb2viMYS4nyRt669
+\unrestrict DPSpCwWv86C5L8ZZ4gL34JiJ00eudaX9hPqUAjei0fHPH7SDGhrqtTVQUI4UaRo
 
 
 --
@@ -710,4 +739,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260716153114'),
     ('20260716204037'),
     ('20260718181840'),
-    ('20260718181855');
+    ('20260718181855'),
+    ('20260721201716'),
+    ('20260721213614'),
+    ('20260721225600');

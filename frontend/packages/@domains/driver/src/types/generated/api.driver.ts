@@ -16,7 +16,11 @@ export interface paths {
          * @description Returns the driver profile for the authenticated user.
          */
         get: operations["getMyDriverProfile"];
-        put?: never;
+        /**
+         * Update driver profile
+         * @description Updates the driver profile for the authenticated user.
+         */
+        put: operations["updateDriverProfile"];
         /**
          * Create driver profile
          * @description Creates a driver profile for the authenticated user. Each user can have at most one driver profile.
@@ -80,6 +84,16 @@ export interface components {
             work_starts?: string;
             /** Format: date-time */
             work_ends?: string;
+            phone?: string;
+            /** @description Reverse-geocoded address of the driver's location */
+            address?: string;
+            /** @description Maximum car weight in kg for tow drivers */
+            max_car_weight_kg?: number;
+            /**
+             * Format: float
+             * @description Maximum car length in meters for tow drivers
+             */
+            max_car_length_meters?: number;
         };
         DriverProfile: {
             /** @description Driver's display name */
@@ -104,6 +118,15 @@ export interface components {
              * @description End of work time (HH:MM:SS)
              */
             work_ends?: string;
+            /** @description Driver phone number */
+            phone?: string;
+            /** @description Maximum car weight in kg for tow drivers */
+            max_car_weight_kg?: number;
+            /**
+             * Format: float
+             * @description Maximum car length in meters for tow drivers
+             */
+            max_car_length_meters?: number;
         };
     };
     responses: never;
@@ -131,6 +154,49 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Driver"];
                 };
+            };
+            /** @description Unauthorized (no valid session) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Driver profile not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateDriverProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DriverProfile"];
+            };
+        };
+        responses: {
+            /** @description Driver profile updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Unauthorized (no valid session) */
             401: {
