@@ -608,11 +608,18 @@ func (h *DriverHandler) GetFreelyAvailableDrivers(ctx *gin.Context) {
 
 	items := make([]FreelyAvailableDriverResponse, 0, len(drivers))
 	for _, d := range drivers {
+		toLocs := make([]Location, 0, len(d.ToLocations))
+		for _, l := range d.ToLocations {
+			addr := l.Address
+			toLocs = append(toLocs, Location{Lat: l.Lat, Lon: l.Lon, Address: &addr})
+		}
+
 		items = append(items, FreelyAvailableDriverResponse{
 			UserId:       d.UserID,
 			FromDate:     d.FromDate,
 			ToDate:       d.ToDate,
 			FromLocation: Location{Lat: d.FromLocation.Lat, Lon: d.FromLocation.Lon, Address: &d.FromLocation.Address},
+			ToLocations:  &toLocs,
 			EnRouteOrder: d.EnRouteOrder,
 			TariffPerKm:  d.TariffPerKm,
 			Name:         d.Name,

@@ -7,11 +7,11 @@ import (
 )
 
 type FreelyAvailableFilter struct {
-	UserLat     float32
-	UserLon     float32
+	UserLat      float32
+	UserLon      float32
 	EnRouteOrder *bool
-	MinTariff   *float32
-	MaxTariff   *float32
+	MinTariff    *float32
+	MaxTariff    *float32
 }
 
 type FreelyAvailableRepository interface {

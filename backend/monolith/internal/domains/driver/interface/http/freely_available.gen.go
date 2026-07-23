@@ -42,9 +42,10 @@ type FreelyAvailableDriverResponse struct {
 	Rating       *float32 `json:"rating,omitempty"`
 
 	// TariffPerKm Price per 1 km
-	TariffPerKm *float32  `json:"tariff_per_km,omitempty"`
-	ToDate      time.Time `json:"to_date"`
-	UserId      int64     `json:"user_id"`
+	TariffPerKm *float32    `json:"tariff_per_km,omitempty"`
+	ToDate      time.Time   `json:"to_date"`
+	ToLocations *[]Location `json:"to_locations,omitempty"`
+	UserId      int64       `json:"user_id"`
 }
 
 // FreelyAvailableResponse defines model for FreelyAvailableResponse.

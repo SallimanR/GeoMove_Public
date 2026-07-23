@@ -130,6 +130,22 @@ func (r *FreelyAvailableRepository) GetFreelyAvailableDrivers(ctx context.Contex
 		return nil, err
 	}
 
+	userIDs := make([]int64, 0, len(rows))
+	for _, row := range rows {
+		userIDs = append(userIDs, row.UserID)
+	}
+
+	locMap := make(map[int64][]entity.LocationWithAddress)
+	if len(userIDs) > 0 {
+		locRows, err := r.queries.GetFreelyAvailableLocationsByDrivers(ctx, userIDs)
+		if err != nil {
+			return nil, err
+		}
+		for _, l := range locRows {
+			locMap[l.TowDriver] = append(locMap[l.TowDriver], entity.LocationWithAddress{Lat: l.Lat, Lon: l.Lon, Address: l.Address})
+		}
+	}
+
 	result := make([]entity.FreelyAvailableDriver, 0, len(rows))
 	for _, row := range rows {
 		result = append(result, entity.FreelyAvailableDriver{
@@ -137,6 +153,7 @@ func (r *FreelyAvailableRepository) GetFreelyAvailableDrivers(ctx context.Contex
 			FromDate:     row.FromDate,
 			ToDate:       row.ToDate,
 			FromLocation: entity.LocationWithAddress{Lat: row.FromLat, Lon: row.FromLon, Address: row.FromAddress},
+			ToLocations:  locMap[row.UserID],
 			EnRouteOrder: row.EnRouteOrder,
 			TariffPerKm:  row.TariffPerKm,
 			Name:         row.Name,

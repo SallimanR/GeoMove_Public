@@ -23,6 +23,7 @@ type FreelyAvailableDriver struct {
 	FromDate     time.Time
 	ToDate       time.Time
 	FromLocation LocationWithAddress
+	ToLocations  []LocationWithAddress
 	EnRouteOrder *bool
 	TariffPerKm  *float32
 	Name         string

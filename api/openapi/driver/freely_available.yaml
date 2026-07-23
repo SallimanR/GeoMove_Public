@@ -106,6 +106,10 @@ components:
           format: date-time
         from_location:
           $ref: '#/components/schemas/Location'
+        to_locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
         en_route_order:
           type: boolean
           description: Accept en-route orders along the way

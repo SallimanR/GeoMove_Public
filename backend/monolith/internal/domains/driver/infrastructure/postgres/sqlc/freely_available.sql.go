@@ -156,7 +156,7 @@ SELECT
 	d.profile_image,
 	st_distance(
 		tfa.from_location,
-		st_setsrid(st_makepoint($1::REAL, $2::REAL), 4326)::geometry
+		st_setsrid(st_makepoint($1::REAL, $2::REAL), 4326)::geography
 	)::real AS distance
 FROM tow_driver_freely_available tfa
 JOIN driver d ON tfa.user_id = d.user_id
@@ -261,6 +261,49 @@ func (q *Queries) GetFreelyAvailableLocations(ctx context.Context, towDriver int
 		var i GetFreelyAvailableLocationsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.TowDriver,
+			&i.Lon,
+			&i.Lat,
+			&i.Address,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFreelyAvailableLocationsByDrivers = `-- name: GetFreelyAvailableLocationsByDrivers :many
+SELECT
+	tow_driver,
+	ST_X(location::geometry)::REAL as lon,
+	ST_Y(location::geometry)::REAL as lat,
+	address
+FROM tow_driver_freely_available_to_location_list
+WHERE tow_driver = ANY($1::BIGINT[])
+ORDER BY id
+`
+
+type GetFreelyAvailableLocationsByDriversRow struct {
+	TowDriver int64
+	Lon       float32
+	Lat       float32
+	Address   string
+}
+
+func (q *Queries) GetFreelyAvailableLocationsByDrivers(ctx context.Context, userIds []int64) ([]GetFreelyAvailableLocationsByDriversRow, error) {
+	rows, err := q.db.Query(ctx, getFreelyAvailableLocationsByDrivers, userIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFreelyAvailableLocationsByDriversRow
+	for rows.Next() {
+		var i GetFreelyAvailableLocationsByDriversRow
+		if err := rows.Scan(
 			&i.TowDriver,
 			&i.Lon,
 			&i.Lat,

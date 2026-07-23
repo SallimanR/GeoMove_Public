@@ -138,6 +138,7 @@ export interface components {
             /** Format: date-time */
             to_date: string;
             from_location: components["schemas"]["Location"];
+            to_locations?: components["schemas"]["Location"][];
             /** @description Accept en-route orders along the way */
             en_route_order?: boolean;
             /**

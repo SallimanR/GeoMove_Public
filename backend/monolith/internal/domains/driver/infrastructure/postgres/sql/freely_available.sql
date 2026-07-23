@@ -67,6 +67,16 @@ FROM tow_driver_freely_available_to_location_list
 WHERE tow_driver = $1
 ORDER BY id;
 
+-- name: GetFreelyAvailableLocationsByDrivers :many
+SELECT
+	tow_driver,
+	ST_X(location::geometry)::REAL as lon,
+	ST_Y(location::geometry)::REAL as lat,
+	address
+FROM tow_driver_freely_available_to_location_list
+WHERE tow_driver = ANY(sqlc.slice('user_ids')::BIGINT[])
+ORDER BY id;
+
 -- name: GetFreelyAvailableDrivers :many
 SELECT
 	tfa.user_id,
@@ -82,7 +92,7 @@ SELECT
 	d.profile_image,
 	st_distance(
 		tfa.from_location,
-		st_setsrid(st_makepoint(@user_lon::REAL, @user_lat::REAL), 4326)::geometry
+		st_setsrid(st_makepoint(@user_lon::REAL, @user_lat::REAL), 4326)::geography
 	)::real AS distance
 FROM tow_driver_freely_available tfa
 JOIN driver d ON tfa.user_id = d.user_id
