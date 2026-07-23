@@ -1,14 +1,14 @@
 import { ref, shallowRef } from "vue";
-import { driverClient, freelyAvailableDriverClient } from "driver/api/client.ts";
+import { driverClient, freelyAvailableDriverClient } from "driver";
 import { authClient } from "auth/api/client.ts";
-import type { Driver } from "driver/types/driver.ts";
+import type { Driver } from "driver";
 import type {
 	FreelyAvailableResponse,
 	CreateFreelyAvailableRequest,
 	UpdateFreelyAvailableRequest,
 } from "driver/types/freelyAvailable.ts";
 
-const STATIC_FILES_URL_BASE = import.meta.env.VITE_STATIC_FILES_URL_BASE || "https://localhost:8050";
+const STATIC_FILES_URL_BASE = import.meta.env.VITE_STATIC_FILES_URL_BASE;
 
 export function resolveImageUrl(path: string | null): string | null {
 	if (!path) return null;
@@ -53,7 +53,7 @@ export function useDriverProfile() {
 			body: { image: imageBase64 },
 		});
 		if (apiErr) throw new Error("Не удалось отправить картинку");
-		return resolveImageUrl(data?.image_url ?? null) ?? data?.image_url ?? "";
+		return data?.image_url ?? "";
 	}
 
 	async function createProfile(
@@ -65,6 +65,8 @@ export function useDriverProfile() {
 		phone?: string,
 		maxCarWeightKg?: number,
 		maxCarLengthMeters?: number,
+		carPhotoMain?: string,
+		carPhotos?: string[],
 	): Promise<void> {
 		const { error: apiErr } = await driverClient.POST("/driver/profile", {
 			body: {
@@ -76,6 +78,8 @@ export function useDriverProfile() {
 				phone: phone || undefined,
 				max_car_weight_kg: maxCarWeightKg ?? undefined,
 				max_car_length_meters: maxCarLengthMeters ?? undefined,
+				car_photo_main: carPhotoMain || undefined,
+				car_photos: carPhotos?.length ? carPhotos : undefined,
 			},
 		});
 		if (apiErr) {
@@ -92,6 +96,8 @@ export function useDriverProfile() {
 		work_ends?: string;
 		max_car_weight_kg?: number;
 		max_car_length_meters?: number;
+		car_photo_main?: string;
+		car_photos?: string[];
 	}): Promise<void> {
 		const { error: apiErr } = await driverClient.PUT("/driver/profile", {
 			body: {
@@ -103,11 +109,21 @@ export function useDriverProfile() {
 				work_ends: params.work_ends || undefined,
 				max_car_weight_kg: params.max_car_weight_kg ?? undefined,
 				max_car_length_meters: params.max_car_length_meters ?? undefined,
+				car_photo_main: params.car_photo_main || undefined,
+				car_photos: params.car_photos?.length ? params.car_photos : undefined,
 			},
 		});
 		if (apiErr) {
 			throw new Error("Не удалось обновить профиль");
 		}
+	}
+
+	async function uploadCarPhoto(imageBase64: string): Promise<string> {
+		const { data, error: apiErr } = await driverClient.POST("/driver/profile/car-photo", {
+			body: { image: imageBase64 },
+		});
+		if (apiErr) throw new Error("Не удалось отправить фото авто");
+		return data?.image_url ?? "";
 	}
 
 	async function createFreelyAvailable(req: CreateFreelyAvailableRequest): Promise<void> {
@@ -168,6 +184,7 @@ export function useDriverProfile() {
 		uploadProfileImage,
 		createProfile,
 		updateProfile,
+		uploadCarPhoto,
 		freelyAvailable,
 		faExists,
 		faLoading,
