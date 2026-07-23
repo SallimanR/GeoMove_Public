@@ -8,16 +8,18 @@ import (
 )
 
 type UpdateDriverCommand struct {
-	UserID              int64
-	Name                string
-	Phone               *string
-	WorkStarts          *time.Time
-	WorkEnds            *time.Time
-	Latitude            float32
-	Longitude           float32
-	MaxCarWeightKg      *int32
-	MaxCarLengthMeters  *float32
-	Address             string
+	UserID             int64
+	Name               string
+	Phone              *string
+	WorkStarts         *time.Time
+	WorkEnds           *time.Time
+	Latitude           float32
+	Longitude          float32
+	MaxCarWeightKg     *int32
+	MaxCarLengthMeters *float32
+	Address            string
+	CarPhotoMain       string
+	CarPhotos          *string
 }
 
 type UpdateDriverHandler struct {
@@ -53,7 +55,7 @@ func (h *UpdateDriverHandler) Handle(ctx context.Context, cmd UpdateDriverComman
 	}
 
 	if cmd.MaxCarWeightKg != nil && cmd.MaxCarLengthMeters != nil {
-		if err := h.repo.UpsertTowDriver(ctx, cmd.UserID, *cmd.MaxCarWeightKg, *cmd.MaxCarLengthMeters); err != nil {
+		if err := h.repo.UpsertTowDriver(ctx, cmd.UserID, *cmd.MaxCarWeightKg, *cmd.MaxCarLengthMeters, cmd.CarPhotoMain, cmd.CarPhotos); err != nil {
 			return err
 		}
 	}

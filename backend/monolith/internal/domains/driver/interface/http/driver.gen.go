@@ -22,10 +22,16 @@ const (
 // Driver defines model for Driver.
 type Driver struct {
 	// Address Reverse-geocoded address of the driver's location
-	Address     *string `json:"address,omitempty"`
-	IsAvailable *bool   `json:"is_available,omitempty"`
-	Lat         float32 `json:"lat"`
-	Lon         float32 `json:"lon"`
+	Address *string `json:"address,omitempty"`
+
+	// CarPhotoMain Main car photo URL
+	CarPhotoMain *string `json:"car_photo_main,omitempty"`
+
+	// CarPhotos Additional car photo URLs
+	CarPhotos   *[]string `json:"car_photos,omitempty"`
+	IsAvailable *bool     `json:"is_available,omitempty"`
+	Lat         float32   `json:"lat"`
+	Lon         float32   `json:"lon"`
 
 	// MaxCarLengthMeters Maximum car length in meters for tow drivers
 	MaxCarLengthMeters *float32 `json:"max_car_length_meters,omitempty"`
@@ -43,6 +49,12 @@ type Driver struct {
 
 // DriverProfile defines model for DriverProfile.
 type DriverProfile struct {
+	// CarPhotoMain Main car photo URL
+	CarPhotoMain *string `json:"car_photo_main,omitempty"`
+
+	// CarPhotos Additional car photo URLs
+	CarPhotos *[]string `json:"car_photos,omitempty"`
+
 	// Lat Latitude (WGS84)
 	Lat float32 `json:"lat"`
 
@@ -81,6 +93,12 @@ type GetFilteredDriversJSONBody struct {
 	WorkStarts *string `json:"work_starts,omitempty"`
 }
 
+// UploadCarPhotoJSONBody defines parameters for UploadCarPhoto.
+type UploadCarPhotoJSONBody struct {
+	// Image Base64-encoded image data URL
+	Image string `json:"image"`
+}
+
 // GetFilteredDriversJSONRequestBody defines body for GetFilteredDrivers for application/json ContentType.
 type GetFilteredDriversJSONRequestBody GetFilteredDriversJSONBody
 
@@ -89,6 +107,9 @@ type CreateDriverProfileJSONRequestBody = DriverProfile
 
 // UpdateDriverProfileJSONRequestBody defines body for UpdateDriverProfile for application/json ContentType.
 type UpdateDriverProfileJSONRequestBody = DriverProfile
+
+// UploadCarPhotoJSONRequestBody defines body for UploadCarPhoto for application/json ContentType.
+type UploadCarPhotoJSONRequestBody UploadCarPhotoJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -104,6 +125,9 @@ type ServerInterface interface {
 	// Update driver profile
 	// (PUT /driver/profile)
 	UpdateDriverProfile(c *gin.Context)
+	// Upload car photo
+	// (POST /driver/profile/car-photo)
+	UploadCarPhoto(c *gin.Context)
 
 	// (GET /driver/{user_id})
 	GetDriverByUserId(c *gin.Context, userId int64)
@@ -176,6 +200,21 @@ func (siw *ServerInterfaceWrapper) UpdateDriverProfile(c *gin.Context) {
 	siw.Handler.UpdateDriverProfile(c)
 }
 
+// UploadCarPhoto operation middleware
+func (siw *ServerInterfaceWrapper) UploadCarPhoto(c *gin.Context) {
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UploadCarPhoto(c)
+}
+
 // GetDriverByUserId operation middleware
 func (siw *ServerInterfaceWrapper) GetDriverByUserId(c *gin.Context) {
 
@@ -231,6 +270,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/driver/profile", wrapper.GetMyDriverProfile)
 	router.POST(options.BaseURL+"/driver/profile", wrapper.CreateDriverProfile)
 	router.PUT(options.BaseURL+"/driver/profile", wrapper.UpdateDriverProfile)
+	router.POST(options.BaseURL+"/driver/profile/car-photo", wrapper.UploadCarPhoto)
 	router.GET(options.BaseURL+"/driver/:user_id", wrapper.GetDriverByUserId)
 }
 
@@ -365,6 +405,41 @@ func (response UpdateDriverProfile404Response) VisitUpdateDriverProfileResponse(
 	return nil
 }
 
+type UploadCarPhotoRequestObject struct {
+	Body *UploadCarPhotoJSONRequestBody
+}
+
+type UploadCarPhotoResponseObject interface {
+	VisitUploadCarPhotoResponse(w http.ResponseWriter) error
+}
+
+type UploadCarPhoto200JSONResponse struct {
+	ImageUrl *string `json:"image_url,omitempty"`
+}
+
+func (response UploadCarPhoto200JSONResponse) VisitUploadCarPhotoResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UploadCarPhoto400Response struct {
+}
+
+func (response UploadCarPhoto400Response) VisitUploadCarPhotoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UploadCarPhoto401Response struct {
+}
+
+func (response UploadCarPhoto401Response) VisitUploadCarPhotoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type GetDriverByUserIdRequestObject struct {
 	UserId int64 `json:"user_id"`
 }
@@ -404,6 +479,9 @@ type StrictServerInterface interface {
 	// Update driver profile
 	// (PUT /driver/profile)
 	UpdateDriverProfile(ctx context.Context, request UpdateDriverProfileRequestObject) (UpdateDriverProfileResponseObject, error)
+	// Upload car photo
+	// (POST /driver/profile/car-photo)
+	UploadCarPhoto(ctx context.Context, request UploadCarPhotoRequestObject) (UploadCarPhotoResponseObject, error)
 
 	// (GET /driver/{user_id})
 	GetDriverByUserId(ctx context.Context, request GetDriverByUserIdRequestObject) (GetDriverByUserIdResponseObject, error)
@@ -538,6 +616,39 @@ func (sh *strictHandler) UpdateDriverProfile(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UpdateDriverProfileResponseObject); ok {
 		if err := validResponse.VisitUpdateDriverProfileResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UploadCarPhoto operation middleware
+func (sh *strictHandler) UploadCarPhoto(ctx *gin.Context) {
+	var request UploadCarPhotoRequestObject
+
+	var body UploadCarPhotoJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UploadCarPhoto(ctx, request.(UploadCarPhotoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UploadCarPhoto")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UploadCarPhotoResponseObject); ok {
+		if err := validResponse.VisitUploadCarPhotoResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

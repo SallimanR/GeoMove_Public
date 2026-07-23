@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -75,20 +76,22 @@ func NewDriverHandler(
 func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
 
 	var req struct {
-		Name       string  `json:"name"`
-		Lat        float32 `json:"lat"`
-		Lon        float32 `json:"lon"`
-		Phone               *string  `json:"phone"`
-		WorkStarts          *string  `json:"work_starts"`
-		WorkEnds            *string  `json:"work_ends"`
-		MaxCarWeightKg      *int32   `json:"max_car_weight_kg"`
-		MaxCarLengthMeters  *float32 `json:"max_car_length_meters"`
+		Name               string    `json:"name"`
+		Lat                float32   `json:"lat"`
+		Lon                float32   `json:"lon"`
+		Phone              *string   `json:"phone"`
+		WorkStarts         *string   `json:"work_starts"`
+		WorkEnds           *string   `json:"work_ends"`
+		MaxCarWeightKg     *int32    `json:"max_car_weight_kg"`
+		MaxCarLengthMeters *float32  `json:"max_car_length_meters"`
+		CarPhotoMain       *string   `json:"car_photo_main"`
+		CarPhotos          *[]string `json:"car_photos"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -99,7 +102,7 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 	if req.WorkStarts != nil {
 		t, err := time.Parse("15:04", *req.WorkStarts)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_starts format, expected HH:MM:SS"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный формат work_starts, ожидается ЧЧ:ММ:СС"})
 			return
 		}
 		workStarts = &t
@@ -107,7 +110,7 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 	if req.WorkEnds != nil {
 		t, err := time.Parse("15:04", *req.WorkEnds)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_ends format, expected HH:MM:SS"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный формат work_ends, ожидается ЧЧ:ММ:СС"})
 			return
 		}
 		workEnds = &t
@@ -115,7 +118,7 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 
 	address, err := geo.ReverseGeocode(ctx.Request.Context(), req.Lat, req.Lon)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to resolve address: " + err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "не удалось определить адрес: " + err.Error()})
 		return
 	}
 
@@ -130,6 +133,8 @@ func (h *DriverHandler) CreateDriverProfile(ctx *gin.Context) {
 		MaxCarWeightKg:     req.MaxCarWeightKg,
 		MaxCarLengthMeters: req.MaxCarLengthMeters,
 		Address:            address,
+		CarPhotoMain:       stringPtrValue(req.CarPhotoMain),
+		CarPhotos:          jsonStringPtr(req.CarPhotos),
 	}
 	err = h.createDriver.Handle(ctx.Request.Context(), cmd)
 	if err != nil {
@@ -166,6 +171,17 @@ func driverToResponse(driver *entity.Driver) Driver {
 	if driver.Address == "" {
 		address = nil
 	}
+	carPhotoMain := &driver.CarPhotoMain
+	if driver.CarPhotoMain == "" {
+		carPhotoMain = nil
+	}
+	var carPhotos *[]string
+	if driver.CarPhotos != nil {
+		var photos []string
+		if err := json.Unmarshal([]byte(*driver.CarPhotos), &photos); err == nil && len(photos) > 0 {
+			carPhotos = &photos
+		}
+	}
 	resp := Driver{
 		UserId:             driver.UserID,
 		Name:               driver.Name,
@@ -180,6 +196,8 @@ func driverToResponse(driver *entity.Driver) Driver {
 		MaxCarWeightKg:     maxCarWeightKg,
 		MaxCarLengthMeters: maxCarLengthMeters,
 		Address:            address,
+		CarPhotoMain:       carPhotoMain,
+		CarPhotos:          carPhotos,
 	}
 	return resp
 }
@@ -188,13 +206,13 @@ func (h *DriverHandler) GetDriverByUserID(ctx *gin.Context) {
 	userIDStr := ctx.Param("user_id")
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный user_id"})
 		return
 	}
 
 	driver, err := h.getDriverByUserID.Handle(ctx.Request.Context(), userID)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "driver profile not found"})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "профиль водителя не найден"})
 		return
 	}
 
@@ -205,14 +223,14 @@ func (h *DriverHandler) GetDriverByUserID(ctx *gin.Context) {
 func (h *DriverHandler) GetMyDriverProfile(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
 
 	driver, err := h.getDriverByUserID.Handle(ctx.Request.Context(), session.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "driver profile not found"})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "профиль водителя не найден"})
 		return
 	}
 
@@ -223,20 +241,22 @@ func (h *DriverHandler) GetMyDriverProfile(ctx *gin.Context) {
 func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
 
 	var req struct {
-		Name       string  `json:"name"`
-		Lat        float32 `json:"lat"`
-		Lon        float32 `json:"lon"`
-		Phone               *string  `json:"phone"`
-		WorkStarts          *string  `json:"work_starts"`
-		WorkEnds            *string  `json:"work_ends"`
-		MaxCarWeightKg      *int32   `json:"max_car_weight_kg"`
-		MaxCarLengthMeters  *float32 `json:"max_car_length_meters"`
+		Name               string    `json:"name"`
+		Lat                float32   `json:"lat"`
+		Lon                float32   `json:"lon"`
+		Phone              *string   `json:"phone"`
+		WorkStarts         *string   `json:"work_starts"`
+		WorkEnds           *string   `json:"work_ends"`
+		MaxCarWeightKg     *int32    `json:"max_car_weight_kg"`
+		MaxCarLengthMeters *float32  `json:"max_car_length_meters"`
+		CarPhotoMain       *string   `json:"car_photo_main"`
+		CarPhotos          *[]string `json:"car_photos"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -247,7 +267,7 @@ func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
 	if req.WorkStarts != nil {
 		t, err := time.Parse("15:04", *req.WorkStarts)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_starts format, expected HH:MM"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный формат work_starts, ожидается ЧЧ:ММ"})
 			return
 		}
 		workStarts = &t
@@ -255,7 +275,7 @@ func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
 	if req.WorkEnds != nil {
 		t, err := time.Parse("15:04", *req.WorkEnds)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid work_ends format, expected HH:MM"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный формат work_ends, ожидается ЧЧ:ММ"})
 			return
 		}
 		workEnds = &t
@@ -263,7 +283,7 @@ func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
 
 	address, err := geo.ReverseGeocode(ctx.Request.Context(), req.Lat, req.Lon)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to resolve address: " + err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "не удалось определить адрес: " + err.Error()})
 		return
 	}
 
@@ -278,6 +298,8 @@ func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
 		MaxCarWeightKg:     req.MaxCarWeightKg,
 		MaxCarLengthMeters: req.MaxCarLengthMeters,
 		Address:            address,
+		CarPhotoMain:       stringPtrValue(req.CarPhotoMain),
+		CarPhotos:          jsonStringPtr(req.CarPhotos),
 	}
 	err = h.updateDriver.Handle(ctx.Request.Context(), cmd)
 	if err != nil {
@@ -291,7 +313,7 @@ func (h *DriverHandler) UpdateDriverProfile(ctx *gin.Context) {
 func (h *DriverHandler) UploadProfileImage(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
@@ -300,7 +322,7 @@ func (h *DriverHandler) UploadProfileImage(ctx *gin.Context) {
 		Image string `json:"image"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный запрос"})
 		return
 	}
 
@@ -315,7 +337,30 @@ func (h *DriverHandler) UploadProfileImage(ctx *gin.Context) {
 		ImageURL: imageURL,
 	}
 	if err := h.updateProfileImage.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile image"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "не удалось обновить фото профиля"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"image_url": imageURL})
+}
+
+func (h *DriverHandler) UploadCarPhoto(ctx *gin.Context) {
+	if _, exists := ctx.Get("session"); !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
+		return
+	}
+
+	var req struct {
+		Image string `json:"image"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный запрос"})
+		return
+	}
+
+	imageURL, err := saveProfileImage(req.Image, h.staticDir)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -364,6 +409,25 @@ func saveProfileImage(imageBase64, staticDir string) (string, error) {
 	return "/static/avatars/" + filename, nil
 }
 
+func stringPtrValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func jsonStringPtr(arr *[]string) *string {
+	if arr == nil || len(*arr) == 0 {
+		return nil
+	}
+	data, err := json.Marshal(*arr)
+	if err != nil {
+		return nil
+	}
+	s := string(data)
+	return &s
+}
+
 func (h *DriverHandler) GetFilteredDrivers(ctx *gin.Context) {
 	var req GetFilteredDriversJSONBody
 	err := ctx.ShouldBindJSON(&req)
@@ -400,7 +464,7 @@ func (h *DriverHandler) GetFilteredDrivers(ctx *gin.Context) {
 func (h *DriverHandler) CreateFreelyAvailable(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
@@ -438,7 +502,7 @@ func (h *DriverHandler) CreateFreelyAvailable(ctx *gin.Context) {
 func (h *DriverHandler) UpdateFreelyAvailable(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
@@ -476,7 +540,7 @@ func (h *DriverHandler) UpdateFreelyAvailable(ctx *gin.Context) {
 func (h *DriverHandler) DeleteFreelyAvailable(ctx *gin.Context) {
 	sessionVal, exists := ctx.Get("session")
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "не авторизован"})
 		return
 	}
 	session := sessionVal.(*auth.Session)
@@ -494,13 +558,13 @@ func (h *DriverHandler) GetFreelyAvailableByID(ctx *gin.Context) {
 	userIDStr := ctx.Param("user_id")
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "неверный user_id"})
 		return
 	}
 
 	fa, err := h.getFreelyAvailableByID.Handle(ctx.Request.Context(), userID)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "freely available entry not found"})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "не найдена запись о свободном эвакуаторе"})
 		return
 	}
 

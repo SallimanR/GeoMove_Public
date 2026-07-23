@@ -183,6 +183,8 @@ type TowDriver struct {
 	DriverID           int64
 	MaxCarWeightKg     int32
 	MaxCarLengthMeters float32
+	CarPhotoMain       string
+	CarPhotos          *string
 }
 
 type TowDriverFreelyAvailable struct {

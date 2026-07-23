@@ -49,6 +49,14 @@ components:
         address:
           type: string
           description: Reverse-geocoded address of the driver's location
+        car_photo_main:
+          type: string
+          description: Main car photo URL
+        car_photos:
+          type: array
+          items:
+            type: string
+          description: Additional car photo URLs
         max_car_weight_kg:
           type: integer
           description: Maximum car weight in kg for tow drivers
@@ -56,7 +64,6 @@ components:
           type: number
           format: float
           description: Maximum car length in meters for tow drivers
-
     DriverProfile:
       type: object
       required:
@@ -93,6 +100,14 @@ components:
           type: number
           format: float
           description: Maximum car length in meters for tow drivers
+        car_photo_main:
+          type: string
+          description: Main car photo URL
+        car_photos:
+          type: array
+          items:
+            type: string
+          description: Additional car photo URLs
 
 paths:
   /driver/profile:
@@ -151,6 +166,39 @@ paths:
           description: Unauthorized (no valid session)
         '404':
           description: Driver profile not found
+      security:
+        - CookieAuth: []
+
+  /driver/profile/car-photo:
+    post:
+      summary: Upload car photo
+      operationId: uploadCarPhoto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  description: Base64-encoded image data URL
+      responses:
+        '200':
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_url:
+                    type: string
+        '400':
+          description: Invalid image
+        '401':
+          description: Unauthorized
       security:
         - CookieAuth: []
 

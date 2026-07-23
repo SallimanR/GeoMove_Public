@@ -16,21 +16,23 @@ type Location struct {
 }
 
 type Driver struct {
-	UserID              int64
-	CreatedAt           time.Time
-	UpdatedAt           *time.Time
-	Name                string
-	ProfileImage        *string
-	WorkStarts          *time.Time
-	WorkEnds            *time.Time
-	IsAvailable         bool
-	LastSeen            time.Time
-	Location            Location
+	UserID             int64
+	CreatedAt          time.Time
+	UpdatedAt          *time.Time
+	Name               string
+	ProfileImage       *string
+	WorkStarts         *time.Time
+	WorkEnds           *time.Time
+	IsAvailable        bool
+	LastSeen           time.Time
+	Location           Location
 	Rating             float32
 	Phone              string
 	MaxCarWeightKg     int32
 	MaxCarLengthMeters float32
 	Address            string
+	CarPhotoMain       string
+	CarPhotos          *string
 }
 
 type DriverOptions struct {

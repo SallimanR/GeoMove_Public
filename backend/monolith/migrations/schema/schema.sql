@@ -1,4 +1,4 @@
-\restrict DPSpCwWv86C5L8ZZ4gL34JiJ00eudaX9hPqUAjei0fHPH7SDGhrqtTVQUI4UaRo
+\restrict B4d53WXOlpKbuoNTKo5KzSEzu4SyPLcsUrkXmpjpMBycohLMsVMQ4R6audG5eBx
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -280,7 +280,9 @@ CREATE TABLE public.session (
 CREATE TABLE public.tow_driver (
     driver_id bigint NOT NULL,
     max_car_weight_kg integer NOT NULL,
-    max_car_length_meters real NOT NULL
+    max_car_length_meters real NOT NULL,
+    car_photo_main text DEFAULT ''::text NOT NULL,
+    car_photos text
 );
 
 
@@ -721,7 +723,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DPSpCwWv86C5L8ZZ4gL34JiJ00eudaX9hPqUAjei0fHPH7SDGhrqtTVQUI4UaRo
+\unrestrict B4d53WXOlpKbuoNTKo5KzSEzu4SyPLcsUrkXmpjpMBycohLMsVMQ4R6audG5eBx
 
 
 --
@@ -742,4 +744,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260718181855'),
     ('20260721201716'),
     ('20260721213614'),
-    ('20260721225600');
+    ('20260721225600'),
+    ('20260721235800');

@@ -81,6 +81,8 @@ func (r *DriverRepository) GetDriverByUserID(ctx context.Context, userID int64) 
 		MaxCarWeightKg:     row.MaxCarWeightKg,
 		MaxCarLengthMeters: row.MaxCarLengthMeters,
 		Address:            row.Address,
+		CarPhotoMain:       row.CarPhotoMain,
+		CarPhotos:          row.CarPhotos,
 	}
 
 	return driver, nil
@@ -116,16 +118,21 @@ func (r *DriverRepository) GetFilteredDrivers(ctx context.Context, filter reposi
 			rating = *row.Rating
 		}
 		resp = append(resp, entity.Driver{
-			UserID:       row.UserID,
-			Name:         row.Name,
-			Phone:        phone,
-			ProfileImage: row.ProfileImage,
-			WorkStarts:   row.WorkStarts,
-			WorkEnds:     row.WorkEnds,
-			IsAvailable:  row.IsAvailable,
-			LastSeen:     row.LastSeen.Time,
-			Rating:       rating,
-			Location:     entity.Location{Lat: row.Lat, Lon: row.Lon},
+			UserID:             row.UserID,
+			Name:               row.Name,
+			Phone:              phone,
+			ProfileImage:       row.ProfileImage,
+			WorkStarts:         row.WorkStarts,
+			WorkEnds:           row.WorkEnds,
+			IsAvailable:        row.IsAvailable,
+			LastSeen:           row.LastSeen.Time,
+			Rating:             rating,
+			Location:           entity.Location{Lat: row.Lat, Lon: row.Lon},
+			MaxCarWeightKg:     row.MaxCarWeightKg,
+			MaxCarLengthMeters: row.MaxCarLengthMeters,
+			Address:            row.Address,
+			CarPhotoMain:       row.CarPhotoMain,
+			CarPhotos:          row.CarPhotos,
 		})
 	}
 
@@ -161,10 +168,12 @@ func (r *DriverRepository) UpdateDriver(ctx context.Context, driver *entity.Driv
 	})
 }
 
-func (r *DriverRepository) UpsertTowDriver(ctx context.Context, driverID int64, maxWeightKg int32, maxLengthM float32) error {
+func (r *DriverRepository) UpsertTowDriver(ctx context.Context, driverID int64, maxWeightKg int32, maxLengthM float32, carPhotoMain string, carPhotos *string) error {
 	return r.queries.UpsertTowDriver(ctx, sqlc.UpsertTowDriverParams{
 		DriverID:           driverID,
 		MaxCarWeightKg:     maxWeightKg,
 		MaxCarLengthMeters: maxLengthM,
+		CarPhotoMain:       carPhotoMain,
+		CarPhotos:          carPhotos,
 	})
 }

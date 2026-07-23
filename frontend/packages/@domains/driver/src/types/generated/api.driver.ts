@@ -32,6 +32,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/driver/profile/car-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload car photo */
+        post: operations["uploadCarPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/driver/{user_id}": {
         parameters: {
             query?: never;
@@ -87,6 +104,10 @@ export interface components {
             phone?: string;
             /** @description Reverse-geocoded address of the driver's location */
             address?: string;
+            /** @description Main car photo URL */
+            car_photo_main?: string;
+            /** @description Additional car photo URLs */
+            car_photos?: string[];
             /** @description Maximum car weight in kg for tow drivers */
             max_car_weight_kg?: number;
             /**
@@ -127,6 +148,10 @@ export interface components {
              * @description Maximum car length in meters for tow drivers
              */
             max_car_length_meters?: number;
+            /** @description Main car photo URL */
+            car_photo_main?: string;
+            /** @description Additional car photo URLs */
+            car_photos?: string[];
         };
     };
     responses: never;
@@ -242,6 +267,49 @@ export interface operations {
                 content?: never;
             };
             /** @description Unauthorized (no valid session) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    uploadCarPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Base64-encoded image data URL */
+                    image: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Photo uploaded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        image_url?: string;
+                    };
+                };
+            };
+            /** @description Invalid image */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
             401: {
                 headers: {
                     [name: string]: unknown;

@@ -84,7 +84,9 @@ SELECT
 	ST_Y(d.location::geometry)::REAL as lat,
 	COALESCE(t.max_car_weight_kg, 0) as max_car_weight_kg,
 	COALESCE(t.max_car_length_meters, 0) as max_car_length_meters,
-	COALESCE(d.address, '') as address
+	COALESCE(d.address, '') as address,
+	COALESCE(t.car_photo_main, '') as car_photo_main,
+	t.car_photos
 FROM driver d
 LEFT JOIN tow_driver t ON t.driver_id = d.user_id
 WHERE d.user_id = $1
@@ -105,6 +107,8 @@ type GetDriverByUserIDRow struct {
 	MaxCarWeightKg     int32
 	MaxCarLengthMeters float32
 	Address            string
+	CarPhotoMain       string
+	CarPhotos          *string
 }
 
 func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDriverByUserIDRow, error) {
@@ -125,35 +129,43 @@ func (q *Queries) GetDriverByUserID(ctx context.Context, userID int64) (GetDrive
 		&i.MaxCarWeightKg,
 		&i.MaxCarLengthMeters,
 		&i.Address,
+		&i.CarPhotoMain,
+		&i.CarPhotos,
 	)
 	return i, err
 }
 
 const getFilteredDrivers = `-- name: GetFilteredDrivers :many
 SELECT 
-    user_id,
-	name,
-	phone,
-	profile_image,
-    work_starts, 
-    work_ends, 
-	is_available,
-	last_seen,
-    rating, 
-	ST_X(location::GEOMETRY)::REAL AS lon,
-	ST_Y(location::GEOMETRY)::REAL AS lat,
+    d.user_id,
+	d.name,
+	d.phone,
+	d.profile_image,
+    d.work_starts, 
+    d.work_ends, 
+	d.is_available,
+	d.last_seen,
+    d.rating, 
+	ST_X(d.location::GEOMETRY)::REAL AS lon,
+	ST_Y(d.location::GEOMETRY)::REAL AS lat,
     st_distance(
-        location, 
+        d.location, 
         st_setsrid(
             st_makepoint($1::REAL, $2::REAL), 
             4326
         )::geometry
-    )::real AS distance
-FROM driver
+    )::real AS distance,
+	COALESCE(t.max_car_weight_kg, 0) as max_car_weight_kg,
+	COALESCE(t.max_car_length_meters, 0) as max_car_length_meters,
+	COALESCE(d.address, '') as address,
+	COALESCE(t.car_photo_main, '') as car_photo_main,
+	t.car_photos
+FROM driver d
+LEFT JOIN tow_driver t ON t.driver_id = d.user_id
 WHERE 
-    ($3::TIME IS NULL OR work_starts <= $3)
-    AND ($4::TIME IS NULL OR work_ends >= $4)
-    AND ($5::REAL IS NULL OR rating >= $5)
+    ($3::TIME IS NULL OR d.work_starts <= $3)
+    AND ($4::TIME IS NULL OR d.work_ends >= $4)
+    AND ($5::REAL IS NULL OR d.rating >= $5)
 ORDER BY distance
 `
 
@@ -166,18 +178,23 @@ type GetFilteredDriversParams struct {
 }
 
 type GetFilteredDriversRow struct {
-	UserID       int64
-	Name         string
-	Phone        *string
-	ProfileImage *string
-	WorkStarts   *time.Time
-	WorkEnds     *time.Time
-	IsAvailable  bool
-	LastSeen     pgtype.Timestamptz
-	Rating       *float32
-	Lon          float32
-	Lat          float32
-	Distance     float32
+	UserID             int64
+	Name               string
+	Phone              *string
+	ProfileImage       *string
+	WorkStarts         *time.Time
+	WorkEnds           *time.Time
+	IsAvailable        bool
+	LastSeen           pgtype.Timestamptz
+	Rating             *float32
+	Lon                float32
+	Lat                float32
+	Distance           float32
+	MaxCarWeightKg     int32
+	MaxCarLengthMeters float32
+	Address            string
+	CarPhotoMain       string
+	CarPhotos          *string
 }
 
 func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDriversParams) ([]GetFilteredDriversRow, error) {
@@ -208,6 +225,11 @@ func (q *Queries) GetFilteredDrivers(ctx context.Context, arg GetFilteredDrivers
 			&i.Lon,
 			&i.Lat,
 			&i.Distance,
+			&i.MaxCarWeightKg,
+			&i.MaxCarLengthMeters,
+			&i.Address,
+			&i.CarPhotoMain,
+			&i.CarPhotos,
 		); err != nil {
 			return nil, err
 		}
@@ -270,20 +292,30 @@ func (q *Queries) UpdateDriverProfileImage(ctx context.Context, arg UpdateDriver
 }
 
 const upsertTowDriver = `-- name: UpsertTowDriver :exec
-INSERT INTO tow_driver (driver_id, max_car_weight_kg, max_car_length_meters)
-VALUES ($1, $2, $3)
+INSERT INTO tow_driver (driver_id, max_car_weight_kg, max_car_length_meters, car_photo_main, car_photos)
+VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (driver_id) DO UPDATE SET
 	max_car_weight_kg = EXCLUDED.max_car_weight_kg,
-	max_car_length_meters = EXCLUDED.max_car_length_meters
+	max_car_length_meters = EXCLUDED.max_car_length_meters,
+	car_photo_main = EXCLUDED.car_photo_main,
+	car_photos = EXCLUDED.car_photos
 `
 
 type UpsertTowDriverParams struct {
 	DriverID           int64
 	MaxCarWeightKg     int32
 	MaxCarLengthMeters float32
+	CarPhotoMain       string
+	CarPhotos          *string
 }
 
 func (q *Queries) UpsertTowDriver(ctx context.Context, arg UpsertTowDriverParams) error {
-	_, err := q.db.Exec(ctx, upsertTowDriver, arg.DriverID, arg.MaxCarWeightKg, arg.MaxCarLengthMeters)
+	_, err := q.db.Exec(ctx, upsertTowDriver,
+		arg.DriverID,
+		arg.MaxCarWeightKg,
+		arg.MaxCarLengthMeters,
+		arg.CarPhotoMain,
+		arg.CarPhotos,
+	)
 	return err
 }

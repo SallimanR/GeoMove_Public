@@ -19,6 +19,7 @@ func RegisterDriverRoutes(router *gin.RouterGroup, h *DriverHandler, authMiddlew
 			profile.GET("/", h.GetMyDriverProfile)
 			profile.PUT("/", h.UpdateDriverProfile)
 			profile.POST("/image", h.UploadProfileImage)
+			profile.POST("/car-photo", h.UploadCarPhoto)
 		}
 
 		freely := driver.Group("/freely-available")

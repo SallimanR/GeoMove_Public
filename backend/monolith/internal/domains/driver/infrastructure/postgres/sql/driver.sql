@@ -31,36 +31,44 @@ SELECT
 	ST_Y(d.location::geometry)::REAL as lat,
 	COALESCE(t.max_car_weight_kg, 0) as max_car_weight_kg,
 	COALESCE(t.max_car_length_meters, 0) as max_car_length_meters,
-	COALESCE(d.address, '') as address
+	COALESCE(d.address, '') as address,
+	COALESCE(t.car_photo_main, '') as car_photo_main,
+	t.car_photos
 FROM driver d
 LEFT JOIN tow_driver t ON t.driver_id = d.user_id
 WHERE d.user_id = $1;
 
 -- name: GetFilteredDrivers :many
 SELECT 
-    user_id,
-	name,
-	phone,
-	profile_image,
-    work_starts, 
-    work_ends, 
-	is_available,
-	last_seen,
-    rating, 
-	ST_X(location::GEOMETRY)::REAL AS lon,
-	ST_Y(location::GEOMETRY)::REAL AS lat,
+    d.user_id,
+	d.name,
+	d.phone,
+	d.profile_image,
+    d.work_starts, 
+    d.work_ends, 
+	d.is_available,
+	d.last_seen,
+    d.rating, 
+	ST_X(d.location::GEOMETRY)::REAL AS lon,
+	ST_Y(d.location::GEOMETRY)::REAL AS lat,
     st_distance(
-        location, 
+        d.location, 
         st_setsrid(
             st_makepoint(@lon::REAL, @lat::REAL), 
             4326
         )::geometry
-    )::real AS distance
-FROM driver
+    )::real AS distance,
+	COALESCE(t.max_car_weight_kg, 0) as max_car_weight_kg,
+	COALESCE(t.max_car_length_meters, 0) as max_car_length_meters,
+	COALESCE(d.address, '') as address,
+	COALESCE(t.car_photo_main, '') as car_photo_main,
+	t.car_photos
+FROM driver d
+LEFT JOIN tow_driver t ON t.driver_id = d.user_id
 WHERE 
-    (sqlc.narg('work_starts')::TIME IS NULL OR work_starts <= sqlc.narg('work_starts'))
-    AND (sqlc.narg('work_ends')::TIME IS NULL OR work_ends >= sqlc.narg('work_ends'))
-    AND (sqlc.narg('min_rating')::REAL IS NULL OR rating >= sqlc.narg('min_rating'))
+    (sqlc.narg('work_starts')::TIME IS NULL OR d.work_starts <= sqlc.narg('work_starts'))
+    AND (sqlc.narg('work_ends')::TIME IS NULL OR d.work_ends >= sqlc.narg('work_ends'))
+    AND (sqlc.narg('min_rating')::REAL IS NULL OR d.rating >= sqlc.narg('min_rating'))
 ORDER BY distance;
 
 -- name: CreateTowDriver :exec
@@ -76,8 +84,10 @@ SET name = $2, phone = $3, work_starts = $4, work_ends = $5,
 WHERE user_id = $1;
 
 -- name: UpsertTowDriver :exec
-INSERT INTO tow_driver (driver_id, max_car_weight_kg, max_car_length_meters)
-VALUES ($1, $2, $3)
+INSERT INTO tow_driver (driver_id, max_car_weight_kg, max_car_length_meters, car_photo_main, car_photos)
+VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (driver_id) DO UPDATE SET
 	max_car_weight_kg = EXCLUDED.max_car_weight_kg,
-	max_car_length_meters = EXCLUDED.max_car_length_meters;
+	max_car_length_meters = EXCLUDED.max_car_length_meters,
+	car_photo_main = EXCLUDED.car_photo_main,
+	car_photos = EXCLUDED.car_photos;
