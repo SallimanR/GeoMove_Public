@@ -4,7 +4,7 @@
 
 [geomove.online](https://geomove.online) | [driver.geomove.online](https://driver.geomove.online)
 
-Приложения для Android: **[перейти на страницу для скачивания](https://github.com/SallimanR/GeoMove_Public/releases/tag/pre-release_1)** -> скачать apk приложения для пользователей/водителей -> найти apk в загрузках браузера или в папке Downloads -> запустить apk
+Приложения для Android: **[перейти на страницу для скачивания](https://github.com/SallimanR/GeoMove_Public/releases/tag/pre-release_2)** -> скачать apk приложения для пользователей/водителей -> найти apk в загрузках браузера или в папке Downloads -> запустить apk
 
 IOS версии нельзя скачать через GitHub из-за ограничений установленных Apple и IOS
 
