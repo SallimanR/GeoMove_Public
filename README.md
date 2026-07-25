@@ -36,19 +36,25 @@ IOS версии нельзя скачать через GitHub из-за огр�
   Пользователь получает уведомление и видит обновлённый статус заказа
 </p>
 
+## Заявки на свободные эвакуаторы/межгород
 
 <p align="center">
-  <img src="./docs/screenshots/freely_available_driver_edit.png" alt="Пользователь создаёт заказ" width="400">
+  <img src="./docs/screenshots/freely_available_driver_edit.png" width="400">
   <br>
   Водитель создаёт заявку на свободный эвакуатор
 </p>
 
 <p align="center">
-  <img src="./docs/screenshots/freely_available_driver.png" alt="Пользователь создаёт заказ" width="400">
+  <img src="./docs/screenshots/freely_available_driver.png" width="400">
   <br>
   Созданная заявка на свободный эвакуатор
 </p>
 
+<p align="center">
+  <img src="./docs/screenshots/available_drivers.png" width="400">
+  <br>
+  Пользователь видит свободные эвакуаторы
+</p>
 
 ---
 
