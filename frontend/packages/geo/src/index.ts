@@ -1,7 +1,8 @@
 export { haversineDistance, degreesToRadians } from "./utils/geometry";
 export * from "./api/geocoding";
 export * from "./api/routing";
-export * from "./utils/displayDistance"
-export * from "./utils/addressToText"
-export { configureGeo } from "./config"
-export type { GeoModuleConfig } from "./config"
+export * from "./api/shortestTimeToArrive";
+export * from "./utils/displayDistance";
+export * from "./utils/addressToText";
+export { configureGeo } from "./config";
+export type { GeoModuleConfig } from "./config";

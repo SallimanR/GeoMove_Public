@@ -39,3 +39,14 @@ func (s *Store) Delete(ctx context.Context, endpoint string) error {
 	}
 	return nil
 }
+
+func (s *Store) DeleteByUserAndDevice(ctx context.Context, userID int64, deviceType string) error {
+	err := s.queries.DeleteSubscriptionsByUserAndDevice(ctx, sqlc.DeleteSubscriptionsByUserAndDeviceParams{
+		UserID:     userID,
+		DeviceType: deviceType,
+	})
+	if err != nil {
+		return fmt.Errorf("delete subscriptions by user and device: %w", err)
+	}
+	return nil
+}

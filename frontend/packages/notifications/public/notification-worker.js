@@ -1,3 +1,11 @@
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("push", (event) => {
   const data = event.data?.json()
 
@@ -11,7 +19,18 @@ self.addEventListener("push", (event) => {
     },
   }
 
-  event.waitUntil(self.registration.showNotification(title, options))
+  event.waitUntil(
+    (async () => {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true })
+      for (const client of clients) {
+        client.postMessage({ type: "push", title, body: options.body })
+      }
+      const bc = new BroadcastChannel("order-updates")
+      bc.postMessage({ type: "push", title, body: options.body })
+      bc.close()
+      return self.registration.showNotification(title, options)
+    })(),
+  )
 })
 
 self.addEventListener("notificationclick", (event) => {

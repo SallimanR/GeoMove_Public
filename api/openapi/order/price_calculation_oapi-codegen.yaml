@@ -1,0 +1,6 @@
+package: pricecalculation
+generate:
+  models: true
+  strict-server: true
+  gin-server: true
+output: backend/monolith/internal/domains/order/interface/http/pricecalculation/price_calculation.gen.go

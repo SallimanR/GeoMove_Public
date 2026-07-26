@@ -60,7 +60,6 @@ const (
 	OrderStatusAccepted   OrderStatus = "accepted"
 	OrderStatusCancelled  OrderStatus = "cancelled"
 	OrderStatusCompleted  OrderStatus = "completed"
-	OrderStatusForming    OrderStatus = "forming"
 	OrderStatusInProgress OrderStatus = "in_progress"
 	OrderStatusPending    OrderStatus = "pending"
 )
@@ -82,7 +81,6 @@ const (
 	UpdateOrderStatusRequestStatusAccepted   UpdateOrderStatusRequestStatus = "accepted"
 	UpdateOrderStatusRequestStatusCancelled  UpdateOrderStatusRequestStatus = "cancelled"
 	UpdateOrderStatusRequestStatusCompleted  UpdateOrderStatusRequestStatus = "completed"
-	UpdateOrderStatusRequestStatusForming    UpdateOrderStatusRequestStatus = "forming"
 	UpdateOrderStatusRequestStatusInProgress UpdateOrderStatusRequestStatus = "in_progress"
 	UpdateOrderStatusRequestStatusPending    UpdateOrderStatusRequestStatus = "pending"
 )
@@ -222,21 +220,30 @@ type ServerInterface interface {
 	// Create a new tow order
 	// (POST /order)
 	CreateOrder(c *gin.Context)
-	// List available orders (forming/pending) for drivers
+	// List available orders (pending) for drivers
 	// (GET /order/available)
 	ListAvailableOrders(c *gin.Context)
+	// List orders declined by the driver
+	// (GET /order/declined)
+	ListDeclinedOrders(c *gin.Context)
 	// List orders for the authenticated user
 	// (GET /order/my)
 	ListMyOrders(c *gin.Context, params ListMyOrdersParams)
-	// Delete user's active (forming/pending) order
+	// Delete user's active (pending) order
 	// (DELETE /order/my/active)
 	DeleteMyActiveOrder(c *gin.Context)
 	// Get order by ID
 	// (GET /order/{order_id})
 	GetOrder(c *gin.Context, orderId int64)
-	// Update order details (forming/pending only)
+	// Update order details (pending only)
 	// (PUT /order/{order_id})
 	UpdateOrder(c *gin.Context, orderId int64)
+	// Restore a previously declined order
+	// (DELETE /order/{order_id}/decline)
+	UndoDeclineOrder(c *gin.Context, orderId int64)
+	// Driver declines an order
+	// (PATCH /order/{order_id}/decline)
+	DeclineOrder(c *gin.Context, orderId int64)
 	// Update order status
 	// (PATCH /order/{order_id}/status)
 	UpdateOrderStatus(c *gin.Context, orderId int64)
@@ -279,6 +286,21 @@ func (siw *ServerInterfaceWrapper) ListAvailableOrders(c *gin.Context) {
 	}
 
 	siw.Handler.ListAvailableOrders(c)
+}
+
+// ListDeclinedOrders operation middleware
+func (siw *ServerInterfaceWrapper) ListDeclinedOrders(c *gin.Context) {
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListDeclinedOrders(c)
 }
 
 // ListMyOrders operation middleware
@@ -383,6 +405,58 @@ func (siw *ServerInterfaceWrapper) UpdateOrder(c *gin.Context) {
 	siw.Handler.UpdateOrder(c, orderId)
 }
 
+// UndoDeclineOrder operation middleware
+func (siw *ServerInterfaceWrapper) UndoDeclineOrder(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "order_id", c.Param("order_id"), &orderId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter order_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UndoDeclineOrder(c, orderId)
+}
+
+// DeclineOrder operation middleware
+func (siw *ServerInterfaceWrapper) DeclineOrder(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "order_id" -------------
+	var orderId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "order_id", c.Param("order_id"), &orderId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter order_id: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(CookieAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeclineOrder(c, orderId)
+}
+
 // UpdateOrderStatus operation middleware
 func (siw *ServerInterfaceWrapper) UpdateOrderStatus(c *gin.Context) {
 
@@ -438,10 +512,13 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.POST(options.BaseURL+"/order", wrapper.CreateOrder)
 	router.GET(options.BaseURL+"/order/available", wrapper.ListAvailableOrders)
+	router.GET(options.BaseURL+"/order/declined", wrapper.ListDeclinedOrders)
 	router.GET(options.BaseURL+"/order/my", wrapper.ListMyOrders)
 	router.DELETE(options.BaseURL+"/order/my/active", wrapper.DeleteMyActiveOrder)
 	router.GET(options.BaseURL+"/order/:order_id", wrapper.GetOrder)
 	router.PUT(options.BaseURL+"/order/:order_id", wrapper.UpdateOrder)
+	router.DELETE(options.BaseURL+"/order/:order_id/decline", wrapper.UndoDeclineOrder)
+	router.PATCH(options.BaseURL+"/order/:order_id/decline", wrapper.DeclineOrder)
 	router.PATCH(options.BaseURL+"/order/:order_id/status", wrapper.UpdateOrderStatus)
 }
 
@@ -501,6 +578,32 @@ type ListAvailableOrders401Response struct {
 }
 
 func (response ListAvailableOrders401Response) VisitListAvailableOrdersResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ListDeclinedOrdersRequestObject struct {
+}
+
+type ListDeclinedOrdersResponseObject interface {
+	VisitListDeclinedOrdersResponse(w http.ResponseWriter) error
+}
+
+type ListDeclinedOrders200JSONResponse struct {
+	Orders *[]Order `json:"orders,omitempty"`
+}
+
+func (response ListDeclinedOrders200JSONResponse) VisitListDeclinedOrdersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListDeclinedOrders401Response struct {
+}
+
+func (response ListDeclinedOrders401Response) VisitListDeclinedOrdersResponse(w http.ResponseWriter) error {
 	w.WriteHeader(401)
 	return nil
 }
@@ -640,6 +743,72 @@ func (response UpdateOrder404Response) VisitUpdateOrderResponse(w http.ResponseW
 	return nil
 }
 
+type UndoDeclineOrderRequestObject struct {
+	OrderId int64 `json:"order_id"`
+}
+
+type UndoDeclineOrderResponseObject interface {
+	VisitUndoDeclineOrderResponse(w http.ResponseWriter) error
+}
+
+type UndoDeclineOrder204Response struct {
+}
+
+func (response UndoDeclineOrder204Response) VisitUndoDeclineOrderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UndoDeclineOrder400JSONResponse ErrorResponse
+
+func (response UndoDeclineOrder400JSONResponse) VisitUndoDeclineOrderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UndoDeclineOrder401Response struct {
+}
+
+func (response UndoDeclineOrder401Response) VisitUndoDeclineOrderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type DeclineOrderRequestObject struct {
+	OrderId int64 `json:"order_id"`
+}
+
+type DeclineOrderResponseObject interface {
+	VisitDeclineOrderResponse(w http.ResponseWriter) error
+}
+
+type DeclineOrder204Response struct {
+}
+
+func (response DeclineOrder204Response) VisitDeclineOrderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeclineOrder400JSONResponse ErrorResponse
+
+func (response DeclineOrder400JSONResponse) VisitDeclineOrderResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeclineOrder401Response struct {
+}
+
+func (response DeclineOrder401Response) VisitDeclineOrderResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type UpdateOrderStatusRequestObject struct {
 	OrderId int64 `json:"order_id"`
 	Body    *UpdateOrderStatusJSONRequestBody
@@ -688,21 +857,30 @@ type StrictServerInterface interface {
 	// Create a new tow order
 	// (POST /order)
 	CreateOrder(ctx context.Context, request CreateOrderRequestObject) (CreateOrderResponseObject, error)
-	// List available orders (forming/pending) for drivers
+	// List available orders (pending) for drivers
 	// (GET /order/available)
 	ListAvailableOrders(ctx context.Context, request ListAvailableOrdersRequestObject) (ListAvailableOrdersResponseObject, error)
+	// List orders declined by the driver
+	// (GET /order/declined)
+	ListDeclinedOrders(ctx context.Context, request ListDeclinedOrdersRequestObject) (ListDeclinedOrdersResponseObject, error)
 	// List orders for the authenticated user
 	// (GET /order/my)
 	ListMyOrders(ctx context.Context, request ListMyOrdersRequestObject) (ListMyOrdersResponseObject, error)
-	// Delete user's active (forming/pending) order
+	// Delete user's active (pending) order
 	// (DELETE /order/my/active)
 	DeleteMyActiveOrder(ctx context.Context, request DeleteMyActiveOrderRequestObject) (DeleteMyActiveOrderResponseObject, error)
 	// Get order by ID
 	// (GET /order/{order_id})
 	GetOrder(ctx context.Context, request GetOrderRequestObject) (GetOrderResponseObject, error)
-	// Update order details (forming/pending only)
+	// Update order details (pending only)
 	// (PUT /order/{order_id})
 	UpdateOrder(ctx context.Context, request UpdateOrderRequestObject) (UpdateOrderResponseObject, error)
+	// Restore a previously declined order
+	// (DELETE /order/{order_id}/decline)
+	UndoDeclineOrder(ctx context.Context, request UndoDeclineOrderRequestObject) (UndoDeclineOrderResponseObject, error)
+	// Driver declines an order
+	// (PATCH /order/{order_id}/decline)
+	DeclineOrder(ctx context.Context, request DeclineOrderRequestObject) (DeclineOrderResponseObject, error)
 	// Update order status
 	// (PATCH /order/{order_id}/status)
 	UpdateOrderStatus(ctx context.Context, request UpdateOrderStatusRequestObject) (UpdateOrderStatusResponseObject, error)
@@ -771,6 +949,31 @@ func (sh *strictHandler) ListAvailableOrders(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(ListAvailableOrdersResponseObject); ok {
 		if err := validResponse.VisitListAvailableOrdersResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDeclinedOrders operation middleware
+func (sh *strictHandler) ListDeclinedOrders(ctx *gin.Context) {
+	var request ListDeclinedOrdersRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDeclinedOrders(ctx, request.(ListDeclinedOrdersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDeclinedOrders")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(ListDeclinedOrdersResponseObject); ok {
+		if err := validResponse.VisitListDeclinedOrdersResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -885,6 +1088,60 @@ func (sh *strictHandler) UpdateOrder(ctx *gin.Context, orderId int64) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UpdateOrderResponseObject); ok {
 		if err := validResponse.VisitUpdateOrderResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UndoDeclineOrder operation middleware
+func (sh *strictHandler) UndoDeclineOrder(ctx *gin.Context, orderId int64) {
+	var request UndoDeclineOrderRequestObject
+
+	request.OrderId = orderId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UndoDeclineOrder(ctx, request.(UndoDeclineOrderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UndoDeclineOrder")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(UndoDeclineOrderResponseObject); ok {
+		if err := validResponse.VisitUndoDeclineOrderResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeclineOrder operation middleware
+func (sh *strictHandler) DeclineOrder(ctx *gin.Context, orderId int64) {
+	var request DeclineOrderRequestObject
+
+	request.OrderId = orderId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeclineOrder(ctx, request.(DeclineOrderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeclineOrder")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeclineOrderResponseObject); ok {
+		if err := validResponse.VisitDeclineOrderResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

@@ -9,6 +9,8 @@ import (
 	"monolith/internal/domains/order/application/command"
 	"monolith/internal/domains/order/application/query"
 	"monolith/internal/domains/order/domain/entity"
+	"monolith/internal/domains/order/domain/pricing"
+	"monolith/internal/domains/order/interface/http/pricecalculation"
 )
 
 func err400(msg string) CreateOrder400JSONResponse {
@@ -28,9 +30,12 @@ type OrderHandler struct {
 	updateOrder         *command.UpdateOrderHandler
 	updateOrderStatus   *command.UpdateOrderStatusHandler
 	deleteActiveOrder   *command.DeleteActiveOrderHandler
+	declineOrder        *command.DeclineOrderHandler
+	undoDeclineOrder    *command.UndoDeclineOrderHandler
 	getOrderByID        *query.GetOrderByIDHandler
 	listOrdersByUser    *query.ListOrdersByUserHandler
 	listAvailableOrders *query.ListAvailableOrdersHandler
+	listDeclinedOrders  *query.ListDeclinedOrdersHandler
 }
 
 func NewOrderHandler(
@@ -38,18 +43,24 @@ func NewOrderHandler(
 	updateOrder *command.UpdateOrderHandler,
 	updateOrderStatus *command.UpdateOrderStatusHandler,
 	deleteActiveOrder *command.DeleteActiveOrderHandler,
+	declineOrder *command.DeclineOrderHandler,
+	undoDeclineOrder *command.UndoDeclineOrderHandler,
 	getOrderByID *query.GetOrderByIDHandler,
 	listOrdersByUser *query.ListOrdersByUserHandler,
 	listAvailableOrders *query.ListAvailableOrdersHandler,
+	listDeclinedOrders *query.ListDeclinedOrdersHandler,
 ) *OrderHandler {
 	return &OrderHandler{
 		createOrder:         createOrder,
 		updateOrder:         updateOrder,
 		updateOrderStatus:   updateOrderStatus,
 		deleteActiveOrder:   deleteActiveOrder,
+		declineOrder:        declineOrder,
+		undoDeclineOrder:    undoDeclineOrder,
 		getOrderByID:        getOrderByID,
 		listOrdersByUser:    listOrdersByUser,
 		listAvailableOrders: listAvailableOrders,
+		listDeclinedOrders:  listDeclinedOrders,
 	}
 }
 
@@ -127,7 +138,7 @@ func (h *OrderHandler) ListAvailableOrders(ctx context.Context, request ListAvai
 		return ListAvailableOrders401Response{}, nil
 	}
 
-	orders, err := h.listAvailableOrders.Handle(ctx)
+	orders, err := h.listAvailableOrders.Handle(ctx, session.UserID)
 	if err != nil {
 		return ListAvailableOrders200JSONResponse{}, nil
 	}
@@ -247,6 +258,74 @@ func (h *OrderHandler) DeleteMyActiveOrder(ctx context.Context, request DeleteMy
 	}
 
 	return DeleteMyActiveOrder204Response{}, nil
+}
+
+func (h *OrderHandler) DeclineOrder(ctx context.Context, request DeclineOrderRequestObject) (DeclineOrderResponseObject, error) {
+	session := getSession(ctx)
+	if session == nil {
+		return DeclineOrder401Response{}, nil
+	}
+
+	if err := h.declineOrder.Handle(ctx, request.OrderId, session.UserID); err != nil {
+		return DeclineOrder400JSONResponse{Error: strPtr(err.Error())}, nil
+	}
+
+	return DeclineOrder204Response{}, nil
+}
+
+func (h *OrderHandler) ListDeclinedOrders(ctx context.Context, request ListDeclinedOrdersRequestObject) (ListDeclinedOrdersResponseObject, error) {
+	session := getSession(ctx)
+	if session == nil {
+		return ListDeclinedOrders401Response{}, nil
+	}
+
+	orders, err := h.listDeclinedOrders.Handle(ctx, session.UserID)
+	if err != nil {
+		return ListDeclinedOrders200JSONResponse{Orders: &[]Order{}}, nil
+	}
+
+	apiOrders := make([]Order, len(orders))
+	for i := range orders {
+		apiOrders[i] = toAPIOrder(&orders[i])
+	}
+
+	return ListDeclinedOrders200JSONResponse{Orders: &apiOrders}, nil
+}
+
+func (h *OrderHandler) UndoDeclineOrder(ctx context.Context, request UndoDeclineOrderRequestObject) (UndoDeclineOrderResponseObject, error) {
+	session := getSession(ctx)
+	if session == nil {
+		return UndoDeclineOrder401Response{}, nil
+	}
+
+	if err := h.undoDeclineOrder.Handle(ctx, request.OrderId, session.UserID); err != nil {
+		return UndoDeclineOrder400JSONResponse{Error: strPtr(err.Error())}, nil
+	}
+
+	return UndoDeclineOrder204Response{}, nil
+}
+
+func (h *OrderHandler) EstimateOrderPrice(c *gin.Context) {
+	session := getSession(c)
+	if session == nil {
+		c.AbortWithStatusJSON(401, gin.H{"error": "не авторизован"})
+		return
+	}
+
+	var req pricecalculation.EstimateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": "неверный запрос"})
+		return
+	}
+
+	price := pricing.CalculatePrice(pricing.EstimateRequest{
+		DistanceMeters:       int32(req.DistanceMeters),
+		CarWeightKg:          int32(req.CarWeightKg),
+		HowManyWheelsBlocked: int16(req.HowManyWheelsBlocked),
+	})
+
+	p := int(price)
+	c.JSON(200, pricecalculation.EstimateResponse{PriceRubles: &p})
 }
 
 func getSession(ctx context.Context) *auth.Session {

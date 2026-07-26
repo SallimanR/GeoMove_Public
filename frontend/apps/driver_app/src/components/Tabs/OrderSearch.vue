@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, inject, watch } from "vue";
 import { useStore } from "@nanostores/vue";
-import {
-  MapsLocationPicker,
-  $locationPicking,
-  setPickCallback,
-} from "@geomove/maps";
+import { MapsLocationPicker, $locationPicking, setPickCallback } from "@geomove/maps";
 import type { GeoPoint } from "@geomove/maps";
 import { TimePicker } from "ui";
 import DatePicker from "primevue/datepicker";
-import SingIn from "auth/components/SignIn.vue";
 import { $user, $isAuthenticated, $loading, checkAuth, setUser } from "auth";
 import { useDriverProfile } from "../../stores/driverStore";
 import { ACTIVE_TAB_KEY } from "../../injectionKeys";
@@ -119,10 +114,7 @@ function onLocationPicked(point: GeoPoint, address: string) {
   const entry: LocationEntry = { lat: point.lat, lon: point.lon, address };
   if (pendingPick.value.type === "from") {
     fromLocation.value = entry;
-  } else if (
-    pendingPick.value.type === "to" &&
-    pendingPick.value.index !== undefined
-  ) {
+  } else if (pendingPick.value.type === "to" && pendingPick.value.index !== undefined) {
     toLocations.value[pendingPick.value.index] = entry;
   }
   pendingPick.value = null;
@@ -131,21 +123,19 @@ function onLocationPicked(point: GeoPoint, address: string) {
 
 function pickFromLocation() {
   pendingPick.value = { type: "from" };
-  activeTab.value = "mapsTab";
+  activeTab.value = "mainTab";
 }
 
 function pickToLocation(index: number) {
   pendingPick.value = { type: "to", index };
-  activeTab.value = "mapsTab";
+  activeTab.value = "mainTab";
 }
 
 function addToLocation() {
   const idx = toLocations.value.length;
   toLocations.value.push({ lat: 0, lon: 0, address: "" });
   pendingPick.value = { type: "to", index: idx };
-  setPickCallback((point: GeoPoint, address: string) =>
-    onLocationPicked(point, address),
-  );
+  setPickCallback((point: GeoPoint, address: string) => onLocationPicked(point, address));
   $locationPicking.set(true);
 }
 
@@ -238,31 +228,27 @@ function formatTariff(val: number | null): string {
 <template>
   <div
     v-if="authLoading || driverLoading || faLoading"
-    class="flex items-center justify-center h-full p-4"
+    class="flex h-full items-center justify-center p-4"
   >
     <p class="text-gray-500">Загрузка...</p>
   </div>
 
-  <div
-    v-else-if="!isAuthenticated"
-    class="flex items-center justify-center h-full"
-  >
-    <SingIn @login-success="onLoginSuccess" />
+  <div v-else-if="!driverExists" class="flex h-full cursor-pointer items-center justify-center">
+    <div
+      @click="activeTab = 'profileTab'"
+      class="rounded-xl bg-white p-3 text-center font-medium text-green-500 shadow-lg transition hover:bg-gray-50"
+    >
+      Войти в профиль водителя
+    </div>
   </div>
 
-  <div
-    v-else-if="!driverExists"
-    class="flex items-center justify-center h-full p-4"
-  >
+  <div v-else-if="!driverExists" class="flex h-full items-center justify-center p-4">
     <p class="text-gray-500">Сначала создайте профиль водителя</p>
   </div>
 
   <!-- Edit/Create form -->
-  <div
-    v-else-if="editMode"
-    class="flex flex-col h-full overflow-y-auto p-4 gap-3"
-  >
-    <h2 class="text-lg font-medium text-center">Свободный эвакуатор</h2>
+  <div v-else-if="editMode" class="flex h-full flex-col gap-3 overflow-y-auto p-4">
+    <h2 class="text-center text-lg font-medium">Свободный эвакуатор</h2>
 
     <div class="flex flex-col gap-2">
       <label class="text-gray-600">Дата и время начала</label>
@@ -283,16 +269,12 @@ function formatTariff(val: number | null): string {
     <div class="flex flex-col gap-2">
       <label class="text-gray-600">Точка отправления:</label>
       <div class="flex flex-row">
-        <MapsLocationPicker
-          @click="pickFromLocation()"
-          @pick="onLocationPicked"
-        />
+        <MapsLocationPicker @click="pickFromLocation()" @pick="onLocationPicked" />
       </div>
       <span v-if="fromLocation" class="text-gray-500">
         <span class="text-green-500">●</span>
         {{
-          fromLocation.address ||
-          fromLocation.lat.toFixed(5) + ", " + fromLocation.lon.toFixed(5)
+          fromLocation.address || fromLocation.lat.toFixed(5) + ", " + fromLocation.lon.toFixed(5)
         }}
       </span>
     </div>
@@ -303,16 +285,12 @@ function formatTariff(val: number | null): string {
         <button
           @click="addToLocation"
           type="button"
-          class="rounded-xl p-2 bg-green-300 hover:text-blue-600"
+          class="rounded-xl bg-green-300 p-2 hover:text-blue-600"
         >
           + Добавить
         </button>
       </div>
-      <div
-        v-for="(loc, idx) in toLocations"
-        :key="idx"
-        class="flex flex-col gap-1"
-      >
+      <div v-for="(loc, idx) in toLocations" :key="idx" class="flex flex-col gap-1">
         <div class="flex items-center gap-1">
           <span class="text-gray-400">Точка {{ idx + 1 }}:</span>
         </div>
@@ -321,14 +299,11 @@ function formatTariff(val: number | null): string {
         </span>
 
         <div class="flex flex-row gap-2">
-          <MapsLocationPicker
-            @click="pickToLocation(idx)"
-            @pick="onLocationPicked"
-          />
+          <MapsLocationPicker @click="pickToLocation(idx)" @pick="onLocationPicked" />
           <button
             @click="removeToLocation(idx)"
             type="button"
-            class="rounded-xl p-2 bg-red-300 hover:bg-red-400"
+            class="rounded-xl bg-red-300 p-2 hover:bg-red-400"
           >
             Убрать
           </button>
@@ -338,7 +313,7 @@ function formatTariff(val: number | null): string {
 
     <div class="flex items-center gap-3">
       <label class="text-gray-600">Попутный заказ</label>
-      <input v-model="enRouteOrder" type="checkbox" class="w-4 h-4" />
+      <input v-model="enRouteOrder" type="checkbox" class="h-4 w-4" />
     </div>
 
     <div class="flex flex-col gap-2">
@@ -348,7 +323,7 @@ function formatTariff(val: number | null): string {
         type="number"
         step="0.01"
         placeholder="50"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+        class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none"
       />
     </div>
 
@@ -358,14 +333,14 @@ function formatTariff(val: number | null): string {
       <button
         @click="cancelEdit"
         type="button"
-        class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-600 transition-colors hover:bg-gray-50"
       >
         Отмена
       </button>
       <button
         @click="onSubmit"
         :disabled="loading || !fromDate || !toDate || !fromLocation"
-        class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 disabled:opacity-50 transition-colors font-medium"
+        class="flex-1 rounded-lg bg-blue-500 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-blue-600 disabled:opacity-50"
       >
         {{ loading ? "Сохранение..." : "Сохранить" }}
       </button>
@@ -375,12 +350,12 @@ function formatTariff(val: number | null): string {
   <!-- Create button when no entry -->
   <div
     v-else-if="!faExists && !editMode"
-    class="flex flex-col items-center justify-center h-full p-4 gap-4"
+    class="flex h-full flex-col items-center justify-center gap-4 p-4"
   >
     <p class="text-gray-500">У вас нет активной заявки</p>
     <button
       @click="startCreate"
-      class="px-6 py-2.5 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 transition-colors font-medium"
+      class="rounded-lg bg-blue-500 px-6 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-blue-600"
     >
       Свободный эвакуатор
     </button>
@@ -389,11 +364,11 @@ function formatTariff(val: number | null): string {
   <!-- Display mode -->
   <div
     v-else-if="faExists && !editMode && freelyAvailable"
-    class="flex flex-col h-full overflow-y-auto p-4 gap-3"
+    class="flex h-full flex-col gap-3 overflow-y-auto p-4"
   >
-    <h2 class="text-lg font-medium text-center">Свободный эвакуатор</h2>
+    <h2 class="text-center text-lg font-medium">Свободный эвакуатор</h2>
 
-    <div class="flex flex-col gap-2 bg-gray-50 rounded-lg p-3">
+    <div class="flex flex-col gap-2 rounded-lg bg-gray-50 p-3">
       <div class="flex flex-col gap-1">
         <span class="text-gray-500">Период:</span>
         <span>С {{ formatDateTime(freelyAvailable.from_date) }}</span>
@@ -421,16 +396,9 @@ function formatTariff(val: number | null): string {
       </p>
     </div>
 
-    <div
-      v-if="freelyAvailable.to_locations?.length"
-      class="flex flex-col gap-1"
-    >
+    <div v-if="freelyAvailable.to_locations?.length" class="flex flex-col gap-1">
       <p class="text-gray-500">Точки назначения:</p>
-      <div
-        v-for="(loc, idx) in freelyAvailable.to_locations"
-        :key="idx"
-        class="pl-2"
-      >
+      <div v-for="(loc, idx) in freelyAvailable.to_locations" :key="idx" class="pl-2">
         {{ idx + 1 }}.
         {{ loc.address || loc.lat.toFixed(5) + ", " + loc.lon.toFixed(5) }}
       </div>
@@ -438,17 +406,17 @@ function formatTariff(val: number | null): string {
 
     <p v-if="error" class="text-red-500">{{ error }}</p>
 
-    <div class="flex gap-2 mt-2">
+    <div class="mt-2 flex gap-2">
       <button
         @click="onDelete"
         :disabled="loading"
-        class="flex-1 px-4 py-2.5 border border-red-300 text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+        class="flex-1 rounded-lg border border-red-300 px-4 py-2.5 text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
       >
         {{ loading ? "Удаление..." : "Удалить" }}
       </button>
       <button
         @click="startEdit"
-        class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 transition-colors font-medium"
+        class="flex-1 rounded-lg bg-blue-500 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-blue-600"
       >
         Изменить
       </button>

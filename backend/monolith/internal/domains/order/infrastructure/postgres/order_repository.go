@@ -283,8 +283,8 @@ func (r *OrderRepository) DeleteActiveOrder(ctx context.Context, customerID int6
 	return r.queries.DeleteActiveOrder(ctx, customerID)
 }
 
-func (r *OrderRepository) ListAvailableOrders(ctx context.Context) ([]entity.Order, error) {
-	rows, err := r.queries.ListAvailableOrders(ctx)
+func (r *OrderRepository) ListAvailableOrders(ctx context.Context, driverID int64) ([]entity.Order, error) {
+	rows, err := r.queries.ListAvailableOrders(ctx, driverID)
 	if err != nil {
 		return nil, err
 	}
@@ -325,4 +325,71 @@ func (r *OrderRepository) ListAvailableOrders(ctx context.Context) ([]entity.Ord
 func (r *OrderRepository) SetOrderDriver(ctx context.Context, orderID, driverID int64) error {
 	_, err := r.queries.SetOrderDriver(ctx, sqlc.SetOrderDriverParams{ID: orderID, DriverID: &driverID})
 	return err
+}
+
+func (r *OrderRepository) DeclineOrder(ctx context.Context, orderID, driverID int64) error {
+	return r.queries.DeclineOrder(ctx, sqlc.DeclineOrderParams{OrderID: orderID, DriverID: driverID})
+}
+
+func (r *OrderRepository) UndoDeclineOrder(ctx context.Context, orderID, driverID int64) error {
+	_, err := r.queries.UndoDeclineOrder(ctx, sqlc.UndoDeclineOrderParams{OrderID: orderID, DriverID: driverID})
+	return err
+}
+
+func (r *OrderRepository) ListDeclinedOrders(ctx context.Context, driverID int64) ([]entity.Order, error) {
+	rows, err := r.queries.DeclinedOrder(ctx, driverID)
+	if err != nil {
+		return nil, err
+	}
+	orders := make([]entity.Order, len(rows))
+	for i, row := range rows {
+		orders[i] = toOrderEntity(orderRow{
+			ID:                   row.ID,
+			CreatedAt:            row.CreatedAt,
+			UpdatedAt:            row.UpdatedAt,
+			CustomerID:           row.CustomerID,
+			DriverID:             row.DriverID,
+			FromLat:              row.FromLat,
+			FromLon:              row.FromLon,
+			FromAddress:          row.FromAddress,
+			ToLat:                row.ToLat,
+			ToLon:                row.ToLon,
+			ToAddress:            row.ToAddress,
+			TotalDistanceMeters:  row.TotalDistanceMeters,
+			HowManyWheelsBlocked: row.HowManyWheelsBlocked,
+			PriceRubles:          row.PriceRubles,
+			CarWeightKg:          row.CarWeightKg,
+			CarLengthMeters:      row.CarLengthMeters,
+			CarType:              row.CarType,
+			CarName:              row.CarName,
+			CarPhotoUrl:          row.CarPhotoUrl,
+			CustomerMessage:      row.CustomerMessage,
+			Status:               row.Status,
+			AcceptedAt:           row.AcceptedAt,
+			PickedUpAt:           row.PickedUpAt,
+			CompletedAt:          row.CompletedAt,
+			CancelledAt:          row.CancelledAt,
+			CancellationReason:   row.CancellationReason,
+		})
+	}
+	return orders, nil
+}
+
+func (r *OrderRepository) ExpirePendingOrders(ctx context.Context) ([]repository.ExpiredOrder, error) {
+	rows, err := r.queries.ExpirePendingOrders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]repository.ExpiredOrder, len(rows))
+	for i, row := range rows {
+		result[i] = repository.ExpiredOrder{ID: row.ID, CustomerID: row.CustomerID}
+	}
+	return result, nil
+}
+
+func (r *OrderRepository) DiscardDriverFromOrder(ctx context.Context, orderID, driverID int64) error {
+	return r.queries.DiscardDriverFromOrder(ctx, sqlc.DiscardDriverFromOrderParams{
+		ID:       orderID,
+		DriverID: &driverID,
+	})
 }

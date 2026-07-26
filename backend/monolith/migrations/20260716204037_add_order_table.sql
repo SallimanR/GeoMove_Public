@@ -1,6 +1,5 @@
 -- migrate:up
 CREATE TYPE ORDER_STATUS AS ENUM (
-    'forming',
     'pending',
     'accepted',
     'in_progress',
@@ -24,7 +23,7 @@ CREATE TABLE "order" (
 	how_many_wheels_blocked SMALLINT NOT NULL,
     price_rubles INTEGER,
 
-    status ORDER_STATUS NOT NULL DEFAULT 'forming',
+    status ORDER_STATUS NOT NULL DEFAULT 'pending',
 
     accepted_at TIMESTAMP,
     picked_up_at TIMESTAMP,

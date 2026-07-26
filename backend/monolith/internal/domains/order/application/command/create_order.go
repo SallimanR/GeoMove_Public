@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"monolith/internal/domains/order/domain/entity"
+	"monolith/internal/domains/order/domain/pricing"
 	"monolith/internal/domains/order/domain/repository"
 	"monolith/internal/notification"
 )
@@ -44,9 +45,18 @@ func (h *CreateOrderHandler) Handle(ctx context.Context, cmd CreateOrderCommand)
 		return nil, fmt.Errorf("ошибка получения заказов: %w", err)
 	}
 	for _, o := range existing {
-		if o.Status == entity.OrderStatusForming || o.Status == entity.OrderStatusPending {
+		if o.Status == entity.OrderStatusPending {
 			return nil, fmt.Errorf("у вас уже есть активный заказ #%d", o.ID)
 		}
+	}
+
+	if cmd.TotalDistanceMeters != nil {
+		price := pricing.CalculatePrice(pricing.EstimateRequest{
+			DistanceMeters:       *cmd.TotalDistanceMeters,
+			CarWeightKg:          cmd.CarWeightKg,
+			HowManyWheelsBlocked: cmd.HowManyWheelsBlocked,
+		})
+		cmd.PriceRubles = &price
 	}
 
 	order, err := entity.NewOrder(entity.NewOrderOptions{

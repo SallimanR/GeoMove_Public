@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, toRaw } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import { useStore } from "@nanostores/vue";
 import {
   $startPoint,
@@ -13,7 +13,13 @@ import { addressToText, getReverseGeocoding } from "@geomove/geo";
 import { Marker } from "maplibre-gl";
 import { $orders, $orderRoute, setOrders, type OrderRoute } from "order/store/orderStore.ts";
 import { orderClient } from "order/api/client.ts";
-import type { Order } from "order";
+import { type Order, useOrderNotifications } from "order";
+import { driverClient } from "driver/api/client.ts";
+import { $driverStore, $freelyAvailableDriverStore } from "driver/store/driverStore.ts";
+import {
+  displayDriverPopups,
+  displayFreelyAvailableDriverPopups,
+} from "src/maps/displayDrivers.ts";
 import CreateOrder from "./CreateOrder.vue";
 import DisplayOrder from "./DisplayOrder.vue";
 import EditOrder from "./EditOrder.vue";
@@ -23,6 +29,9 @@ const open = ref(false);
 const editing = ref(false);
 const picking = ref(false);
 
+const startPoint = useStore($startPoint);
+const endPoint = useStore($endPoint);
+
 onMounted(async () => {
   const { data } = await orderClient.GET("/order/my", {
     params: { query: { role: "customer" } },
@@ -30,22 +39,75 @@ onMounted(async () => {
   if (data?.orders) setOrders(data.orders as Order[]);
 });
 
+useOrderNotifications(() => {
+  console.log("[Notification: order]");
+  orderClient
+    .GET("/order/my", {
+      params: { query: { role: "customer" } },
+    })
+    .then(({ data }) => {
+      if (data?.orders) setOrders(data.orders as Order[]);
+    });
+});
+
 const activeOrder = computed<Order | null>(() => {
-  return orders.value.find(
-    (o) => !["completed", "cancelled"].includes(o.status),
-  ) ?? null;
+  return orders.value.find((o) => !["completed", "cancelled"].includes(o.status)) ?? null;
+});
+
+watch(
+  [startPoint, endPoint],
+  async ([sp, ep]) => {
+    if (sp && ep) {
+      void fetchDriversAt(sp.lat, sp.lon);
+    } else {
+      $driverStore.set([]);
+      displayDriverPopups();
+      $freelyAvailableDriverStore.set([]);
+      displayFreelyAvailableDriverPopups();
+    }
+  },
+  { immediate: true },
+);
+
+async function fetchDriversAt(lat: number, lon: number) {
+  const { data } = await driverClient.POST("/driver/filter", {
+    body: { user_lat: lat, user_lon: lon },
+  });
+  if (data?.drivers) {
+    $driverStore.set(data.drivers);
+    displayDriverPopups();
+  }
+  const faResult = await fetch(`${import.meta.env.VITE_API_BASE}/driver/freely-available/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_lat: lat, user_lon: lon }),
+    credentials: "include",
+  });
+  if (faResult.ok) {
+    const json = await faResult.json();
+    if (json.drivers) {
+      $freelyAvailableDriverStore.set(json.drivers);
+      displayFreelyAvailableDriverPopups();
+    }
+  }
+}
+
+onMounted(() => {
+  let unsub: (() => void) | undefined;
+  unsub = $mapInstance.subscribe((map) => {
+    if (!map) return;
+    unsub?.();
+    if ($startPoint.get() && $endPoint.get()) return;
+    const c = map.getCenter();
+    void fetchDriversAt(c.lat, c.lng);
+  });
 });
 
 const startMarker = new Marker({ draggable: true, color: "#40fc0c" });
 const endMarker = new Marker({ draggable: true, color: "#fc5b55" });
 
-function getMap() {
-  const raw = toRaw($mapInstance.get());
-  return raw as unknown as import("maplibre-gl").Map | null;
-}
-
 $startPoint.subscribe((p) => {
-  const map = getMap();
+  const map = $mapInstance.get();
   if (p && map) {
     startMarker.setLngLat([p.lon, p.lat]).addTo(map);
   } else {
@@ -54,7 +116,7 @@ $startPoint.subscribe((p) => {
 });
 
 $endPoint.subscribe((p) => {
-  const map = getMap();
+  const map = $mapInstance.get();
   if (p && map) {
     endMarker.setLngLat([p.lon, p.lat]).addTo(map);
   } else {
@@ -63,7 +125,7 @@ $endPoint.subscribe((p) => {
 });
 
 startMarker.on("dragend", () => {
-  const map = getMap();
+  const map = $mapInstance.get();
   if (!map) return;
   const pos = startMarker.getLngLat();
   $startPoint.set({ lat: pos.lat, lon: pos.lng });
@@ -79,7 +141,7 @@ startMarker.on("dragend", () => {
 });
 
 endMarker.on("dragend", () => {
-  const map = getMap();
+  const map = $mapInstance.get();
   if (!map) return;
   const pos = endMarker.getLngLat();
   $endPoint.set({ lat: pos.lat, lon: pos.lng });
@@ -187,31 +249,40 @@ onUnmounted(() => {
 <template>
   <div
     v-if="!open && !picking"
-    class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-100 pointer-events-auto"
+    class="pointer-events-auto absolute bottom-4 left-1/2 w-full max-w-100 -translate-x-1/2"
   >
     <div
       @click="openPanel"
-      class="bg-white rounded-xl p-3 shadow-lg cursor-pointer text-gray-500 hover:bg-gray-50 transition text-center"
+      class="cursor-pointer rounded-xl bg-white p-3 text-center text-gray-500 shadow-lg transition hover:bg-gray-50"
     >
       {{ activeOrder ? "Мой заказ" : "Создать заказ" }}
     </div>
   </div>
 
-  <div v-show="open" class="absolute inset-0 z-100 pointer-events-auto flex flex-col" @click="open = false">
+  <div
+    v-show="open"
+    class="pointer-events-auto absolute inset-0 z-100 flex flex-col"
+    @click="open = false"
+  >
     <div class="absolute inset-0 bg-black/30" />
-    <div class="relative flex-1 flex items-center justify-center">
-      <span class="text-white text-lg font-medium select-none">
-        Нажмите чтобы закрыть
-      </span>
+    <div class="relative flex flex-1 items-center justify-center">
+      <span class="text-lg font-medium text-white select-none"> Нажмите чтобы закрыть </span>
     </div>
 
     <div
-      class="relative w-full max-w-300 rounded-t-2xl bg-white overflow-y-auto max-h-[80vh] p-4 mx-auto"
+      class="relative mx-auto max-h-[80vh] w-full max-w-300 overflow-y-auto rounded-t-2xl bg-white p-4"
       @click.stop
     >
       <template v-if="activeOrder">
         <DisplayOrder v-if="!editing" :order="activeOrder" @edit="editing = true" />
-        <EditOrder v-else :order="activeOrder" @back="editing = false" @pick-start="onPickStart" @pick-done="onPickDone" @cancel-pick="onCancelPick" />
+        <EditOrder
+          v-else
+          :order="activeOrder"
+          @back="editing = false"
+          @pick-start="onPickStart"
+          @pick-done="onPickDone"
+          @cancel-pick="onCancelPick"
+        />
       </template>
       <CreateOrder
         v-else

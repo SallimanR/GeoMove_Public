@@ -18,7 +18,7 @@ type UpdateOrderStatusCommand struct {
 }
 
 type UpdateOrderStatusHandler struct {
-	repo    repository.OrderRepository
+	repo     repository.OrderRepository
 	notifSvc *notification.Service
 }
 
@@ -33,6 +33,32 @@ func (h *UpdateOrderStatusHandler) Handle(ctx context.Context, cmd UpdateOrderSt
 	}
 
 	previousStatus := order.Status
+
+	if cmd.Status == entity.OrderStatusAccepted && order.Status != entity.OrderStatusPending {
+		return nil, fmt.Errorf("заказ уже не ожидает принятия")
+	}
+
+	if cmd.Status == entity.OrderStatusPending {
+		if order.DriverID == nil || cmd.DriverID == nil || *order.DriverID != *cmd.DriverID {
+			return nil, fmt.Errorf("только назначенный водитель может отменить принятие заказа")
+		}
+		if order.Status != entity.OrderStatusAccepted && order.Status != entity.OrderStatusInProgress {
+			return nil, fmt.Errorf("заказ не может быть возвращён в ожидание из статуса %s", order.Status)
+		}
+		if err := h.repo.DiscardDriverFromOrder(ctx, cmd.OrderID, *cmd.DriverID); err != nil {
+			return nil, fmt.Errorf("ошибка при отмене принятия заказа: %w", err)
+		}
+		order, err = h.repo.GetOrderByID(ctx, cmd.OrderID)
+		if err != nil {
+			return nil, err
+		}
+		h.notifyDriverCancel(order, previousStatus, cmd.CancellationReason)
+		return order, nil
+	}
+
+	if cmd.Status != entity.OrderStatusAccepted && order.DriverID != nil && cmd.DriverID != nil && *order.DriverID != *cmd.DriverID {
+		return nil, fmt.Errorf("только назначенный водитель может изменить статус заказа")
+	}
 
 	if err := order.TransitionStatus(cmd.Status); err != nil {
 		return nil, err
@@ -64,6 +90,21 @@ func (h *UpdateOrderStatusHandler) Handle(ctx context.Context, cmd UpdateOrderSt
 	return order, nil
 }
 
+func (h *UpdateOrderStatusHandler) notifyDriverCancel(order *entity.Order, previousStatus entity.OrderStatus, reason *string) {
+	if h.notifSvc == nil {
+		return
+	}
+	go func() {
+		ctx := context.Background()
+		reasonText := "водитель не сможет выполнить заказ"
+		if reason != nil && *reason != "" {
+			reasonText = *reason
+		}
+		cancelMsg := fmt.Sprintf("Заказ #%d возвращён в поиск: %s", order.ID, reasonText)
+		h.send(ctx, order.CustomerID, "Водитель отменил заказ", cancelMsg)
+	}()
+}
+
 func (h *UpdateOrderStatusHandler) sendNotifications(order *entity.Order, previousStatus entity.OrderStatus) {
 	if h.notifSvc == nil {
 		return
@@ -76,11 +117,6 @@ func (h *UpdateOrderStatusHandler) notifyStatusChange(order *entity.Order, previ
 	ctx := context.Background()
 
 	switch order.Status {
-	case entity.OrderStatusPending:
-		h.send(ctx, order.CustomerID,
-			"Заказ размещён",
-			fmt.Sprintf("Заказ #%d отправлен на поиск водителей", order.ID))
-
 	case entity.OrderStatusAccepted:
 		h.send(ctx, order.CustomerID,
 			"Водитель назначен",

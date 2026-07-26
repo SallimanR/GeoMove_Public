@@ -1,0 +1,68 @@
+openapi: 3.2.0
+info:
+  title: Price Calculation API
+  version: 1.0.0
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Session cookie set after OAuth login
+
+  schemas:
+    EstimateRequest:
+      type: object
+      required:
+        - distance_meters
+        - car_weight_kg
+        - how_many_wheels_blocked
+      properties:
+        distance_meters:
+          type: integer
+        car_weight_kg:
+          type: integer
+        how_many_wheels_blocked:
+          type: integer
+
+    EstimateResponse:
+      type: object
+      properties:
+        price_rubles:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+paths:
+  /order/estimate:
+    post:
+      operationId: estimateOrderPrice
+      summary: Estimate order price
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateRequest'
+      responses:
+        '200':
+          description: Price estimate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimateResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized

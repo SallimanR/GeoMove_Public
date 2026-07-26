@@ -15,3 +15,6 @@ WHERE user_id = $1;
 
 -- name: DeleteSubscription :exec
 DELETE FROM push_subscriptions WHERE endpoint = $1;
+
+-- name: DeleteSubscriptionsByUserAndDevice :exec
+DELETE FROM push_subscriptions WHERE user_id = $1 AND device_type = $2;

@@ -63,7 +63,6 @@ func (ns NullCarType) Value() (driver.Value, error) {
 type OrderStatus string
 
 const (
-	OrderStatusForming    OrderStatus = "forming"
 	OrderStatusPending    OrderStatus = "pending"
 	OrderStatusAccepted   OrderStatus = "accepted"
 	OrderStatusInProgress OrderStatus = "in_progress"
@@ -158,6 +157,12 @@ type Order struct {
 	CarName              string
 	CarPhotoUrl          *string
 	CustomerMessage      *string
+}
+
+type OrderDecline struct {
+	OrderID   int64
+	DriverID  int64
+	CreatedAt time.Time
 }
 
 type PushSubscription struct {

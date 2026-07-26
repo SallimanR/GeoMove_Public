@@ -1,36 +1,45 @@
-export { MAP_CENTER_LAT, MAP_CENTER_LON } from './mapConfig'
+export { MAP_CENTER_LAT, MAP_CENTER_LON } from "./mapConfig";
 
-export { default as Maps } from './components/Maps.vue'
-export { default as MapsOverlayControls } from './components/MapsOverlayControls.vue'
-export { default as MapsLocationPicker } from './components/MapsLocationPicker.vue'
-
-export { type UseMovingIconLayerOptions, type MovingPath, type MovingPosition } from './types/movingIconLayerShared.ts'
-export type { GeoPoint } from './types/geoPoint.ts'
-
-export { useMovingIconLayer } from './composables/useMovingIconLayer.ts'
-export { useMovingIconLayerMaplibre } from './composables/useMovingIconLayerMaplibre.ts'
+export { default as Maps } from "./components/Maps.vue";
+export { default as MapsOverlayControls } from "./components/MapsOverlayControls.vue";
+export { default as MapsLocationPicker } from "./components/MapsLocationPicker.vue";
 
 export {
-  $coords,
-  $mapInstance,
-  $deckOverlay,
-  $mapCenterAddress,
-  $mapCenterAddressText,
-  $locationPicking,
-  setPickCallback,
-  invokePickCallback,
-  clearPickCallback,
-} from './stores/mapsStore'
+	type UseMovingIconLayerOptions,
+	type MovingPath,
+	type MovingPosition,
+} from "./types/movingIconLayerShared.ts";
+export type { GeoPoint } from "./types/geoPoint.ts";
+
+export { useMovingIconLayer } from "./composables/useMovingIconLayer.ts";
+export { useMovingIconLayerMaplibre } from "./composables/useMovingIconLayerMaplibre.ts";
 
 export {
-  $startPoint,
-  $endPoint,
-  $startAddress,
-  $endAddress,
-  $routePath,
-  $isRouteLoading,
-} from './stores/routeStore'
+	$coords,
+	$mapInstance,
+	$deckOverlay,
+	$mapCenterAddress,
+	$mapCenterAddressText,
+	$locationPicking,
+	setPickCallback,
+	invokePickCallback,
+	clearPickCallback,
+} from "./stores/mapsStore";
 
-export { addPopupToMap, removeAllPopups, removePopupsByGroup } from './utils/mapPopup'
+export {
+	$startPoint,
+	$endPoint,
+	$startAddress,
+	$endAddress,
+	$routePath,
+	$isRouteLoading,
+} from "./stores/routeStore";
 
-export { useRouteDisplay } from './composables/useRouteDisplay'
+export { addPopupToMap, removeAllPopups, removePopupsByGroup } from "./utils/mapPopup";
+export { useMapPopupScale } from "./composables/useMapPopupScale";
+
+export { flyToPointOnMap } from "./utils/flyToPointOnMap.ts"
+
+export { Marker } from "maplibre-gl";
+
+export { useRouteDisplay } from "./composables/useRouteDisplay";

@@ -45,6 +45,10 @@ func (h *Handler) Subscribe(ctx context.Context, request SubscribeRequestObject)
 		deviceType = *request.Body.DeviceType
 	}
 
+	if err := h.store.DeleteByUserAndDevice(ctx, user.ID, deviceType); err != nil {
+		log.Printf("subscribe: cleanup old subscriptions: %v", err)
+	}
+
 	err := h.store.UpsertSubscription(ctx, sqlc.UpsertSubscriptionParams{
 		UserID:          user.ID,
 		Endpoint:        request.Body.Endpoint,

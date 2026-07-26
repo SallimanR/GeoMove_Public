@@ -7,15 +7,8 @@ function openMovingDriverPopup() {
 </script>
 
 <template>
-  <div
-    class="flex flex-col items-center realtime-driver-popup"
-    @click="openMovingDriverPopup"
-  >
-    <img
-      :src="'tow_image.jpg'"
-      :alt="`Водитель ${props.id}`"
-      class="driver-avatar"
-    />
+  <div class="realtime-driver-popup flex flex-col items-center" @click="openMovingDriverPopup">
+    <img :src="'tow_image.jpg'" :alt="`Водитель ${props.id}`" class="driver-avatar" />
   </div>
 </template>
 

@@ -7,45 +7,34 @@ import Tab from "primevue/tab";
 import TabPanels from "primevue/tabpanels";
 import TabPanel from "primevue/tabpanel";
 
+import MapsTab from "./Tabs/MapsTab.vue";
 import Profile from "./Tabs/Profile/Profile.vue";
 import OrderSearch from "./Tabs/OrderSearch.vue";
-import AvailableOrders from "./Tabs/AvailableOrders.vue";
 import StreamGps from "./Tabs/StreamGps.vue";
 import { ACTIVE_TAB_KEY } from "../injectionKeys";
 
-import { Maps, MapsOverlayControls } from "@geomove/maps";
-
-const styleApi = import.meta.env.VITE_STYLE_API;
-
-const activeTab = ref("mapsTab");
+const activeTab = ref("mainTab");
 provide(ACTIVE_TAB_KEY, activeTab);
 </script>
 
 <template>
-  <Tabs v-model:value="activeTab" class="h-full w-full flex flex-col">
+  <Tabs v-model:value="activeTab" class="flex h-full w-full flex-col">
     <TabList class="flex w-full">
-      <Tab value="mapsTab" class="flex-1 text-center">Карты</Tab>
-      <Tab value="ordersTab" class="flex-1 text-center">Заказы</Tab>
+      <Tab value="mainTab" class="flex-1 text-center">Главная</Tab>
       <Tab value="orderSearchTab" class="flex-1 text-center">Ищу заказ</Tab>
       <Tab value="statusTab" class="flex-1 text-center">Статус</Tab>
       <Tab value="profileTab" class="flex-1 text-center">Профиль</Tab>
     </TabList>
-    <TabPanels class="flex-1 overflow-hidden flex flex-col">
-      <TabPanel value="mapsTab" class="flex-1 p-0 m-0">
-        <div class="relative flex flex-col h-full">
-          <Maps :styleApi="styleApi" />
-          <MapsOverlayControls :hideRouteInput="true" />
-        </div>
+    <TabPanels class="flex flex-1 flex-col overflow-hidden">
+      <TabPanel value="mainTab" class="m-0 flex-1 p-0">
+        <MapsTab />
       </TabPanel>
-      <TabPanel value="ordersTab" class="flex-1 p-0 m-0">
-        <AvailableOrders />
-      </TabPanel>
-      <TabPanel value="orderSearchTab" class="flex-1 p-0 m-0">
+      <TabPanel value="orderSearchTab" class="m-0 flex-1 p-0">
         <OrderSearch />
       </TabPanel>
       <TabPanel value="statusTab"> <StreamGps /> </TabPanel>
 
-      <TabPanel value="profileTab" class="flex-1 p-0 m-0">
+      <TabPanel value="profileTab" class="m-0 flex-1 p-0">
         <Profile />
       </TabPanel>
     </TabPanels>

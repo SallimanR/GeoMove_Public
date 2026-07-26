@@ -18,6 +18,20 @@ func (q *Queries) DeleteSubscription(ctx context.Context, endpoint string) error
 	return err
 }
 
+const deleteSubscriptionsByUserAndDevice = `-- name: DeleteSubscriptionsByUserAndDevice :exec
+DELETE FROM push_subscriptions WHERE user_id = $1 AND device_type = $2
+`
+
+type DeleteSubscriptionsByUserAndDeviceParams struct {
+	UserID     int64
+	DeviceType string
+}
+
+func (q *Queries) DeleteSubscriptionsByUserAndDevice(ctx context.Context, arg DeleteSubscriptionsByUserAndDeviceParams) error {
+	_, err := q.db.Exec(ctx, deleteSubscriptionsByUserAndDevice, arg.UserID, arg.DeviceType)
+	return err
+}
+
 const getSubscriptionsByUserID = `-- name: GetSubscriptionsByUserID :many
 SELECT id, user_id, endpoint, device_public_key, auth_secret, device_type, created_at
 FROM push_subscriptions

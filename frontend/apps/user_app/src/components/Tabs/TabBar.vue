@@ -7,9 +7,8 @@ import Tab from "primevue/tab";
 import TabPanels from "primevue/tabpanels";
 import TabPanel from "primevue/tabpanel";
 
-import MapsTabPanel from "./MapsTab/MapsTabPanel.vue";
-import ProfileTabPanel from "./Profile.vue";
-import DriverCardPopup from "./DriverCardPopup.vue";
+import MapsTab from "./MapsTab/MapsTab.vue";
+import ProfileTab from "./ProfileTab.vue";
 import { ACTIVE_TAB_KEY } from "src/injectionKeys";
 
 const activeTab = ref("mapsTab");
@@ -17,21 +16,20 @@ provide(ACTIVE_TAB_KEY, activeTab);
 </script>
 
 <template>
-  <Tabs v-model:value="activeTab" class="h-full w-full flex flex-col">
+  <Tabs v-model:value="activeTab" class="flex h-full w-full flex-col">
     <TabList class="flex w-full">
-      <Tab value="mapsTab" class="flex-1 text-center">Карты</Tab>
+      <Tab value="mapsTab" class="flex-1 text-center">Главная</Tab>
       <Tab value="profileTab" class="flex-1 text-center">Профиль</Tab>
     </TabList>
-    <TabPanels class="flex-1 overflow-hidden flex flex-col">
-      <TabPanel value="mapsTab" class="flex-1 p-0 m-0">
-        <MapsTabPanel />
+    <TabPanels class="flex flex-1 flex-col overflow-hidden">
+      <TabPanel value="mapsTab" class="m-0 flex-1 p-0">
+        <MapsTab />
       </TabPanel>
-      <TabPanel value="profileTab" class="flex-1 p-0 m-0">
-        <ProfileTabPanel />
+      <TabPanel value="profileTab" class="m-0 flex-1 p-0">
+        <ProfileTab />
       </TabPanel>
     </TabPanels>
   </Tabs>
-  <DriverCardPopup />
 </template>
 
 <style scoped>

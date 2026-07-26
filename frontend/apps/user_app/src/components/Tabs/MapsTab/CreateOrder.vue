@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { useStore } from "@nanostores/vue";
 import {
   $startPoint,
@@ -10,8 +10,9 @@ import {
   MapsLocationPicker,
 } from "@geomove/maps";
 import type { GeoPoint } from "@geomove/maps";
-import { displayDistance, addressToText } from "@geomove/geo";
+import { displayDistance, addressToText, shortestTimeToArrive } from "@geomove/geo";
 import { orderClient } from "order/api/client.ts";
+import { priceCalcClient } from "order/api/priceCalcClient.ts";
 import {
   addOrder,
   $createOrderForm,
@@ -43,16 +44,61 @@ const endAddress = useStore($endAddress);
 const isSubmitting = ref(false);
 const submitError = ref<string | null>(null);
 
-const fromText = computed(() =>
-  startAddress.value ? addressToText(startAddress.value) : "",
-);
-const toText = computed(() =>
-  endAddress.value ? addressToText(endAddress.value) : "",
-);
+const fromText = computed(() => (startAddress.value ? addressToText(startAddress.value) : ""));
+const toText = computed(() => (endAddress.value ? addressToText(endAddress.value) : ""));
 
 const distance = computed(() => {
   if (!routePath.value?.paths?.[0]?.distance) return null;
   return routePath.value.paths[0].distance;
+});
+
+const drivers = useStore($driverStore);
+
+const estimatedPrice = ref<number | null>(null);
+const priceLoading = ref(false);
+
+const driverEta = ref<number | null>(null);
+const etaLoading = ref(false);
+
+watchEffect(async () => {
+  const dist = distance.value;
+  const weight = form.value.carWeightKg;
+  const wheels = form.value.wheels;
+
+  if (!dist || !weight || wheels == null) {
+    estimatedPrice.value = null;
+    return;
+  }
+
+  priceLoading.value = true;
+  try {
+    const { data, error } = await priceCalcClient.POST("/order/estimate", {
+      body: {
+        distance_meters: Math.round(dist),
+        car_weight_kg: weight,
+        how_many_wheels_blocked: wheels,
+      },
+    });
+    if (!error && data) {
+      estimatedPrice.value = data.price_rubles ?? null;
+    }
+  } catch {
+    estimatedPrice.value = null;
+  } finally {
+    priceLoading.value = false;
+  }
+});
+
+watchEffect(async () => {
+  const sp = startPoint.value;
+  if (!sp || drivers.value.length === 0) {
+    driverEta.value = null;
+    return;
+  }
+
+  etaLoading.value = true;
+  driverEta.value = await shortestTimeToArrive(sp, drivers.value);
+  etaLoading.value = false;
 });
 
 const canPublish = computed(
@@ -119,9 +165,7 @@ async function handlePublishOrder() {
         to_lon: endPoint.value.lon,
         to_address: toText.value,
         how_many_wheels_blocked: form.value.wheels,
-        total_distance_meters: distance.value
-          ? Math.round(distance.value)
-          : null,
+        total_distance_meters: distance.value ? Math.round(distance.value) : null,
         car_weight_kg: form.value.carWeightKg,
         car_length_meters: form.value.carLengthMeters,
         car_type: form.value.carType,
@@ -156,39 +200,53 @@ async function handlePublishOrder() {
 
 <template>
   <div class="flex flex-col gap-3">
-    <h3 class="font-semibold text-center">Создать заказ</h3>
+    <h3 class="text-center font-semibold">Создать заказ</h3>
 
     <div class="flex flex-col gap-2">
       <div class="flex items-center gap-2">
-        <InputText
-          :modelValue="fromText"
-          placeholder="Откуда"
-          class="flex-1"
-          readonly
+        <InputText :modelValue="fromText" placeholder="Откуда" class="flex-1" readonly />
+        <MapsLocationPicker
+          @pick="onFromPicked"
+          @click="emit('pickStart')"
+          @cancel="emit('cancelPick')"
         />
-        <MapsLocationPicker @pick="onFromPicked" @click="emit('pickStart')" @cancel="emit('cancelPick')" />
       </div>
 
       <div class="flex items-center gap-2">
         <InputText :modelValue="toText" placeholder="Куда" class="flex-1" readonly />
-        <MapsLocationPicker @pick="onToPicked" @click="emit('pickStart')" @cancel="emit('cancelPick')" />
+        <MapsLocationPicker
+          @pick="onToPicked"
+          @click="emit('pickStart')"
+          @cancel="emit('cancelPick')"
+        />
       </div>
 
       <div v-if="routePath" class="flex gap-2">
         <button
           @click="handleClearRoute"
           type="button"
-          class="rounded-xl bg-red-300 p-2 text-sm flex-1"
+          class="flex-1 rounded-xl bg-red-300 p-2 text-sm"
         >
           Сбросить маршрут
         </button>
       </div>
 
-      <div
-        v-if="routePath && routePath.paths[0]?.distance"
-        class="text-center"
-      >
+      <div v-if="routePath && routePath.paths[0]?.distance" class="text-center">
         Расстояние: {{ displayDistance(routePath.paths[0].distance) }}
+      </div>
+
+      <div
+        v-if="estimatedPrice != null"
+        class="rounded-lg bg-green-50 p-3 text-center text-lg font-semibold text-green-700"
+      >
+        {{ priceLoading ? "Расчёт..." : `Приблизительно: ${estimatedPrice.toLocaleString()} ₽` }}
+      </div>
+
+      <div
+        v-if="driverEta != null"
+        class="rounded-lg bg-blue-50 p-3 text-center text-sm text-blue-700"
+      >
+        {{ etaLoading ? "Расчёт..." : `Ближайший водитель приедет через ~${driverEta} мин` }}
       </div>
     </div>
 
@@ -203,16 +261,21 @@ async function handlePublishOrder() {
       @update:wheels="(v) => $createOrderForm.set({ ...$createOrderForm.get(), wheels: v })"
       @update:carType="(v) => $createOrderForm.set({ ...$createOrderForm.get(), carType: v })"
       @update:carName="(v) => $createOrderForm.set({ ...$createOrderForm.get(), carName: v })"
-      @update:carWeightKg="(v) => $createOrderForm.set({ ...$createOrderForm.get(), carWeightKg: v })"
-      @update:carLengthMeters="(v) => $createOrderForm.set({ ...$createOrderForm.get(), carLengthMeters: v })"
-      @update:carPhotoUrl="(v) => $createOrderForm.set({ ...$createOrderForm.get(), carPhotoUrl: v })"
-      @update:customerMessage="(v) => $createOrderForm.set({ ...$createOrderForm.get(), customerMessage: v })"
+      @update:carWeightKg="
+        (v) => $createOrderForm.set({ ...$createOrderForm.get(), carWeightKg: v })
+      "
+      @update:carLengthMeters="
+        (v) => $createOrderForm.set({ ...$createOrderForm.get(), carLengthMeters: v })
+      "
+      @update:carPhotoUrl="
+        (v) => $createOrderForm.set({ ...$createOrderForm.get(), carPhotoUrl: v })
+      "
+      @update:customerMessage="
+        (v) => $createOrderForm.set({ ...$createOrderForm.get(), customerMessage: v })
+      "
     />
 
-    <div
-      v-if="submitError"
-      class="rounded-xl bg-red-100 p-3 text-center text-red-600"
-    >
+    <div v-if="submitError" class="rounded-xl bg-red-100 p-3 text-center text-red-600">
       {{ submitError }}
     </div>
 
@@ -221,7 +284,7 @@ async function handlePublishOrder() {
       :loading="isSubmitting"
       @click="handlePublishOrder"
       class="w-full"
-      :class="canPublish ? '!bg-green-500 !border-green-500' : ''"
+      :class="canPublish ? '!border-green-500 !bg-green-500' : ''"
     >
       {{ isSubmitting ? "Отправка..." : "Создать заказ" }}
     </Button>

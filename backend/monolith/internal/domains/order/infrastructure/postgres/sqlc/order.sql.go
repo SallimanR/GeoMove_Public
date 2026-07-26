@@ -42,7 +42,7 @@ INSERT INTO "order" (
 	$16,
 	$7,
 	$8,
-	'forming'
+	'pending'
 )
 RETURNING id
 `
@@ -90,14 +90,191 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (int64
 	return id, err
 }
 
+const declineOrder = `-- name: DeclineOrder :exec
+INSERT INTO order_decline (order_id, driver_id)
+VALUES ($1, $2)
+ON CONFLICT DO NOTHING
+`
+
+type DeclineOrderParams struct {
+	OrderID  int64
+	DriverID int64
+}
+
+func (q *Queries) DeclineOrder(ctx context.Context, arg DeclineOrderParams) error {
+	_, err := q.db.Exec(ctx, declineOrder, arg.OrderID, arg.DriverID)
+	return err
+}
+
+const declinedOrder = `-- name: DeclinedOrder :many
+SELECT
+	o.id,
+	o.created_at,
+	o.updated_at,
+	o.customer_id,
+	o.driver_id,
+	ST_X(o.from_location::geometry)::REAL AS from_lon,
+	ST_Y(o.from_location::geometry)::REAL AS from_lat,
+	o.from_address,
+	ST_X(o.to_location::geometry)::REAL AS to_lon,
+	ST_Y(o.to_location::geometry)::REAL AS to_lat,
+	o.to_address,
+	o.total_distance_meters,
+	o.how_many_wheels_blocked,
+	o.price_rubles,
+	o.car_weight_kg,
+	o.car_length_meters,
+	o.car_type,
+	o.car_name,
+	o.car_photo_url,
+	o.customer_message,
+	o.status,
+	o.accepted_at,
+	o.picked_up_at,
+	o.completed_at,
+	o.cancelled_at,
+	o.cancellation_reason
+FROM "order" o
+INNER JOIN order_decline d ON d.order_id = o.id
+WHERE d.driver_id = $1
+ORDER BY d.created_at DESC
+`
+
+type DeclinedOrderRow struct {
+	ID                   int64
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	CustomerID           int64
+	DriverID             *int64
+	FromLon              float32
+	FromLat              float32
+	FromAddress          string
+	ToLon                float32
+	ToLat                float32
+	ToAddress            string
+	TotalDistanceMeters  *int32
+	HowManyWheelsBlocked int16
+	PriceRubles          *int32
+	CarWeightKg          int32
+	CarLengthMeters      float32
+	CarType              CarType
+	CarName              string
+	CarPhotoUrl          *string
+	CustomerMessage      *string
+	Status               OrderStatus
+	AcceptedAt           *time.Time
+	PickedUpAt           *time.Time
+	CompletedAt          *time.Time
+	CancelledAt          *time.Time
+	CancellationReason   *string
+}
+
+func (q *Queries) DeclinedOrder(ctx context.Context, driverID int64) ([]DeclinedOrderRow, error) {
+	rows, err := q.db.Query(ctx, declinedOrder, driverID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeclinedOrderRow
+	for rows.Next() {
+		var i DeclinedOrderRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CustomerID,
+			&i.DriverID,
+			&i.FromLon,
+			&i.FromLat,
+			&i.FromAddress,
+			&i.ToLon,
+			&i.ToLat,
+			&i.ToAddress,
+			&i.TotalDistanceMeters,
+			&i.HowManyWheelsBlocked,
+			&i.PriceRubles,
+			&i.CarWeightKg,
+			&i.CarLengthMeters,
+			&i.CarType,
+			&i.CarName,
+			&i.CarPhotoUrl,
+			&i.CustomerMessage,
+			&i.Status,
+			&i.AcceptedAt,
+			&i.PickedUpAt,
+			&i.CompletedAt,
+			&i.CancelledAt,
+			&i.CancellationReason,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteActiveOrder = `-- name: DeleteActiveOrder :exec
 DELETE FROM "order"
-WHERE customer_id = $1 AND status IN ('forming', 'pending')
+WHERE customer_id = $1 AND status = 'pending'
 `
 
 func (q *Queries) DeleteActiveOrder(ctx context.Context, customerID int64) error {
 	_, err := q.db.Exec(ctx, deleteActiveOrder, customerID)
 	return err
+}
+
+const discardDriverFromOrder = `-- name: DiscardDriverFromOrder :exec
+UPDATE "order"
+SET
+    status = 'pending',
+    driver_id = NULL,
+    accepted_at = NULL
+WHERE id = $1 AND driver_id = $2
+`
+
+type DiscardDriverFromOrderParams struct {
+	ID       int64
+	DriverID *int64
+}
+
+func (q *Queries) DiscardDriverFromOrder(ctx context.Context, arg DiscardDriverFromOrderParams) error {
+	_, err := q.db.Exec(ctx, discardDriverFromOrder, arg.ID, arg.DriverID)
+	return err
+}
+
+const expirePendingOrders = `-- name: ExpirePendingOrders :many
+UPDATE "order"
+SET status = 'cancelled', cancelled_at = NOW(), cancellation_reason = 'Время ожидания истекло'
+WHERE status = 'pending' AND created_at < NOW() - INTERVAL '30 minutes'
+RETURNING id, customer_id
+`
+
+type ExpirePendingOrdersRow struct {
+	ID         int64
+	CustomerID int64
+}
+
+func (q *Queries) ExpirePendingOrders(ctx context.Context) ([]ExpirePendingOrdersRow, error) {
+	rows, err := q.db.Query(ctx, expirePendingOrders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExpirePendingOrdersRow
+	for rows.Next() {
+		var i ExpirePendingOrdersRow
+		if err := rows.Scan(&i.ID, &i.CustomerID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
@@ -197,35 +374,39 @@ func (q *Queries) GetOrderByID(ctx context.Context, id int64) (GetOrderByIDRow, 
 
 const listAvailableOrders = `-- name: ListAvailableOrders :many
 SELECT
-	id,
-	created_at,
-	updated_at,
-	customer_id,
-	driver_id,
-	ST_X(from_location::geometry)::REAL AS from_lon,
-	ST_Y(from_location::geometry)::REAL AS from_lat,
-	from_address,
-	ST_X(to_location::geometry)::REAL AS to_lon,
-	ST_Y(to_location::geometry)::REAL AS to_lat,
-	to_address,
-	total_distance_meters,
-	how_many_wheels_blocked,
-	price_rubles,
-	car_weight_kg,
-	car_length_meters,
-	car_type,
-	car_name,
-	car_photo_url,
-	customer_message,
-	status,
-	accepted_at,
-	picked_up_at,
-	completed_at,
-	cancelled_at,
-	cancellation_reason
-FROM "order"
-WHERE status IN ('forming', 'pending')
-ORDER BY created_at DESC
+	o.id,
+	o.created_at,
+	o.updated_at,
+	o.customer_id,
+	o.driver_id,
+	ST_X(o.from_location::geometry)::REAL AS from_lon,
+	ST_Y(o.from_location::geometry)::REAL AS from_lat,
+	o.from_address,
+	ST_X(o.to_location::geometry)::REAL AS to_lon,
+	ST_Y(o.to_location::geometry)::REAL AS to_lat,
+	o.to_address,
+	o.total_distance_meters,
+	o.how_many_wheels_blocked,
+	o.price_rubles,
+	o.car_weight_kg,
+	o.car_length_meters,
+	o.car_type,
+	o.car_name,
+	o.car_photo_url,
+	o.customer_message,
+	o.status,
+	o.accepted_at,
+	o.picked_up_at,
+	o.completed_at,
+	o.cancelled_at,
+	o.cancellation_reason
+FROM "order" o
+WHERE o.status = 'pending'
+  AND NOT EXISTS (
+	SELECT 1 FROM order_decline d
+	WHERE d.order_id = o.id AND d.driver_id = $1::BIGINT
+  )
+ORDER BY o.created_at DESC
 `
 
 type ListAvailableOrdersRow struct {
@@ -257,8 +438,8 @@ type ListAvailableOrdersRow struct {
 	CancellationReason   *string
 }
 
-func (q *Queries) ListAvailableOrders(ctx context.Context) ([]ListAvailableOrdersRow, error) {
-	rows, err := q.db.Query(ctx, listAvailableOrders)
+func (q *Queries) ListAvailableOrders(ctx context.Context, driverID int64) ([]ListAvailableOrdersRow, error) {
+	rows, err := q.db.Query(ctx, listAvailableOrders, driverID)
 	if err != nil {
 		return nil, err
 	}
@@ -525,7 +706,11 @@ func (q *Queries) ListOrdersByDriver(ctx context.Context, driverID *int64) ([]Li
 const setOrderDriver = `-- name: SetOrderDriver :execrows
 UPDATE "order"
 SET driver_id = $2, status = 'accepted'
-WHERE id = $1 AND status IN ('forming', 'pending')
+WHERE id = $1 AND status = 'pending'
+  AND NOT EXISTS (
+	SELECT 1 FROM order_decline d
+	WHERE d.order_id = $1 AND d.driver_id = $2
+  )
 `
 
 type SetOrderDriverParams struct {
@@ -535,6 +720,24 @@ type SetOrderDriverParams struct {
 
 func (q *Queries) SetOrderDriver(ctx context.Context, arg SetOrderDriverParams) (int64, error) {
 	result, err := q.db.Exec(ctx, setOrderDriver, arg.ID, arg.DriverID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const undoDeclineOrder = `-- name: UndoDeclineOrder :execrows
+DELETE FROM order_decline
+WHERE order_id = $1 AND driver_id = $2
+`
+
+type UndoDeclineOrderParams struct {
+	OrderID  int64
+	DriverID int64
+}
+
+func (q *Queries) UndoDeclineOrder(ctx context.Context, arg UndoDeclineOrderParams) (int64, error) {
+	result, err := q.db.Exec(ctx, undoDeclineOrder, arg.OrderID, arg.DriverID)
 	if err != nil {
 		return 0, err
 	}

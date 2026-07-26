@@ -48,7 +48,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete user's active (forming/pending) order */
+        /** Delete user's active (pending) order */
         delete: operations["deleteMyActiveOrder"];
         options?: never;
         head?: never;
@@ -62,8 +62,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List available orders (forming/pending) for drivers */
+        /** List available orders (pending) for drivers */
         get: operations["listAvailableOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/order/declined": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List orders declined by the driver */
+        get: operations["listDeclinedOrders"];
         put?: never;
         post?: never;
         delete?: never;
@@ -81,7 +98,7 @@ export interface paths {
         };
         /** Get order by ID */
         get: operations["getOrder"];
-        /** Update order details (forming/pending only) */
+        /** Update order details (pending only) */
         put: operations["updateOrder"];
         post?: never;
         delete?: never;
@@ -105,6 +122,24 @@ export interface paths {
         head?: never;
         /** Update order status */
         patch: operations["updateOrderStatus"];
+        trace?: never;
+    };
+    "/order/{order_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Restore a previously declined order */
+        delete: operations["undoDeclineOrder"];
+        options?: never;
+        head?: never;
+        /** Driver declines an order */
+        patch: operations["declineOrder"];
         trace?: never;
     };
 }
@@ -142,7 +177,7 @@ export interface components {
             how_many_wheels_blocked: number;
             price_rubles?: number | null;
             /** @enum {string} */
-            status: "forming" | "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
+            status: "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
@@ -174,7 +209,7 @@ export interface components {
         } & components["schemas"]["CarInfo"];
         UpdateOrderStatusRequest: {
             /** @enum {string} */
-            status: "forming" | "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
+            status: "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
             cancellation_reason?: string;
         };
         UpdateOrderRequest: {
@@ -338,6 +373,35 @@ export interface operations {
             };
         };
     };
+    listDeclinedOrders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of declined orders */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        orders?: components["schemas"]["Order"][];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getOrder: {
         parameters: {
             query?: never;
@@ -465,6 +529,78 @@ export interface operations {
             };
             /** @description Order not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    undoDeclineOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Decline undone */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cannot undo decline */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    declineOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Order declined */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cannot decline order */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

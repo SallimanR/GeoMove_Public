@@ -1,4 +1,4 @@
-\restrict B4d53WXOlpKbuoNTKo5KzSEzu4SyPLcsUrkXmpjpMBycohLMsVMQ4R6audG5eBx
+\restrict 3QtfhaddYrSnAcPlbIRewbusH21TdB3iCzgvec6W7eJvqoJ1qUa3sd6jRncOFXC
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg13+1)
 -- Dumped by pg_dump version 18.4
@@ -106,7 +106,6 @@ CREATE TYPE public.car_type AS ENUM (
 --
 
 CREATE TYPE public.order_status AS ENUM (
-    'forming',
     'pending',
     'accepted',
     'in_progress',
@@ -187,7 +186,7 @@ CREATE TABLE public."order" (
     total_distance_meters integer,
     how_many_wheels_blocked smallint NOT NULL,
     price_rubles integer,
-    status public.order_status DEFAULT 'forming'::public.order_status NOT NULL,
+    status public.order_status DEFAULT 'pending'::public.order_status NOT NULL,
     accepted_at timestamp without time zone,
     picked_up_at timestamp without time zone,
     completed_at timestamp without time zone,
@@ -199,6 +198,17 @@ CREATE TABLE public."order" (
     car_name text NOT NULL,
     car_photo_url text,
     customer_message text
+);
+
+
+--
+-- Name: order_decline; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.order_decline (
+    order_id bigint NOT NULL,
+    driver_id bigint NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
@@ -393,6 +403,14 @@ ALTER TABLE ONLY public.tow_driver_freely_available_to_location_list ALTER COLUM
 
 ALTER TABLE ONLY public.moving_driver
     ADD CONSTRAINT moving_driver_pkey PRIMARY KEY (driver_id);
+
+
+--
+-- Name: order_decline order_decline_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_decline
+    ADD CONSTRAINT order_decline_pkey PRIMARY KEY (order_id, driver_id);
 
 
 --
@@ -664,6 +682,22 @@ ALTER TABLE ONLY public."order"
 
 
 --
+-- Name: order_decline order_decline_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_decline
+    ADD CONSTRAINT order_decline_driver_id_fkey FOREIGN KEY (driver_id) REFERENCES public.driver(user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: order_decline order_decline_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.order_decline
+    ADD CONSTRAINT order_decline_order_id_fkey FOREIGN KEY (order_id) REFERENCES public."order"(id) ON DELETE CASCADE;
+
+
+--
 -- Name: order order_driver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -723,7 +757,7 @@ ALTER TABLE ONLY public.user_oauth_links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict B4d53WXOlpKbuoNTKo5KzSEzu4SyPLcsUrkXmpjpMBycohLMsVMQ4R6audG5eBx
+\unrestrict 3QtfhaddYrSnAcPlbIRewbusH21TdB3iCzgvec6W7eJvqoJ1qUa3sd6jRncOFXC
 
 
 --
@@ -745,4 +779,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260721201716'),
     ('20260721213614'),
     ('20260721225600'),
-    ('20260721235800');
+    ('20260721235800'),
+    ('20260723181000');

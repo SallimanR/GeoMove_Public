@@ -25,14 +25,14 @@ func (h *DeleteActiveOrderHandler) Handle(ctx context.Context, customerID int64)
 	var activeOrder *entity.Order
 	for i := range orders {
 		o := &orders[i]
-		if o.Status == entity.OrderStatusForming || o.Status == entity.OrderStatusPending {
+		if o.Status == entity.OrderStatusPending {
 			activeOrder = o
 			break
 		}
 	}
 
 	if activeOrder == nil {
-		return fmt.Errorf("нет активного заказа для удаления")
+		return fmt.Errorf("нельзя отменить заказ")
 	}
 
 	return h.repo.DeleteActiveOrder(ctx, customerID)

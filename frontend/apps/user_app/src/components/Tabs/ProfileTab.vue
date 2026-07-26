@@ -52,54 +52,42 @@ async function onLogout() {
 </script>
 
 <template>
-  <div v-if="loading" class="flex items-center justify-center h-full">
+  <div v-if="loading" class="flex h-full items-center justify-center">
     <p class="text-gray-500">Загружаем профиль...</p>
   </div>
 
-  <div v-else-if="error" class="flex items-center justify-center h-full">
+  <div v-else-if="error" class="flex h-full items-center justify-center">
     <p class="text-red-500">{{ error }}</p>
   </div>
 
   <div
     v-else-if="isAuthenticated && user"
-    class="flex flex-col items-center justify-center h-full gap-4 p-4"
+    class="flex h-full flex-col items-center justify-center gap-4 p-4"
   >
-    <div
-      v-if="user.profile_image"
-      class="w-24 h-24 rounded-full overflow-hidden"
-    >
-      <img
-        :src="user.profile_image"
-        alt="Profile"
-        class="w-full h-full object-cover"
-      />
+    <div v-if="user.profile_image" class="h-24 w-24 overflow-hidden rounded-full">
+      <img :src="user.profile_image" alt="Profile" class="h-full w-full object-cover" />
     </div>
-    <div
-      v-else
-      class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center"
-    >
-      <span class="text-3xl text-gray-500">{{
-        user.email?.charAt(0).toUpperCase() || "?"
-      }}</span>
+    <div v-else class="flex h-24 w-24 items-center justify-center rounded-full bg-gray-200">
+      <span class="text-3xl text-gray-500">{{ user.email?.charAt(0).toUpperCase() || "?" }}</span>
     </div>
     <p class="text-lg font-medium">{{ user.email }}</p>
     <p v-if="notifyError" class="text-sm text-amber-600">{{ notifyError }}</p>
     <p v-if="isSubscribed" class="text-xs text-green-600">Уведомления включены</p>
     <button
       @click="router.push('/triphistory')"
-      class="px-6 py-2.5 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-150 text-sm font-medium"
+      class="rounded-lg bg-blue-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none"
     >
       История поездок
     </button>
     <button
       @click="onLogout"
-      class="px-6 py-2.5 bg-red-400 text-white rounded-lg shadow-sm hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 transition-all duration-150 text-sm font-medium"
+      class="rounded-lg bg-red-400 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-red-500 focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:outline-none"
     >
       Выйти из аккаунта
     </button>
   </div>
 
-  <div v-else class="flex items-center justify-center h-full">
+  <div v-else class="flex h-full items-center justify-center">
     <SingIn @login-success="onLoginSuccess" />
   </div>
 </template>

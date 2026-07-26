@@ -15,6 +15,6 @@ func NewListAvailableOrdersHandler(repo repository.OrderRepository) *ListAvailab
 	return &ListAvailableOrdersHandler{repo: repo}
 }
 
-func (h *ListAvailableOrdersHandler) Handle(ctx context.Context) ([]entity.Order, error) {
-	return h.repo.ListAvailableOrders(ctx)
+func (h *ListAvailableOrdersHandler) Handle(ctx context.Context, driverID int64) ([]entity.Order, error) {
+	return h.repo.ListAvailableOrders(ctx, driverID)
 }

@@ -9,7 +9,6 @@ import (
 )
 
 var editableStatuses = map[entity.OrderStatus]bool{
-	entity.OrderStatusForming: true,
 	entity.OrderStatusPending: true,
 }
 

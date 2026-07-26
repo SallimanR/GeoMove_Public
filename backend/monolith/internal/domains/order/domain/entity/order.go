@@ -8,7 +8,6 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusForming    OrderStatus = "forming"
 	OrderStatusPending    OrderStatus = "pending"
 	OrderStatusAccepted   OrderStatus = "accepted"
 	OrderStatusInProgress OrderStatus = "in_progress"
@@ -96,17 +95,16 @@ func NewOrder(opts NewOrderOptions) (*Order, error) {
 		CarName:              opts.CarName,
 		CarPhotoUrl:          opts.CarPhotoUrl,
 		CustomerMessage:      opts.CustomerMessage,
-		Status:               OrderStatusForming,
+		Status:               OrderStatusPending,
 		CreatedAt:            now,
 		UpdatedAt:            now,
 	}, nil
 }
 
 var validTransitions = map[OrderStatus][]OrderStatus{
-	OrderStatusForming:    {OrderStatusPending, OrderStatusAccepted, OrderStatusCancelled},
 	OrderStatusPending:    {OrderStatusAccepted, OrderStatusCancelled},
-	OrderStatusAccepted:   {OrderStatusInProgress},
-	OrderStatusInProgress: {OrderStatusCompleted},
+	OrderStatusAccepted:   {OrderStatusInProgress, OrderStatusCancelled},
+	OrderStatusInProgress: {OrderStatusCompleted, OrderStatusCancelled},
 	OrderStatusCompleted:  {},
 	OrderStatusCancelled:  {},
 }

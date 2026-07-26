@@ -9,6 +9,8 @@ oapi-codegen -config api/openapi/geolocation/oapi-codegen.yaml api/openapi/geolo
 oapi-codegen -config api/openapi/order/oapi-codegen.yaml api/openapi/order/order.yaml
 oapi-codegen -config api/openapi/notifications/oapi-codegen.yaml api/openapi/notifications/notifications.yaml
 
+oapi-codegen -config api/openapi/order/price_calculation_oapi-codegen.yaml api/openapi/order/price_calculation.yaml
+
 # Frontend: TypeScript
 cd frontend && pnpm exec openapi-typescript ../api/openapi/driver/driver.yaml \
 	-o packages/@domains/driver/src/types/generated/api.driver.ts
@@ -21,6 +23,9 @@ pnpm exec openapi-typescript ../api/openapi/geolocation/geolocation.yaml \
 
 pnpm exec openapi-typescript ../api/openapi/order/order.yaml \
 	-o packages/@domains/order/src/types/generated/api.order.ts
+
+pnpm exec openapi-typescript ../api/openapi/order/price_calculation.yaml \
+	-o packages/@domains/order/src/types/generated/api.price_calculation.ts
 
 pnpm exec openapi-typescript ../api/openapi/notifications/notifications.yaml \
 	-o packages/notifications/src/types/generated/api.notifications.ts

@@ -88,7 +88,7 @@ components:
               nullable: true
             status:
               type: string
-              enum: [forming, pending, accepted, in_progress, completed, cancelled]
+              enum: [pending, accepted, in_progress, completed, cancelled]
             created_at:
               type: string
               format: date-time
@@ -159,7 +159,7 @@ components:
       properties:
         status:
           type: string
-          enum: [forming, pending, accepted, in_progress, completed, cancelled]
+          enum: [pending, accepted, in_progress, completed, cancelled]
         cancellation_reason:
           type: string
 
@@ -265,7 +265,7 @@ paths:
   /order/my/active:
     delete:
       operationId: deleteMyActiveOrder
-      summary: Delete user's active (forming/pending) order
+      summary: Delete user's active (pending) order
       security:
         - CookieAuth: []
       responses:
@@ -283,12 +283,33 @@ paths:
   /order/available:
     get:
       operationId: listAvailableOrders
-      summary: List available orders (forming/pending) for drivers
+      summary: List available orders (pending) for drivers
       security:
         - CookieAuth: []
       responses:
         '200':
           description: List of available orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+
+  /order/declined:
+    get:
+      operationId: listDeclinedOrders
+      summary: List orders declined by the driver
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of declined orders
           content:
             application/json:
               schema:
@@ -327,7 +348,7 @@ paths:
           description: Unauthorized
     put:
       operationId: updateOrder
-      summary: Update order details (forming/pending only)
+      summary: Update order details (pending only)
       security:
         - CookieAuth: []
       parameters:
@@ -395,5 +416,53 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Order not found
+        '401':
+          description: Unauthorized
+
+  /order/{order_id}/decline:
+    patch:
+      operationId: declineOrder
+      summary: Driver declines an order
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Order declined
+        '400':
+          description: Cannot decline order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+    delete:
+      operationId: undoDeclineOrder
+      summary: Restore a previously declined order
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Decline undone
+        '400':
+          description: Cannot undo decline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
