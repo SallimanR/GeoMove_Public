@@ -85,3 +85,7 @@ IOS версии нельзя скачать через GitHub из-за огр�
 ### Для разработки и участия:
 - [DEVELOPING.md](./DEVELOPING.md)
 - [Документация](./docs/)
+
+### [Артихектура]
+
+<img src="./docs/Architecture.jpg" width="800">
